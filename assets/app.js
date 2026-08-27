@@ -237,6 +237,93 @@
     return {events:sortRecent(events),health:normal?"normal":null,healthText:normal?"目前沒有公開事件":null};
   }
 
+  function appleStructuredAdapter(data, service, source) {
+    var services = data && Array.isArray(data.services) ? data.services : [];
+    var events = [];
+    var activeCount = 0;
+
+    services.forEach(function (svc) {
+      var serviceName = cleanText(svc && svc.serviceName);
+      var svcEvents = svc && Array.isArray(svc.events) ? svc.events : [];
+
+      svcEvents.forEach(function (ev) {
+        if (!ev) return;
+
+        var rawStatus = cleanText(ev.eventStatus || "").toLowerCase();
+        var rawType = cleanText(ev.statusType || "");
+
+        // Apple 的 eventStatus 是官方結構化狀態。
+        // resolved / completed 表示已結束；其他非空狀態視為目前仍有事件。
+        var status = null;
+        if (rawStatus === "resolved") status = "resolved";
+        else if (rawStatus === "completed") status = "completed";
+        else if (rawStatus === "investigating") status = "investigating";
+        else if (rawStatus === "monitoring") status = "monitoring";
+        else if (rawStatus === "identified") status = "identified";
+        else if (rawStatus === "scheduled") status = "scheduled";
+        else if (rawStatus === "in progress" || rawStatus === "in_progress") status = "in_progress";
+
+        if (
+          rawStatus &&
+          rawStatus !== "resolved" &&
+          rawStatus !== "completed"
+        ) {
+          activeCount++;
+        }
+
+        var start = null;
+        var end = null;
+
+        if (typeof ev.epochStartDate === "number" && isFinite(ev.epochStartDate)) {
+          start = new Date(ev.epochStartDate).toISOString();
+        } else if (ev.startDate) {
+          var sd = new Date(ev.startDate);
+          if (!isNaN(sd.getTime())) start = sd.toISOString();
+        }
+
+        if (typeof ev.epochEndDate === "number" && isFinite(ev.epochEndDate)) {
+          end = new Date(ev.epochEndDate).toISOString();
+        } else if (ev.endDate) {
+          var ed = new Date(ev.endDate);
+          if (!isNaN(ed.getTime())) end = ed.toISOString();
+        }
+
+        var title = serviceName || "Apple Service";
+        // 不把描述內容當事件標題；Apple 官方 UI 的主體就是服務名稱。
+        // statusType 保留為來源資訊，不拿來推斷 status。
+        events.push({
+          title: title,
+          status: status,
+          statusRaw: ev.eventStatus || null,
+          impact: rawType || null,
+          start: start,
+          end: end,
+          url: service.page,
+          sourceLabel: source.label
+        });
+      });
+    });
+
+    return {
+      events: sortRecent(events),
+      health: activeCount > 0 ? "incident" : "normal",
+      healthText: activeCount > 0
+        ? (activeCount + " 個目前事件")
+        : "所有服務均正常運作"
+    };
+  }
+
+  async function fetchAppleJson(url) {
+    var raw = await fetchText(url);
+
+    // production endpoint 為純 JSON；保留 JSONP 清理以提高兼容性。
+    raw = String(raw || "").trim()
+      .replace(/^jsonCallback\s*\(\s*/i, "")
+      .replace(/\s*\)\s*;?\s*$/i, "");
+
+    return JSON.parse(raw);
+  }
+
   function parseAppleClockRange(text) {
     var raw = String(text || "");
 
@@ -461,6 +548,7 @@
 
   async function runSource(source,service) {
     if (source.type==="statuspage") return statuspageAdapter(await fetchJson(source.url),service,source);
+    if (source.type==="apple-json") return appleStructuredAdapter(await fetchAppleJson(source.url),service,source);
     if (source.type==="gcp") return gcpAdapter(await fetchJson(source.url),service,source);
     if (source.type==="rss") return rssAdapter(await fetchText(source.url),service,source);
     if (source.type==="reader") return parseReader(await fetchReader(source.url),service,source);

@@ -140,6 +140,12 @@ window.CLOUDSTATUS_SERVICES = [
     "parser": "apple",
     "sources": [
       {
+        "type": "apple-json",
+        "url": "https://www.apple.com/support/systemstatus/data/system_status_en_US.js",
+        "label": "官方 JSON",
+        "tier": 1
+      },
+      {
         "type": "reader",
         "url": "https://www.apple.com/support/systemstatus/?viewlocale=en_US",
         "label": "官方 System Status",
