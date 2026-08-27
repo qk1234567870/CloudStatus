@@ -1,9 +1,0 @@
-{
-  "name": "CloudStatus Web Dashboard",
-  "version": "2.3.0",
-  "updated": "2026-08-27",
-  "services": 16,
-  "max_events": 3,
-  "translation": "browser",
-  "notes": "Removed DeepL/Google server-side translation. Official incident titles are preserved; browser translation is used when needed."
-}
