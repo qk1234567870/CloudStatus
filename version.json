@@ -1,11 +1,11 @@
 {
   "name": "CloudStatus Pure Pages",
-  "version": "6.0.0",
+  "version": "7.0.0",
   "updated": "2026-08-27",
-  "features": [
-    "staged fallback",
-    "strict noise filter",
-    "top 3 genuine incidents",
-    "per-event source tracking"
-  ]
+  "refresh": {
+    "interval_minutes": 5,
+    "foreground_threshold_minutes": 2,
+    "manual_force_refresh": true,
+    "full_page_reload": false
+  }
 }
