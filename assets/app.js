@@ -9,748 +9,516 @@
   var lastRefresh = 0;
   var refreshInFlight = false;
 
-  var statusLabel = {
-    resolved: "已解決",
-    monitoring: "監控中",
-    identified: "已確認",
-    degraded: "效能下降",
-    maintenance: "維護中",
+  var STATUS_LABELS = {
     investigating: "調查中",
-    outage: "服務中斷"
+    identified: "已確認",
+    monitoring: "監控中",
+    resolved: "已解決",
+    postmortem: "事後分析",
+    maintenance: "維護",
+    scheduled: "已排程",
+    in_progress: "進行中",
+    completed: "已完成",
+    degraded: "效能下降",
+    outage: "服務中斷",
+    active: "啟用",
+    closed: "已關閉"
   };
 
+  var NOISE = [
+    /^#+\s*/i, /^recent incidents?$/i, /^past incidents?$/i, /^incident history$/i,
+    /^view all$/i, /^view history$/i, /^subscribe$/i, /^rss(?: feed)?$/i, /^atom$/i,
+    /^webhook$/i, /^documentation$/i, /^privacy(?: policy)?$/i, /^terms/i,
+    /^powered by/i, /^contact us$/i, /^send feedback$/i,
+    /^get (?:email|text message|sms) notifications?/i,
+    /^receive (?:email|text message|sms) notifications?/i,
+    /^\[[^\]]*\]\([^)]+\)$/i,
+    /網址來源\s*:/i,
+    /url source\s*:/i
+  ];
+
   function $(q) { return document.querySelector(q); }
-
-  function escapeHtml(value) {
-    return String(value == null ? "" : value)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
+  function cleanText(v) { return String(v == null ? "" : v).replace(/\s+/g, " ").trim(); }
+  function escapeHtml(v) {
+    return String(v == null ? "" : v).replace(/&/g,"&amp;").replace(/</g,"&lt;")
+      .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
   }
 
-  function cleanText(value) {
-    return String(value || "").replace(/\s+/g, " ").trim();
+  function explicitStatus(v) {
+    if (v == null || v === "") return null;
+    var s = cleanText(v).toLowerCase().replace(/\s+/g, "_");
+    var map = {
+      investigating:"investigating", identified:"identified", monitoring:"monitoring",
+      resolved:"resolved", postmortem:"postmortem", maintenance:"maintenance",
+      scheduled:"scheduled", in_progress:"in_progress", completed:"completed",
+      degraded:"degraded", outage:"outage", active:"active", closed:"closed"
+    };
+    return map[s] || null;
   }
 
-  function normalizeStatus(value) {
-    var s = String(value || "").toLowerCase();
-
-    if (
-      s.indexOf("resolved") !== -1 ||
-      s.indexOf("completed") !== -1 ||
-      s.indexOf("closed") !== -1 ||
-      s.indexOf("restored") !== -1 ||
-      s.indexOf("recovered") !== -1 ||
-      s.indexOf("fixed") !== -1 ||
-      s.indexOf("postmortem") !== -1
-    ) return "resolved";
-
-    if (s.indexOf("maintenance") !== -1) return "maintenance";
-    if (s.indexOf("monitoring") !== -1) return "monitoring";
-    if (s.indexOf("identified") !== -1) return "identified";
-
-    if (
-      s.indexOf("degraded") !== -1 ||
-      s.indexOf("packet loss") !== -1 ||
-      s.indexOf("congestion") !== -1
-    ) return "degraded";
-
-    if (
-      s.indexOf("outage") !== -1 ||
-      s.indexOf("offline") !== -1 ||
-      s.indexOf("interruption") !== -1 ||
-      s.indexOf("failure") !== -1
-    ) return "outage";
-
-    return "investigating";
-  }
-
-  function timeValue(value) {
-    if (!value) return 0;
-    var d = new Date(value);
+  function timeValue(v) {
+    if (!v) return 0;
+    var d = new Date(v);
     return isNaN(d.getTime()) ? 0 : d.getTime();
   }
 
-  function latestThree(events) {
-    var seen = {};
-    var unique = [];
-
-    (events || []).forEach(function (e) {
-      var key = [e.title || "", e.start || "", e.end || ""].join("|");
-      if (seen[key]) return;
-      seen[key] = true;
-      unique.push(e);
-    });
-
-    unique.sort(function (a, b) {
-      return timeValue(b.start || b.end) - timeValue(a.start || a.end);
-    });
-
-    var active = unique.filter(function (e) { return e.status !== "resolved"; });
-    var resolved = unique.filter(function (e) { return e.status === "resolved"; });
-
-    return (active.length ? active.concat(resolved) : resolved).slice(0, 3);
-  }
-
-  function formatDate(value) {
-    if (!value) return "";
-    var d = new Date(value);
+  function formatDate(v) {
+    if (!v) return "";
+    var d = new Date(v);
     if (isNaN(d.getTime())) return "";
-
     try {
       return new Intl.DateTimeFormat("zh-TW", {
-        month: "numeric",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false
+        month:"numeric", day:"numeric", hour:"2-digit", minute:"2-digit", hour12:false
       }).format(d);
-    } catch (e) {
-      return "";
-    }
+    } catch (e) { return ""; }
   }
 
-  function formatRange(start, end) {
-    if (!start) return "";
-    var a = formatDate(start);
-    if (!end) return a;
-    var b = formatDate(end);
-    return b ? a + "-" + b : a;
+  function formatRange(a,b) {
+    var x = formatDate(a);
+    if (!x) return "";
+    var y = formatDate(b);
+    return y ? x + "-" + y : x;
+  }
+
+  function looksNoise(title) {
+    var t = cleanText(title);
+    if (!t || t.length < 4) return true;
+    for (var i=0;i<NOISE.length;i++) if (NOISE[i].test(t)) return true;
+    if (/notification/i.test(t) && /(email|sms|text message|subscribe)/i.test(t)) return true;
+    return false;
+  }
+
+  function fingerprint(e) {
+    return cleanText(e.title).toLowerCase().replace(/[^\p{L}\p{N}]+/gu," ").trim() +
+      "|" + (e.start ? String(e.start).slice(0,10) : "");
+  }
+
+  function dedupe(events) {
+    var out=[], seen={};
+    (events||[]).forEach(function(e){
+      if (!e || looksNoise(e.title)) return;
+      var k=fingerprint(e);
+      if (!k || seen[k]) return;
+      seen[k]=true; out.push(e);
+    });
+    return out;
+  }
+
+  function sortRecent(events) {
+    return dedupe(events).sort(function(a,b){
+      return timeValue(b.start || b.end) - timeValue(a.start || a.end);
+    }).slice(0,3);
   }
 
   async function fetchJson(url) {
-    var res = await fetch(url, { cache: "no-store" });
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    return await res.json();
+    var r = await fetch(url,{cache:"no-store"});
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return await r.json();
   }
 
   async function fetchText(url) {
-    var res = await fetch(url, { cache: "no-store" });
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    return await res.text();
+    var r = await fetch(url,{cache:"no-store"});
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return await r.text();
   }
 
   async function fetchReader(url) {
     return await fetchText("https://r.jina.ai/" + url);
   }
 
-  async function sourceStatuspage(source, service) {
-    var data = await fetchJson(source.url);
-    var incidents = Array.isArray(data.incidents) ? data.incidents : [];
+  function lines(text) {
+    return String(text||"").split(/\n+/).map(cleanText).filter(Boolean);
+  }
 
-    return incidents.map(function (inc) {
+  function findDate(text) {
+    var m = String(text||"").match(
+      /(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{1,2},?\s+\d{4}(?:\s+(?:at\s+)?)?\d{1,2}:\d{2}\s*(?:AM|PM)?(?:\s*\([^)]+\)|\s+[A-Z]{2,5})?/i
+    );
+    if (!m) return null;
+    var d = new Date(m[0].replace(/\([^)]+\)/g,""));
+    return isNaN(d.getTime()) ? null : d.toISOString();
+  }
+
+  function findDateRange(text) {
+    var ds = [];
+    var re = /(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{1,2},?\s+\d{4}\s+\d{1,2}:\d{2}\s*(?:AM|PM)?(?:\s*\([^)]+\)|\s+[A-Z]{2,5})?/gi;
+    var m;
+    while ((m=re.exec(String(text||""))) !== null) {
+      var d=new Date(m[0].replace(/\([^)]+\)/g,""));
+      if (!isNaN(d.getTime())) ds.push(d.toISOString());
+    }
+    return { start: ds[0] || null, end: ds[1] || null };
+  }
+
+  function statuspageAdapter(data, service, source) {
+    var incidents = Array.isArray(data.incidents) ? data.incidents : [];
+    var events = incidents.map(function(inc){
       return {
-        title: inc.name || "",
-        status: normalizeStatus(inc.status),
+        title: cleanText(inc.name),
+        status: explicitStatus(inc.status),
+        statusRaw: inc.status || null,
+        impact: inc.impact || null,
         start: inc.created_at || null,
         end: inc.resolved_at || null,
-        url: inc.shortlink || inc.url || service.page
+        url: inc.shortlink || inc.url || service.page,
+        sourceLabel: source.label
       };
     });
+    var active = events.some(function(e){ return e.status && e.status !== "resolved" && e.status !== "postmortem" && e.status !== "completed" && e.status !== "closed"; });
+    return { events: sortRecent(events), health: active ? "incident" : "normal", healthText: active ? null : "目前沒有未解決事件" };
   }
 
-  async function sourceGcp(source, service) {
-    var data = await fetchJson(source.url);
+  function gcpAdapter(data, service, source) {
     var list = Array.isArray(data) ? data : [];
-
-    return list.map(function (inc) {
+    var events = list.map(function(inc){
       return {
-        title: inc.external_desc || inc.service_name || "",
-        status: null,
+        title: cleanText(inc.external_desc || inc.service_name || ""),
+        status: explicitStatus(inc.status || null),
+        statusRaw: inc.status || null,
         start: inc.begin || null,
         end: inc.end || null,
-        url: service.page
+        url: service.page,
+        sourceLabel: source.label
       };
     });
+    return { events: sortRecent(events), health: null, healthText: null };
   }
 
-  async function sourceRss(source, service) {
-    var xml = await fetchText(source.url);
-    var doc = new DOMParser().parseFromString(xml, "text/xml");
-    var items = Array.prototype.slice.call(doc.querySelectorAll("item"));
+  function rssAdapter(xml, service, source) {
+    var doc = new DOMParser().parseFromString(xml,"text/xml");
+    var items = Array.prototype.slice.call(doc.querySelectorAll("item, entry"));
     var events = [];
-
-    items.forEach(function (item) {
-      var title = item.querySelector("title");
-      var date = item.querySelector("pubDate");
-      var link = item.querySelector("link");
-
-      if (!title) return;
-
+    items.forEach(function(item){
+      var t=item.querySelector("title"), d=item.querySelector("pubDate, published, updated"), l=item.querySelector("link");
+      if (!t) return;
+      var href = l ? (l.getAttribute("href") || cleanText(l.textContent)) : service.page;
       events.push({
-        title: cleanText(title.textContent),
-        status: "resolved",
-        start: date ? cleanText(date.textContent) : null,
-        end: null,
-        url: link ? cleanText(link.textContent) : service.page
+        title:cleanText(t.textContent), status:null, statusRaw:null,
+        start:d ? cleanText(d.textContent) : null, end:null, url:href || service.page,
+        sourceLabel:source.label
       });
     });
-
-    return events;
+    return { events:sortRecent(events), health:null, healthText:null };
   }
 
-
-  // 每個服務自己的事件解析策略。
-  // Reader 只負責取得文字；是否為真正事件由這裡決定。
-  var SERVICE_PARSER_POLICIES = {
-    "cloudflare": {
-      accept: /(incident|outage|degraded|maintenance|disruption|service issue|network performance|errors?)/i,
-      reject: /(documentation|developers?|blog|community|learn more|all systems operational|no incidents?)/i
-    },
-    "aws": {
-      accept: /(service disruption|service degradation|increased error|increased latency|connectivity|operational issue|incident|outage|maintenance)/i,
-      reject: /(documentation|architecture|pricing|getting started|all services.*operating normally|no current incidents?)/i
-    },
-    "azure": {
-      accept: /(service issue|service degradation|service interruption|incident|outage|impact|mitigation|maintenance)/i,
-      reject: /(documentation|pricing|products?|learn|all services.*available|no active incidents?)/i
-    },
-    "google-cloud": {
-      accept: /(incident|service disruption|service issue|degraded|outage|latency|packet loss|maintenance)/i,
-      reject: /(documentation|products?|solutions?|pricing|all services.*available|no incidents?)/i
-    },
-    "github": {
-      accept: /(incident|disruption|degraded|outage|errors?|maintenance|performance issues?)/i,
-      reject: /(documentation|changelog|blog|all systems operational|no incidents?)/i
-    },
-    "apple": {
-      accept: /(resolved outage|resolved issue|outage|issue|maintenance|users? (?:are|were) affected)/i,
-      reject: /(available|all services.*operating normally|system status|support)/i
-    },
-    "oracle": {
-      accept: /(incident|service disruption|service degradation|outage|maintenance|availability|performance issue)/i,
-      reject: /(documentation|products?|cloud infrastructure home|all systems operational|no incidents?)/i
-    },
-    "bandwagon": {
-      accept: /(incident|outage|maintenance|network issue|packet loss|degraded|routing issue|service interruption)/i,
-      reject: /(knowledge base|client area|order|pricing|no incidents?|all systems operational)/i
-    },
-    "dmit": {
-      accept: /(maintenance|incident|outage|network issue|packet loss|fiber|cable|degraded|emergency|interruption|latency|routing issue)/i,
-      reject: /(client area|login|order|pricing|looking glass|no incidents?|operating normally)/i
-    },
-    "equinix": {
-      accept: /(incident|outage|degraded|maintenance|service disruption|connectivity issue|performance issue)/i,
-      reject: /(products?|services overview|data centers?|interconnection|learn more|all systems operational|no incidents?)/i
-    },
-    "digital-realty": {
-      accept: /(incident|outage|degraded|maintenance|service disruption|connectivity issue|performance issue)/i,
-      reject: /(products?|platformdigital|data centers?|solutions?|learn more|all systems operational|no incidents?)/i
-    },
-    "ntt-gdc": {
-      accept: /(incident|outage|degraded|maintenance|service disruption|connectivity issue|performance issue)/i,
-      reject: /(data centers?|services?|solutions?|learn more|outage[-\s]?free|no (?:network )?outages?|no incidents?)/i
-    },
-    "arelion": {
-      accept: /(incident|outage|degraded|maintenance|service disruption|packet loss|latency issue|routing issue|network issue)/i,
-      reject: /(bgp communities|routing polic(?:y|ies)|network map|products?|learn more|outage[-\s]?free|no incidents?)/i
-    },
-    "ntt-global-network": {
-      accept: /(incident|outage|degraded|maintenance|service disruption|packet loss|latency issue|routing issue|network issue)/i,
-      reject: /(no (?:network )?outages?|outage[-\s]?free|100%\s+.*outage[-\s]?free|bgp communities|routing polic(?:y|ies)|our global ip network|availability\s*[:\-]|guaranteed|learn more)/i
-    },
-    "cogent": {
-      accept: /(incident|outage|degraded|maintenance|service disruption|packet loss|latency issue|routing issue|network issue)/i,
-      reject: /(products?|network map|looking glass|bgp|routing polic(?:y|ies)|learn more|outage[-\s]?free|no incidents?)/i
-    }
-  };
-
-  function getServiceParserPolicy(service) {
-    return SERVICE_PARSER_POLICIES[service.id] || {
-      accept: /(incident|outage|degraded|maintenance|disruption|interruption|packet loss|latency issue|routing issue|network issue|service issue|performance issue|error rate|connectivity issue)/i,
-      reject: /(no\s+(?:network\s+)?outages?|no\s+(?:known\s+)?incidents?|outage[-\s]?free|all systems operational|all services operational|operating normally|documentation|learn more)/i
-    };
-  }
-
-  function filterEventsByServicePolicy(service, events) {
-    var policy = getServiceParserPolicy(service);
-    return latestThree((events || []).filter(function (event) {
-      var title = cleanText(event && event.title);
-      if (!title) return false;
-      if (policy.reject && policy.reject.test(title)) return false;
-      return !policy.accept || policy.accept.test(title);
-    }));
-  }
-
-  function parseReaderEvents(text, service) {
-    var lines = String(text || "").split(/\n+/).map(cleanText).filter(Boolean);
-    var events = [];
-
-    // High-confidence incident words only.
-    var eventWords = /(incident|outage|degraded|maintenance|disruption|interruption|packet loss|latency issue|routing issue|network issue|service issue|performance issue|availability issue|error rate|connectivity issue|service degradation|service unavailable)/i;
-
-    // Negative/marketing wording that must NEVER be treated as an incident.
-    var negativeWords = /(no\s+(?:network\s+)?outages?|no\s+(?:known\s+)?incidents?|no\s+service\s+(?:disruptions?|interruptions?)|outage[-\s]?free|100%\s+(?:network\s+)?outage[-\s]?free|all\s+systems?\s+(?:are\s+)?operational|all\s+services?\s+(?:are\s+)?operational|operating\s+normally|fully\s+operational|no\s+active\s+incidents?|no\s+current\s+incidents?|no\s+incidents?\s+reported|there\s+are\s+currently\s+no\s+active\s+events?)/i;
-
-    // Product/marketing/navigation text that often contains network/routing keywords.
-    var noiseWords = /(bgp\s+communities|routing\s+polic(?:y|ies)|service\s+level\s+agreement|sla\b|learn\s+more|our\s+global\s+ip\s+network|availability\s*[:\-]|guaranteed|network\s+overview|product\s+overview|connectivity\s+services|global\s+ip\s+network)/i;
-
-    var normalWords = /(all systems operational|all services operational|operating normally|no active incidents|no current incidents|no incidents reported|there are currently no active events|no network outages|outage[-\s]?free)/i;
-
-    lines.forEach(function (line) {
-      if (line.length < 8 || line.length > 220) return;
-
-      // Explicit normal/negative statement: skip as event.
-      if (negativeWords.test(line)) return;
-
-      // Known page copy / marketing copy: skip.
-      if (noiseWords.test(line)) return;
-
-      // Must have a high-confidence incident phrase.
-      if (!eventWords.test(line)) return;
-
-      // Extra protection: generic "network", "routing", "availability" alone are not enough.
-      if (/^(availability|network|routing|bgp)\b/i.test(line) && !/(issue|incident|outage|degraded|maintenance|disruption|interruption|loss|latency|error|unavailable)/i.test(line)) {
-        return;
+  function parseGooglePage(text, service, source) {
+    var t=String(text||"");
+    var normal=/No broad severe incidents|沒有大規模嚴重事件|No incidents/i.test(t);
+    var events=[];
+    var ls=lines(t);
+    for (var i=0;i<ls.length;i++) {
+      if (/^Recent incidents?\s*\(\d+\)/i.test(ls[i]) && ls[i+2]) {
+        var title=ls[i+2];
+        if (!looksNoise(title)) {
+          var block=ls.slice(i+1,i+12).join(" ");
+          var st=null, raw=null;
+          var sm=block.match(/\b(Active|Closed)\b/i);
+          if (sm) { raw=sm[1]; st=explicitStatus(sm[1]); }
+          events.push({title:title,status:st,statusRaw:raw,start:findDate(block),end:null,url:service.page,sourceLabel:source.label});
+        }
       }
+    }
+    return {events:sortRecent(events),health:normal?"normal":null,healthText:normal?"沒有大規模嚴重事件":null};
+  }
 
+  function parseAzure(text, service, source) {
+    var t=String(text||"");
+    var normal=/There are currently no active events|目前沒有.*事件|all services.*available/i.test(t);
+    var events=[];
+    // Only accept blocks that visibly expose a status label.
+    var ls=lines(t);
+    var statuses=/^(Investigating|Identified|Monitoring|Resolved|Maintenance|Active|Closed)$/i;
+    for (var i=0;i<ls.length;i++) {
+      if (!statuses.test(ls[i])) continue;
+      var title = i>0 ? ls[i-1] : "";
+      if (!title || looksNoise(title)) continue;
+      events.push({title:title,status:explicitStatus(ls[i]),statusRaw:ls[i],start:findDate(ls.slice(i,i+6).join(" ")),end:null,url:service.page,sourceLabel:source.label});
+    }
+    return {events:sortRecent(events),health:normal?"normal":null,healthText:normal?"目前沒有公開事件":null};
+  }
+
+  function parseApple(text, service, source) {
+    var t=String(text||"");
+    var normal=/All services are operating normally|所有服務均正常運作|All services.*normal/i.test(t);
+    var events=[];
+    var ls=lines(t);
+    var statusLine=/^(Resolved Outage|Resolved Issue|Outage|Issue|Maintenance)$/i;
+    for (var i=0;i<ls.length;i++) {
+      var m=ls[i].match(/^(.+?)\s*-\s*(Resolved Outage|Resolved Issue|Outage|Issue|Maintenance)$/i);
+      if (m) {
+        var raw=m[2], st=null;
+        if (/^Resolved/i.test(raw)) st="resolved";
+        else if (/^Maintenance$/i.test(raw)) st="maintenance";
+        else if (/^Outage$/i.test(raw)) st="outage";
+        var block=ls.slice(i,i+8).join(" ");
+        events.push({title:cleanText(m[1]),status:st,statusRaw:raw,start:findDate(block),end:null,url:service.page,sourceLabel:source.label});
+        continue;
+      }
+      if (statusLine.test(ls[i]) && i>0) {
+        var raw2=ls[i], st2=null;
+        if (/^Resolved/i.test(raw2)) st2="resolved";
+        else if (/^Maintenance$/i.test(raw2)) st2="maintenance";
+        else if (/^Outage$/i.test(raw2)) st2="outage";
+        var title2=ls[i-1];
+        if (!looksNoise(title2)) events.push({title:title2,status:st2,statusRaw:raw2,start:findDate(ls.slice(i,i+8).join(" ")),end:null,url:service.page,sourceLabel:source.label});
+      }
+    }
+    return {events:sortRecent(events),health:normal?"normal":null,healthText:normal?"所有服務均正常運作":null};
+  }
+
+  function parseBandwagon(text, service, source) {
+    var t=String(text||"");
+    var ls=lines(t), events=[];
+    var activeCount = null;
+    var mc=t.match(/(\d+)\s+active/i); if (mc) activeCount=parseInt(mc[1],10);
+    var status=/^(Maintenance|Incident|Outage|Resolved|Monitoring)$/i;
+    for (var i=0;i<ls.length;i++) {
+      if (!status.test(ls[i])) continue;
+      var title=i>0?ls[i-1]:"";
+      if (!title || /recent incidents|active incident/i.test(title) || looksNoise(title)) continue;
+      var block=ls.slice(i-1,i+16).join(" ");
+      var range=findDateRange(block);
       events.push({
-        title: line,
-        status: null,
-        start: null,
-        end: null,
-        url: service.page
+        title:title,status:explicitStatus(ls[i]),statusRaw:ls[i],
+        start:range.start,end:range.end,url:service.page,sourceLabel:source.label
       });
-    });
-
+    }
     return {
-      events: filterEventsByServicePolicy(service, events),
-      normal: normalWords.test(text)
+      events:sortRecent(events),
+      health:activeCount===0?"normal":(activeCount>0?"incident":null),
+      healthText:activeCount===0?"目前沒有啟用事件":(activeCount>0?activeCount+" 個啟用事件":null)
     };
   }
 
-  function applyServiceReaderPolicy(service, parsed, text) {
-    var normal = !!parsed.normal;
-
-    if (/(no\s+(?:network\s+)?outages?|no\s+(?:known\s+)?incidents?|outage[-\s]?free|100%\s+.*outage[-\s]?free|all\s+systems?\s+(?:are\s+)?operational|all\s+services?\s+(?:are\s+)?operational|operating\s+normally)/i.test(String(text || ""))) {
-      normal = true;
+  function parseOracle(text, service, source) {
+    var t=String(text||""), ls=lines(t), events=[];
+    var normal=/All Systems Operational|No incidents reported|No incidents/i.test(t);
+    var status=/^(Investigating|Identified|Monitoring|Resolved|Maintenance|Completed|Closed)$/i;
+    for (var i=0;i<ls.length;i++) {
+      if (!status.test(ls[i])) continue;
+      var title=i>0?ls[i-1]:"";
+      if (!title || looksNoise(title)) continue;
+      events.push({title:title,status:explicitStatus(ls[i]),statusRaw:ls[i],start:findDate(ls.slice(i,i+8).join(" ")),end:null,url:service.page,sourceLabel:source.label});
     }
-
-    return {
-      events: filterEventsByServicePolicy(service, parsed.events || []),
-      normal: normal
-    };
+    return {events:sortRecent(events),health:normal?"normal":null,healthText:normal?"所有系統正常":null};
   }
 
-  async function sourceReader(source, service) {
-    var text = await fetchReader(source.url);
-    var parsed = parseReaderEvents(text, service);
-    parsed = applyServiceReaderPolicy(service, parsed, text);
-
-    return {
-      events: parsed.events,
-      normal: parsed.normal
-    };
+  function parseDMIT(text, service, source) {
+    var ls=lines(text), events=[];
+    // No status inference. Telegram/HTML entries are accepted as events only if they
+    // contain strong incident semantics; status remains null unless an explicit label exists.
+    var eventWords=/(maintenance|incident|outage|packet loss|fiber|cable|emergency|interruption|latency|routing issue|network issue)/i;
+    for (var i=0;i<ls.length;i++) {
+      if (!eventWords.test(ls[i]) || looksNoise(ls[i])) continue;
+      events.push({title:ls[i],status:null,statusRaw:null,start:findDate(ls.slice(Math.max(0,i-2),i+5).join(" ")),end:null,url:source.url,sourceLabel:source.label});
+    }
+    return {events:sortRecent(events),health:null,healthText:null};
   }
 
-  async function trySource(source, service) {
-    if (source.type === "statuspage") {
-      return { events: await sourceStatuspage(source, service), normal: false };
+  function parseInfrastructure(text, service, source) {
+    var t=String(text||""), ls=lines(t), events=[];
+    var normal=/All Systems Operational|All services operational|operating normally|No active incidents|No current incidents|No incidents reported|No network outages|outage[- ]free/i.test(t);
+    var explicit=/^(Investigating|Identified|Monitoring|Resolved|Maintenance|Active|Closed|Degraded)$/i;
+    for (var i=0;i<ls.length;i++) {
+      if (!explicit.test(ls[i])) continue;
+      var title=i>0?ls[i-1]:"";
+      if (!title || looksNoise(title) || /BGP communities|routing polic|network overview|product overview|learn more/i.test(title)) continue;
+      events.push({title:title,status:explicitStatus(ls[i]),statusRaw:ls[i],start:findDate(ls.slice(i,i+8).join(" ")),end:null,url:service.page,sourceLabel:source.label});
     }
-
-    if (source.type === "gcp") {
-      return { events: await sourceGcp(source, service), normal: false };
-    }
-
-    if (source.type === "rss") {
-      return { events: await sourceRss(source, service), normal: false };
-    }
-
-    if (source.type === "reader") {
-      return await sourceReader(source, service);
-    }
-
-    throw new Error("Unsupported source: " + source.type);
+    return {events:sortRecent(events),health:normal?"normal":null,healthText:normal?"官方頁顯示正常":null};
   }
 
-
-
-  var EVENT_NOISE_PATTERNS = [
-    /^no known service issues?$/i, /^recent incidents?$/i, /^past incidents?$/i,
-    /^incident history$/i, /^view all$/i, /^subscribe$/i, /^rss$/i, /^atom$/i,
-    /^webhook$/i, /^status page$/i, /^contact us$/i, /^privacy(?: policy)?$/i,
-    /^terms(?: of service)?$/i, /^powered by\b/i,
-    /^get (?:email|text message|sms) notifications?\b/i,
-    /^receive (?:email|text message|sms) notifications?\b/i
-  ];
-
-  function looksLikeNoiseTitle(title) {
-    var raw = cleanText(title || "");
-    if (!raw) return true;
-    if (/^#{1,6}\s+/.test(raw)) return true;
-    if (/^\[[^\]]*\]\([^)]+\)$/.test(raw)) return true;
-    var plain = raw.replace(/^#{1,6}\s+/, "").replace(/\*\*/g, "").replace(/`/g, "").trim();
-    for (var i = 0; i < EVENT_NOISE_PATTERNS.length; i++) {
-      if (EVENT_NOISE_PATTERNS[i].test(plain)) return true;
+  function parseReader(text, service, source) {
+    switch(service.parser) {
+      case "google-cloud": return parseGooglePage(text,service,source);
+      case "azure": return parseAzure(text,service,source);
+      case "apple": return parseApple(text,service,source);
+      case "oracle": return parseOracle(text,service,source);
+      case "bandwagon": return parseBandwagon(text,service,source);
+      case "dmit": return parseDMIT(text,service,source);
+      case "equinix":
+      case "digital-realty":
+      case "ntt-gdc":
+      case "arelion":
+      case "ntt-global":
+      case "cogent": return parseInfrastructure(text,service,source);
+      case "aws": return parseInfrastructure(text,service,source);
+      default: return parseInfrastructure(text,service,source);
     }
-    if (/notification/i.test(plain) && /(email|sms|text message|subscribe)/i.test(plain)) return true;
-    return false;
   }
 
-  function strictFilterEvents(service, events, sourceType) {
-    return (events || []).filter(function (event) {
-      if (!event || looksLikeNoiseTitle(event.title)) return false;
-      var title = cleanText(event.title);
-      if (title.length < 5) return false;
-      if (["reader","official-page","telegram","social","third-party"].indexOf(sourceType) !== -1) {
-        var semantic = /(incident|outage|degrad|disrupt|maintenance|latency|packet loss|network|routing|unavailable|availability|failure|failed|error|interruption|service issue|investigat|monitoring|resolved|restored|recovered|故障|異常|中斷|維護|延遲|丟包|路由|恢復|修復)/i;
-        if (!semantic.test(title) && !event.start && !event.end && !event.status) return false;
-      }
-      return true;
+  async function runSource(source,service) {
+    if (source.type==="statuspage") return statuspageAdapter(await fetchJson(source.url),service,source);
+    if (source.type==="gcp") return gcpAdapter(await fetchJson(source.url),service,source);
+    if (source.type==="rss") return rssAdapter(await fetchText(source.url),service,source);
+    if (source.type==="reader") return parseReader(await fetchReader(source.url),service,source);
+    throw new Error("Unsupported source " + source.type);
+  }
+
+  function mergeEvents(existing,newEvents) {
+    var all=(existing||[]).concat(newEvents||[]);
+    var map={}, out=[];
+    all.forEach(function(e){
+      if (!e || looksNoise(e.title)) return;
+      var k=fingerprint(e);
+      if (!k) return;
+      if (!map[k]) { map[k]=e; out.push(e); return; }
+      var old=map[k];
+      if (!old.status && e.status) { old.status=e.status; old.statusRaw=e.statusRaw; }
+      old.start=old.start||e.start; old.end=old.end||e.end; old.url=old.url||e.url;
     });
-  }
-
-  function sourceTier(type) {
-    if (["statuspage","gcp","official-json","official-api"].indexOf(type) !== -1) return 1;
-    if (["rss","official-rss"].indexOf(type) !== -1) return 2;
-    if (type === "official-history") return 3;
-    if (type === "official-page") return 4;
-    if (type === "reader") return 5;
-    if (["telegram","social"].indexOf(type) !== -1) return 6;
-    return 7;
-  }
-
-  var SOURCE_CONFIDENCE = {
-    "statuspage": 100,
-    "gcp": 100,
-    "official-json": 100,
-    "official-api": 100,
-    "rss": 92,
-    "official-rss": 92,
-    "official-page": 82,
-    "reader": 72,
-    "telegram": 68,
-    "social": 62,
-    "third-party": 48
-  };
-
-  function sourceConfidence(source) {
-    return SOURCE_CONFIDENCE[source.type] || 60;
-  }
-
-  function normalizeEventTitle(title) {
-    return cleanText(title)
-      .toLowerCase()
-      .replace(/\[[^\]]+\]/g, " ")
-      .replace(/[^\p{L}\p{N}]+/gu, " ")
-      .replace(/\s+/g, " ")
-      .trim();
-  }
-
-  function eventFingerprint(event) {
-    var title = normalizeEventTitle(event.title || "");
-    var date = event.start ? String(event.start).slice(0, 10) : "";
-    return title + "|" + date;
-  }
-
-  function mergeCollectedEvents(collected) {
-    var map = {};
-
-    collected.forEach(function (entry) {
-      (entry.events || []).forEach(function (event) {
-        var key = eventFingerprint(event);
-        if (!key || key === "|") return;
-
-        var candidate = Object.assign({}, event, {
-          sourceLabel: entry.sourceLabel,
-          sourceType: entry.sourceType,
-          confidence: entry.confidence
-        });
-
-        if (!map[key]) {
-          map[key] = candidate;
-          return;
-        }
-
-        var current = map[key];
-
-        // Prefer the higher-confidence source, while filling missing fields
-        // from lower-priority corroborating sources.
-        if ((candidate.confidence || 0) > (current.confidence || 0)) {
-          candidate.start = candidate.start || current.start;
-          candidate.end = candidate.end || current.end;
-          candidate.url = candidate.url || current.url;
-          map[key] = candidate;
-        } else {
-          current.start = current.start || candidate.start;
-          current.end = current.end || candidate.end;
-          current.url = current.url || candidate.url;
-        }
-      });
-    });
-
-    var events = Object.keys(map).map(function (key) { return map[key]; });
-
-    events.sort(function (a, b) {
-      var aActive = a.status !== "resolved" ? 1 : 0;
-      var bActive = b.status !== "resolved" ? 1 : 0;
-
-      if (aActive !== bActive) return bActive - aActive;
-
-      var timeDiff = timeValue(b.start || b.end) - timeValue(a.start || a.end);
-      if (timeDiff !== 0) return timeDiff;
-
-      return (b.confidence || 0) - (a.confidence || 0);
-    });
-
-    return events.slice(0, 3);
-  }
-
-  function classifySourceResult(result) {
-    if (result && Array.isArray(result.events) && result.events.length) {
-      return "events_found";
-    }
-    if (result && result.normal === true) {
-      return "explicit_normal";
-    }
-    if (result) {
-      return "no_event_data";
-    }
-    return "parse_failed";
+    return sortRecent(out);
   }
 
   async function loadService(service) {
-    var collected = [], sourceStates = [], explicitNormal = [], errors = [];
-    var sources = service.sources.slice().sort(function(a,b){ return sourceTier(a.type)-sourceTier(b.type); });
+    var events=[], health=null, healthText=null, sourceLabels=[], failures=[];
+    var sources=service.sources.slice().sort(function(a,b){return (a.tier||9)-(b.tier||9);});
 
-    for (var i = 0; i < sources.length; i++) {
-      var source = sources[i];
+    for (var i=0;i<sources.length;i++) {
+      var source=sources[i];
       try {
-        var result = await trySource(source, service);
-        var sourceEvents = strictFilterEvents(
-          service,
-          filterEventsByServicePolicy(service, latestThree((result && result.events) || [])),
-          source.type
-        );
-
-        var normal = !!(result && result.normal);
-        if (!sourceEvents.length && result &&
-            ["statuspage","gcp","official-json","official-api"].indexOf(source.type) !== -1) normal = true;
-
-        var state = sourceEvents.length ? "events_found" : (normal ? "explicit_normal" : "no_event_data");
-        sourceStates.push({label: source.label || source.type, type: source.type, state: state});
-
-        if (sourceEvents.length) {
-          collected.push({
-            sourceLabel: source.label || source.type,
-            sourceType: source.type,
-            confidence: sourceConfidence(source),
-            events: sourceEvents
-          });
-          if (mergeCollectedEvents(collected).length >= 3) break;
-        } else if (normal) {
-          explicitNormal.push({
-            sourceLabel: source.label || source.type,
-            sourceType: source.type,
-            confidence: sourceConfidence(source)
-          });
+        var result=await runSource(source,service);
+        if (result.events && result.events.length) {
+          events=mergeEvents(events,result.events);
+          if (sourceLabels.indexOf(source.label)<0) sourceLabels.push(source.label);
         }
-      } catch (e) {
-        sourceStates.push({label: source.label || source.type, type: source.type, state: "fetch_failed"});
-        errors.push((source.label || source.type) + ": " + String(e));
+        // Health is independent from history events. Prefer an explicit current-health
+        // signal from an official status page/API when available.
+        if (result.health && !health) {
+          health=result.health; healthText=result.healthText||null;
+          if (sourceLabels.indexOf(source.label)<0) sourceLabels.push(source.label);
+        }
+        if (events.length>=3 && health) break;
+      } catch(e) {
+        failures.push(source.label + ": " + String(e));
       }
     }
 
-    var mergedEvents = mergeCollectedEvents(collected);
-    if (mergedEvents.length) {
-      var used = [];
-      mergedEvents.forEach(function(e){
-        if (e.sourceLabel && used.indexOf(e.sourceLabel) < 0) used.push(e.sourceLabel);
-      });
-      return {
-        id: service.id, name: service.name, desc: service.desc, category: service.category,
-        page: service.page, state: "ok",
-        sourceLabel: used.length ? used.join(" + ") : "事件來源",
-        events: mergedEvents.slice(0,3), sourceStates: sourceStates
-      };
-    }
-
-    if (explicitNormal.length) {
-      explicitNormal.sort(function(a,b){ return b.confidence-a.confidence; });
-      return {
-        id: service.id, name: service.name, desc: service.desc, category: service.category,
-        page: service.page, state: "normal", sourceLabel: explicitNormal[0].sourceLabel,
-        events: [], sourceStates: sourceStates
-      };
-    }
-
     return {
-      id: service.id, name: service.name, desc: service.desc, category: service.category,
-      page: service.page, state: "official_link", sourceLabel: "官方頁",
-      events: [], sourceStates: sourceStates, errors: errors
+      id:service.id,name:service.name,desc:service.desc,category:service.category,page:service.page,
+      events:events.slice(0,3),health:health,healthText:healthText,
+      sourceLabel:sourceLabels.length?sourceLabels.join(" + "):"官方頁",
+      fallback:!events.length && !health,
+      failures:failures
     };
   }
 
   function isActive(service) {
-    return (service.events || []).some(function (e) { return e.status !== "resolved"; });
+    if (service.health==="incident") return true;
+    return (service.events||[]).some(function(e){
+      return e.status && ["resolved","postmortem","completed","closed"].indexOf(e.status)===-1;
+    });
   }
 
   function visibleServices() {
-    var needle = state.search.trim().toLowerCase();
-
-    return state.services.filter(function (service) {
-      if (state.filter !== "all" && service.category !== state.filter) return false;
-      if (state.activeOnly && !isActive(service)) return false;
-
-      if (needle) {
-        var haystack = [
-          service.name,
-          service.desc
-        ].concat((service.events || []).map(function (e) { return e.title; }))
-          .join(" ")
-          .toLowerCase();
-
-        if (haystack.indexOf(needle) === -1) return false;
+    var n=state.search.trim().toLowerCase();
+    return state.services.filter(function(s){
+      if (state.filter!=="all" && s.category!==state.filter) return false;
+      if (state.activeOnly && !isActive(s)) return false;
+      if (n) {
+        var h=[s.name,s.desc].concat((s.events||[]).map(function(e){return e.title;})).join(" ").toLowerCase();
+        if (h.indexOf(n)===-1) return false;
       }
-
       return true;
     });
   }
 
   function renderSummary() {
-    var live = state.services.filter(function (s) {
-      return s.state === "ok" || s.state === "normal";
-    }).length;
-
-    var active = state.services.filter(isActive).length;
-
-    var fallback = state.services.filter(function (s) {
-      return s.state === "official_link";
-    }).length;
-
+    var auto=state.services.filter(function(s){return !s.fallback;}).length;
+    var fallback=state.services.length-auto;
     $("#summary").innerHTML =
-      '<div class="metric"><strong>' + state.services.length + '</strong><span>服務</span></div>' +
-      '<div class="metric"><strong>' + live + '</strong><span>自動取得</span></div>' +
-      '<div class="metric"><strong>' + fallback + '</strong><span>官方頁備援</span></div>';
+      '<div class="metric"><strong>'+state.services.length+'</strong><span>服務</span></div>'+
+      '<div class="metric"><strong>'+auto+'</strong><span>自動取得</span></div>'+
+      '<div class="metric"><strong>'+fallback+'</strong><span>官方頁備援</span></div>';
+  }
+
+  function renderEvent(e,service) {
+    var tag = e.status && STATUS_LABELS[e.status]
+      ? '<span class="tag '+escapeHtml(e.status)+'">['+escapeHtml(STATUS_LABELS[e.status])+']</span>'
+      : '';
+    return '<a class="event" href="'+escapeHtml(e.url||service.page)+'" target="_blank" rel="noopener">'+
+      tag+
+      '<span class="event-title" title="'+escapeHtml(e.title+(e.sourceLabel?" · "+e.sourceLabel:""))+'">'+escapeHtml(e.title)+'</span>'+
+      '<span class="event-time">'+escapeHtml(formatRange(e.start,e.end))+'</span>'+
+      '</a>';
   }
 
   function renderService(service) {
-    var body = "";
-
-    if (service.state === "official_link") {
-      body =
-        '<a class="message link" href="' + escapeHtml(service.page) + '" target="_blank" rel="noopener">' +
-        '[官方狀態頁] 自動來源不可用，查看官方即時狀態 →</a>';
-    } else if (service.state === "normal") {
-      body = '<div class="message good">[正常] 目前沒有公開事件</div>';
-    } else {
-      body = (service.events || []).map(function (event) {
-        return (
-          '<a class="event" href="' + escapeHtml(event.url || service.page) + '" target="_blank" rel="noopener">' +
-            '<span class="tag ' + escapeHtml(event.status) + '">[' +
-              escapeHtml(statusLabel[event.status] || "") +
-            ']</span>' +
-            '<span class="event-title" title="' + escapeHtml(event.title + (event.sourceLabel ? " · " + event.sourceLabel : "")) + '">' +
-              escapeHtml(event.title) +
-            '</span>' +
-            '<span class="event-time">' +
-              escapeHtml(formatRange(event.start, event.end)) +
-            '</span>' +
-          '</a>'
-        );
-      }).join("");
+    var body="";
+    if (service.health==="normal") {
+      body += '<div class="message good">[正常] '+escapeHtml(service.healthText||"官方來源顯示正常")+'</div>';
+    } else if (service.health==="incident" && service.healthText) {
+      body += '<div class="message warn">'+escapeHtml(service.healthText)+'</div>';
     }
 
-    return (
-      '<article class="service">' +
-        '<div class="service-head">' +
-          '<a class="service-name" href="' + escapeHtml(service.page) + '" target="_blank" rel="noopener">🔹 ' +
-            escapeHtml(service.name) +
-          '</a>' +
-          '<span class="service-desc">(' + escapeHtml(service.desc) + ')</span>' +
-          '<span class="source-badge">' + escapeHtml(service.sourceLabel || "") + '</span>' +
-        '</div>' +
-        '<div class="events">' + body + '</div>' +
-      '</article>'
-    );
+    if (service.events.length) {
+      body += service.events.map(function(e){return renderEvent(e,service);}).join("");
+    } else if (service.fallback) {
+      body += '<a class="message link" href="'+escapeHtml(service.page)+'" target="_blank" rel="noopener">[官方狀態頁] 自動來源未取得可靠事件資料，查看官方即時狀態 →</a>';
+    } else if (!service.health) {
+      body += '<div class="message">目前沒有可顯示的可靠事件資料</div>';
+    }
+
+    return '<article class="service">'+
+      '<div class="service-head">'+
+        '<a class="service-name" href="'+escapeHtml(service.page)+'" target="_blank" rel="noopener">🔹 '+escapeHtml(service.name)+'</a>'+
+        '<span class="service-desc">('+escapeHtml(service.desc)+')</span>'+
+        '<span class="source-badge">'+escapeHtml(service.sourceLabel)+'</span>'+
+      '</div><div class="events">'+body+'</div></article>';
   }
 
   function render() {
     renderSummary();
-
-    var list = visibleServices();
-    $("#services").innerHTML = list.length
-      ? list.map(renderService).join("")
-      : '<div class="empty">沒有符合條件的服務或事件。</div>';
+    var list=visibleServices();
+    $("#services").innerHTML=list.length?list.map(renderService).join(""):'<div class="empty">沒有符合條件的服務或事件。</div>';
   }
 
   async function refresh(options) {
-    options = options || {};
-    var force = !!options.force;
-
-    if (refreshInFlight && !force) return;
-
-    var reload = $("#reload");
-    refreshInFlight = true;
-    reload.disabled = true;
-    $("#updated").textContent = "正在依優先級更新資料…";
-
+    options=options||{};
+    if (refreshInFlight && !options.force) return;
+    refreshInFlight=true;
+    var reload=$("#reload"); reload.disabled=true;
+    $("#updated").textContent="載入中…";
     try {
-      state.services = await Promise.all(
-        SERVICES.map(function (service) { return loadService(service); })
-      );
-
-      lastRefresh = Date.now();
-      var now = new Intl.DateTimeFormat("zh-TW", {
-        month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false
-      }).format(new Date(lastRefresh));
-
-      $("#updated").textContent = "最後讀取於 " + now;
+      state.services=await Promise.all(SERVICES.map(loadService));
+      lastRefresh=Date.now();
+      var now=new Intl.DateTimeFormat("zh-TW",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit",hour12:false}).format(new Date(lastRefresh));
+      $("#updated").textContent="最後讀取於 "+now;
       render();
-    } catch (e) {
-      $("#updated").textContent = "更新失敗：" + String(e);
-      if (!state.services.length) {
-        $("#services").innerHTML = '<div class="empty">前端載入失敗，請稍後重新整理。</div>';
-      }
+    } catch(e) {
+      $("#updated").textContent="更新失敗";
+      if (!state.services.length) $("#services").innerHTML='<div class="empty">資料載入失敗，請稍後重試。</div>';
     } finally {
-      refreshInFlight = false;
-      reload.disabled = false;
+      refreshInFlight=false; reload.disabled=false;
     }
   }
 
-  function shouldRefreshOnForeground() {
-    return !lastRefresh || (Date.now() - lastRefresh >= FOREGROUND_REFRESH_THRESHOLD);
+  function shouldForegroundRefresh() {
+    return !lastRefresh || Date.now()-lastRefresh>=FOREGROUND_REFRESH_THRESHOLD;
   }
 
   function startAutoRefresh() {
-    setInterval(function () {
-      if (document.visibilityState === "visible") refresh();
-    }, REFRESH_INTERVAL);
-
-    document.addEventListener("visibilitychange", function () {
-      if (document.visibilityState === "visible" && shouldRefreshOnForeground()) refresh();
+    setInterval(function(){
+      if (document.visibilityState==="visible") refresh();
+    },REFRESH_INTERVAL);
+    document.addEventListener("visibilitychange",function(){
+      if (document.visibilityState==="visible" && shouldForegroundRefresh()) refresh();
     });
-
-    window.addEventListener("focus", function () {
-      if (shouldRefreshOnForeground()) refresh();
+    window.addEventListener("focus",function(){
+      if (shouldForegroundRefresh()) refresh();
     });
   }
 
-  $("#filters").addEventListener("click", function (e) {
-    var button = e.target.closest("[data-filter]");
-    if (!button) return;
-
-    state.filter = button.getAttribute("data-filter");
-
-    Array.prototype.forEach.call(document.querySelectorAll(".chip"), function (x) {
-      x.classList.toggle("active", x === button);
-    });
-
+  $("#filters").addEventListener("click",function(e){
+    var b=e.target.closest("[data-filter]"); if(!b)return;
+    state.filter=b.getAttribute("data-filter");
+    Array.prototype.forEach.call(document.querySelectorAll(".chip"),function(x){x.classList.toggle("active",x===b);});
     render();
   });
+  $("#search").addEventListener("input",function(e){state.search=e.target.value;render();});
+  $("#activeOnly").addEventListener("change",function(e){state.activeOnly=e.target.checked;render();});
+  $("#reload").addEventListener("click",function(){refresh({force:true});});
 
-  $("#search").addEventListener("input", function (e) {
-    state.search = e.target.value;
-    render();
-  });
-
-  $("#activeOnly").addEventListener("change", function (e) {
-    state.activeOnly = e.target.checked;
-    render();
-  });
-
-  $("#reload").addEventListener("click", function () { refresh({ force: true }); });
-  refresh({ force: true });
+  refresh({force:true});
   startAutoRefresh();
 })();
