@@ -360,6 +360,52 @@
   }
 
 
+
+  var EVENT_NOISE_PATTERNS = [
+    /^no known service issues?$/i, /^recent incidents?$/i, /^past incidents?$/i,
+    /^incident history$/i, /^view all$/i, /^subscribe$/i, /^rss$/i, /^atom$/i,
+    /^webhook$/i, /^status page$/i, /^contact us$/i, /^privacy(?: policy)?$/i,
+    /^terms(?: of service)?$/i, /^powered by\b/i,
+    /^get (?:email|text message|sms) notifications?\b/i,
+    /^receive (?:email|text message|sms) notifications?\b/i
+  ];
+
+  function looksLikeNoiseTitle(title) {
+    var raw = cleanText(title || "");
+    if (!raw) return true;
+    if (/^#{1,6}\s+/.test(raw)) return true;
+    if (/^\[[^\]]*\]\([^)]+\)$/.test(raw)) return true;
+    var plain = raw.replace(/^#{1,6}\s+/, "").replace(/\*\*/g, "").replace(/`/g, "").trim();
+    for (var i = 0; i < EVENT_NOISE_PATTERNS.length; i++) {
+      if (EVENT_NOISE_PATTERNS[i].test(plain)) return true;
+    }
+    if (/notification/i.test(plain) && /(email|sms|text message|subscribe)/i.test(plain)) return true;
+    return false;
+  }
+
+  function strictFilterEvents(service, events, sourceType) {
+    return (events || []).filter(function (event) {
+      if (!event || looksLikeNoiseTitle(event.title)) return false;
+      var title = cleanText(event.title);
+      if (title.length < 5) return false;
+      if (["reader","official-page","telegram","social","third-party"].indexOf(sourceType) !== -1) {
+        var semantic = /(incident|outage|degrad|disrupt|maintenance|latency|packet loss|network|routing|unavailable|availability|failure|failed|error|interruption|service issue|investigat|monitoring|resolved|restored|recovered|故障|異常|中斷|維護|延遲|丟包|路由|恢復|修復)/i;
+        if (!semantic.test(title) && !event.start && !event.end && !event.status) return false;
+      }
+      return true;
+    });
+  }
+
+  function sourceTier(type) {
+    if (["statuspage","gcp","official-json","official-api"].indexOf(type) !== -1) return 1;
+    if (["rss","official-rss"].indexOf(type) !== -1) return 2;
+    if (type === "official-history") return 3;
+    if (type === "official-page") return 4;
+    if (type === "reader") return 5;
+    if (["telegram","social"].indexOf(type) !== -1) return 6;
+    return 7;
+  }
+
   var SOURCE_CONFIDENCE = {
     "statuspage": 100,
     "gcp": 100,
@@ -460,57 +506,35 @@
   }
 
   async function loadService(service) {
-    var collected = [];
-    var sourceStates = [];
-    var explicitNormal = [];
-    var errors = [];
+    var collected = [], sourceStates = [], explicitNormal = [], errors = [];
+    var sources = service.sources.slice().sort(function(a,b){ return sourceTier(a.type)-sourceTier(b.type); });
 
-    // Multi-source mode: try every configured source.
-    // This maximizes the chance of retaining recent incident history.
-    for (var i = 0; i < service.sources.length; i++) {
-      var source = service.sources[i];
-
+    for (var i = 0; i < sources.length; i++) {
+      var source = sources[i];
       try {
         var result = await trySource(source, service);
-        var sourceEvents = filterEventsByServicePolicy(
+        var sourceEvents = strictFilterEvents(
           service,
-          latestThree((result && result.events) || [])
+          filterEventsByServicePolicy(service, latestThree((result && result.events) || [])),
+          source.type
         );
 
-        var normalizedResult = {
-          events: sourceEvents,
-          normal: !!(result && result.normal)
-        };
+        var normal = !!(result && result.normal);
+        if (!sourceEvents.length && result &&
+            ["statuspage","gcp","official-json","official-api"].indexOf(source.type) !== -1) normal = true;
 
-        // Structured official APIs returning an empty incident array are an
-        // explicit normal signal, not merely "no data".
-        if (
-          sourceEvents.length === 0 &&
-          (
-            source.type === "statuspage" ||
-            source.type === "gcp" ||
-            source.type === "official-json" ||
-            source.type === "official-api"
-          )
-        ) {
-          normalizedResult.normal = true;
-        }
+        var state = sourceEvents.length ? "events_found" : (normal ? "explicit_normal" : "no_event_data");
+        sourceStates.push({label: source.label || source.type, type: source.type, state: state});
 
-        var sourceState = classifySourceResult(normalizedResult);
-        sourceStates.push({
-          label: source.label || source.type,
-          type: source.type,
-          state: sourceState
-        });
-
-        if (sourceState === "events_found") {
+        if (sourceEvents.length) {
           collected.push({
             sourceLabel: source.label || source.type,
             sourceType: source.type,
             confidence: sourceConfidence(source),
             events: sourceEvents
           });
-        } else if (sourceState === "explicit_normal") {
+          if (mergeCollectedEvents(collected).length >= 3) break;
+        } else if (normal) {
           explicitNormal.push({
             sourceLabel: source.label || source.type,
             sourceType: source.type,
@@ -518,68 +542,38 @@
           });
         }
       } catch (e) {
-        sourceStates.push({
-          label: source.label || source.type,
-          type: source.type,
-          state: "fetch_failed"
-        });
+        sourceStates.push({label: source.label || source.type, type: source.type, state: "fetch_failed"});
         errors.push((source.label || source.type) + ": " + String(e));
       }
     }
 
     var mergedEvents = mergeCollectedEvents(collected);
-
     if (mergedEvents.length) {
-      var best = collected.slice().sort(function (a, b) {
-        return b.confidence - a.confidence;
-      })[0];
-
+      var used = [];
+      mergedEvents.forEach(function(e){
+        if (e.sourceLabel && used.indexOf(e.sourceLabel) < 0) used.push(e.sourceLabel);
+      });
       return {
-        id: service.id,
-        name: service.name,
-        desc: service.desc,
-        category: service.category,
-        page: service.page,
-        state: "ok",
-        sourceLabel: collected.length > 1
-          ? "多來源"
-          : (best ? best.sourceLabel : "事件來源"),
-        events: mergedEvents,
-        sourceStates: sourceStates
+        id: service.id, name: service.name, desc: service.desc, category: service.category,
+        page: service.page, state: "ok",
+        sourceLabel: used.length ? used.join(" + ") : "事件來源",
+        events: mergedEvents.slice(0,3), sourceStates: sourceStates
       };
     }
 
     if (explicitNormal.length) {
-      explicitNormal.sort(function (a, b) {
-        return b.confidence - a.confidence;
-      });
-
+      explicitNormal.sort(function(a,b){ return b.confidence-a.confidence; });
       return {
-        id: service.id,
-        name: service.name,
-        desc: service.desc,
-        category: service.category,
-        page: service.page,
-        state: "normal",
-        sourceLabel: explicitNormal[0].sourceLabel,
-        events: [],
-        sourceStates: sourceStates
+        id: service.id, name: service.name, desc: service.desc, category: service.category,
+        page: service.page, state: "normal", sourceLabel: explicitNormal[0].sourceLabel,
+        events: [], sourceStates: sourceStates
       };
     }
 
-    // No source could prove an incident or an explicit normal state.
-    // Do not fabricate "normal"; fall back to the official status page.
     return {
-      id: service.id,
-      name: service.name,
-      desc: service.desc,
-      category: service.category,
-      page: service.page,
-      state: "official_link",
-      sourceLabel: "官方頁",
-      events: [],
-      sourceStates: sourceStates,
-      errors: errors
+      id: service.id, name: service.name, desc: service.desc, category: service.category,
+      page: service.page, state: "official_link", sourceLabel: "官方頁",
+      events: [], sourceStates: sourceStates, errors: errors
     };
   }
 
