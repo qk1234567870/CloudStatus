@@ -1,7 +1,15 @@
 {
   "name": "CloudStatus Pure Pages",
-  "version": "4.0.0",
+  "version": "5.0.0",
   "updated": "2026-08-27",
-  "service_parser_policy": true,
-  "service_ids_detected": []
+  "features": [
+    "multi-source collection",
+    "source result classification",
+    "confidence scoring",
+    "cross-source event deduplication",
+    "active-event-first sorting",
+    "top 3 merged incidents",
+    "explicit-normal-only normal state",
+    "official page final fallback"
+  ]
 }

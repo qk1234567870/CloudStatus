@@ -131,3 +131,61 @@ NTT Global Network、Arelion、Cogent、NTT GDC 另外有服務專屬規則，�
 ```
 
 Reader 現在只負責取得來源文字；事件判定交給各服務自己的 Parser Policy。
+
+
+## v5：多來源事件聚合
+
+本版不再採用「第一個成功來源就停止」。
+
+流程：
+
+```text
+官方 API / JSON
+官方 RSS
+官方事件頁 / History
+Reader
+官方公告 / Telegram 等備援
+        ↓
+全部嘗試
+        ↓
+事件標準化
+        ↓
+各服務 Parser Policy
+        ↓
+可信度評分
+        ↓
+跨來源去重
+        ↓
+衝突時優先採用高可信來源
+        ↓
+活動事件優先 + 時間排序
+        ↓
+最近 3 筆
+```
+
+來源狀態分為：
+
+```text
+events_found
+explicit_normal
+no_event_data
+parse_failed
+fetch_failed
+```
+
+`HTTP 200` 不等於正常；「沒有解析到事件」也不會自動判成正常。
+
+可信度大致為：
+
+```text
+官方 API / JSON       100
+官方 RSS               92
+官方頁                 82
+Reader                 72
+Telegram               68
+官方社群               62
+第三方                 48
+```
+
+只有有明確正常訊號的來源才可產生 `[正常]`。
+所有來源既沒有事件、也沒有明確正常訊號時，最後才退到官方狀態頁入口。
