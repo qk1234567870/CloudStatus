@@ -302,14 +302,16 @@
         var end = null;
 
         if (typeof ev.epochStartDate === "number" && isFinite(ev.epochStartDate)) {
-          start = new Date(ev.epochStartDate).toISOString();
+          var es = ev.epochStartDate < 100000000000 ? ev.epochStartDate * 1000 : ev.epochStartDate;
+          start = new Date(es).toISOString();
         } else if (ev.startDate) {
           var sd = new Date(ev.startDate);
           if (!isNaN(sd.getTime())) start = sd.toISOString();
         }
 
         if (typeof ev.epochEndDate === "number" && isFinite(ev.epochEndDate)) {
-          end = new Date(ev.epochEndDate).toISOString();
+          var ee = ev.epochEndDate < 100000000000 ? ev.epochEndDate * 1000 : ev.epochEndDate;
+          end = new Date(ee).toISOString();
         } else if (ev.endDate) {
           var ed = new Date(ev.endDate);
           if (!isNaN(ed.getTime())) end = ed.toISOString();
@@ -510,6 +512,51 @@
     };
   }
 
+  function parseAppleBackup(text, service, source) {
+    var ls = lines(String(text || "")).map(function(x) {
+      return cleanText(String(x || "")
+        .replace(/^#{1,6}\s+/, "")
+        .replace(/^\s*[-*+]\s+/, "")
+        .replace(/\*\*/g, "")
+        .replace(/__/g, "")
+        .replace(/`/g, ""));
+    }).filter(Boolean);
+
+    var events = [];
+    var titleRe = /^(.+?):\s*(Performance|Outage|Issue|Maintenance)\s*(?:Resolved)?$/i;
+
+    for (var i = 0; i < ls.length; i++) {
+      var line = ls[i];
+      var m = line.match(titleRe);
+      if (!m) continue;
+
+      var title = cleanText(m[1]);
+      if (!title || looksNoise(title) || isAppleServiceInventoryLine(title)) continue;
+
+      var block = ls.slice(i, Math.min(i + 10, ls.length)).join(" ");
+      var resolved = /\bResolved\b/i.test(block);
+      var start = findDate(block);
+      var end = null;
+
+      events.push({
+        title: title,
+        status: resolved ? "resolved" : null,
+        statusRaw: resolved ? "Resolved" : null,
+        impact: cleanText(m[2]),
+        start: start,
+        end: end,
+        url: service.page,
+        sourceLabel: source.label
+      });
+    }
+
+    return {
+      events: sortRecent(events),
+      health: null,
+      healthText: null
+    };
+  }
+
   function parseBandwagon(text, service, source) {
     var t=String(text||"");
     var ls=lines(t), events=[];
@@ -577,6 +624,7 @@
       case "google-cloud": return parseGooglePage(text,service,source);
       case "azure": return parseAzure(text,service,source);
       case "apple": return parseApple(text,service,source);
+      case "apple-backup": return parseAppleBackup(text,service,source);
       case "oracle": return parseOracle(text,service,source);
       case "bandwagon": return parseBandwagon(text,service,source);
       case "dmit": return parseDMIT(text,service,source);
@@ -596,6 +644,7 @@
     if (source.type==="apple-json") return appleStructuredAdapter(await fetchAppleJson(source.url),service,source);
     if (source.type==="gcp") return gcpAdapter(await fetchJson(source.url),service,source);
     if (source.type==="rss") return rssAdapter(await fetchText(source.url),service,source);
+    if (source.type==="apple-backup") return parseAppleBackup(await fetchReader(source.url),service,source);
     if (source.type==="reader") return parseReader(await fetchReader(source.url),service,source);
     throw new Error("Unsupported source " + source.type);
   }

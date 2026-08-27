@@ -296,3 +296,57 @@ button { font-size: 14px; }
     font-size:10.5px;
   }
 }
+
+
+/* v18 — event time boundary hardening */
+.event,
+.event-row,
+.incident,
+.incident-row {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.event > *,
+.event-row > *,
+.incident > *,
+.incident-row > * {
+  min-width: 0;
+}
+
+.event-time,
+.event .time,
+.event-row .time,
+.incident-time,
+.incident .time,
+.incident-row .time {
+  min-width: 0 !important;
+  max-width: min(42vw, 240px) !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  box-sizing: border-box !important;
+  justify-self: end !important;
+  text-align: right !important;
+}
+
+.service-card,
+.card,
+.events,
+.event-list {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+@media (max-width: 720px) {
+  .event-time,
+  .event .time,
+  .event-row .time,
+  .incident-time,
+  .incident .time,
+  .incident-row .time {
+    max-width: 34vw !important;
+  }
+}

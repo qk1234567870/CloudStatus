@@ -150,6 +150,12 @@ window.CLOUDSTATUS_SERVICES = [
         "url": "https://www.apple.com/support/systemstatus/?viewlocale=en_US",
         "label": "官方 System Status",
         "tier": 4
+      },
+      {
+        "type": "apple-backup",
+        "url": "https://pingoru.io/providers/apple/outage-history",
+        "label": "Pingoru 備援",
+        "tier": 8
       }
     ]
   },
