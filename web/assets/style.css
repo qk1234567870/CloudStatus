@@ -297,3 +297,5 @@ footer {
   .summary { grid-template-columns: repeat(3, 1fr); }
   .service-desc { font-size: 9.5px; }
 }
+
+.message.neutral { color: var(--muted); }

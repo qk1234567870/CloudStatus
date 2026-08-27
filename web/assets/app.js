@@ -132,6 +132,10 @@ function renderService(service) {
     body = `<div class="message bad">[取得失敗] 目前無法取得服務資料</div>`;
   } else if (service.state === "parse_failed") {
     body = `<div class="message warn">[解析失敗] 已取得來源，但未解析到事件</div>`;
+  } else if (service.state === "restricted") {
+    body = `<div class="message neutral">[受限] 官方事件明細需登入或未提供匿名事件來源</div>`;
+  } else if (service.state === "status_only") {
+    body = `<div class="message neutral">[狀態頁] 官方頁可用，但未提供穩定的公開事件歷史介面</div>`;
   } else if (!service.events?.length) {
     body = `<div class="message good">[正常] 所有服務運作正常，無近期事件</div>`;
   } else {
