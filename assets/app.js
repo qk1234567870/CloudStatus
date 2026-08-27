@@ -664,12 +664,50 @@
     return sortRecent(out);
   }
 
+  var SOURCE_PRIORITY = {
+    "official-api": 10,
+    "official-json": 20,
+    "official-rss": 30,
+    "official-history": 40,
+    "official-status": 50,
+    "official-announcement": 60,
+    "official-backup": 70,
+    "trusted-third-party": 80,
+    "other-backup": 90
+  };
+
+  function sourcePriority(source) {
+    if (source && source.kind && SOURCE_PRIORITY[source.kind] != null) {
+      return SOURCE_PRIORITY[source.kind];
+    }
+    if (source && typeof source.priority === "number") {
+      return source.priority;
+    }
+    if (source && typeof source.tier === "number") {
+      return source.tier;
+    }
+    return 999;
+  }
+
+  function isThirdPartySource(source) {
+    return source && (
+      source.kind === "trusted-third-party" ||
+      source.kind === "other-backup"
+    );
+  }
+
   async function loadService(service) {
     var events=[], health=null, healthText=null, sourceLabels=[], failures=[];
-    var sources=service.sources.slice().sort(function(a,b){return (a.tier||9)-(b.tier||9);});
+    var sources=service.sources.slice().sort(function(a,b){return sourcePriority(a)-sourcePriority(b);});
 
     for (var i=0;i<sources.length;i++) {
       var source=sources[i];
+
+      // 第三方只用來補資料；官方來源已同時提供目前狀態且有 3 筆事件時，不再碰第三方。
+      if (isThirdPartySource(source) && health && events.length >= 3) {
+        break;
+      }
+
       try {
         var result=await runSource(source,service);
         if (result.events && result.events.length) {

@@ -11,13 +11,17 @@ window.CLOUDSTATUS_SERVICES = [
         "type": "statuspage",
         "url": "https://www.cloudflarestatus.com/api/v2/incidents.json",
         "label": "官方 API",
-        "tier": 1
+        "tier": 10,
+        "kind": "official-api",
+        "priority": 10
       },
       {
         "type": "reader",
         "url": "https://www.cloudflarestatus.com",
         "label": "官方頁 Reader",
-        "tier": 5
+        "tier": 50,
+        "kind": "official-status",
+        "priority": 50
       }
     ]
   },
@@ -33,13 +37,17 @@ window.CLOUDSTATUS_SERVICES = [
         "type": "rss",
         "url": "https://status.aws.amazon.com/rss/all.rss",
         "label": "官方 RSS",
-        "tier": 2
+        "tier": 30,
+        "kind": "official-rss",
+        "priority": 30
       },
       {
         "type": "reader",
         "url": "https://health.aws.amazon.com/health/status",
-        "label": "Health Dashboard",
-        "tier": 4
+        "label": "官方 Health Dashboard",
+        "tier": 50,
+        "kind": "official-status",
+        "priority": 50
       }
     ]
   },
@@ -55,13 +63,17 @@ window.CLOUDSTATUS_SERVICES = [
         "type": "reader",
         "url": "https://azure.status.microsoft/status",
         "label": "官方 Status",
-        "tier": 4
+        "tier": 50,
+        "kind": "official-status",
+        "priority": 50
       },
       {
         "type": "reader",
         "url": "https://backup.azure.status.microsoft/",
-        "label": "官方 Backup",
-        "tier": 5
+        "label": "官方 Backup Status",
+        "tier": 70,
+        "kind": "official-backup",
+        "priority": 70
       }
     ]
   },
@@ -76,14 +88,18 @@ window.CLOUDSTATUS_SERVICES = [
       {
         "type": "gcp",
         "url": "https://status.cloud.google.com/incidents.json",
-        "label": "官方 JSON / Reader",
-        "tier": 1
+        "label": "官方 JSON",
+        "tier": 20,
+        "kind": "official-json",
+        "priority": 20
       },
       {
         "type": "reader",
         "url": "https://status.cloud.google.com",
         "label": "官方狀態頁",
-        "tier": 4
+        "tier": 50,
+        "kind": "official-status",
+        "priority": 50
       }
     ]
   },
@@ -99,13 +115,17 @@ window.CLOUDSTATUS_SERVICES = [
         "type": "statuspage",
         "url": "https://www.githubstatus.com/api/v2/incidents.json",
         "label": "官方 API",
-        "tier": 1
+        "tier": 10,
+        "kind": "official-api",
+        "priority": 10
       },
       {
         "type": "reader",
         "url": "https://www.githubstatus.com",
         "label": "官方頁 Reader",
-        "tier": 5
+        "tier": 50,
+        "kind": "official-status",
+        "priority": 50
       }
     ]
   },
@@ -121,13 +141,17 @@ window.CLOUDSTATUS_SERVICES = [
         "type": "statuspage",
         "url": "https://status.openai.com/api/v2/incidents.json",
         "label": "官方 API",
-        "tier": 1
+        "tier": 10,
+        "kind": "official-api",
+        "priority": 10
       },
       {
         "type": "reader",
         "url": "https://status.openai.com",
         "label": "官方頁 Reader",
-        "tier": 5
+        "tier": 50,
+        "kind": "official-status",
+        "priority": 50
       }
     ]
   },
@@ -142,20 +166,26 @@ window.CLOUDSTATUS_SERVICES = [
       {
         "type": "apple-json",
         "url": "https://www.apple.com/support/systemstatus/data/system_status_en_US.js",
-        "label": "官方 JSON / Reader",
-        "tier": 1
+        "label": "官方 JSON",
+        "tier": 20,
+        "kind": "official-json",
+        "priority": 20
       },
       {
         "type": "reader",
         "url": "https://www.apple.com/support/systemstatus/?viewlocale=en_US",
         "label": "官方 System Status",
-        "tier": 4
+        "tier": 50,
+        "kind": "official-status",
+        "priority": 50
       },
       {
         "type": "apple-backup",
         "url": "https://pingoru.io/providers/apple/outage-history",
         "label": "Pingoru 備援",
-        "tier": 8
+        "tier": 80,
+        "kind": "trusted-third-party",
+        "priority": 80
       }
     ]
   },
@@ -171,13 +201,17 @@ window.CLOUDSTATUS_SERVICES = [
         "type": "reader",
         "url": "https://ocistatus.oraclecloud.com/incidents/",
         "label": "官方事件歷史",
-        "tier": 3
+        "tier": 40,
+        "kind": "official-history",
+        "priority": 40
       },
       {
         "type": "reader",
         "url": "https://ocistatus.oraclecloud.com/",
         "label": "官方 Status",
-        "tier": 4
+        "tier": 50,
+        "kind": "official-status",
+        "priority": 50
       }
     ]
   },
@@ -193,7 +227,9 @@ window.CLOUDSTATUS_SERVICES = [
         "type": "reader",
         "url": "https://bwhstatus.com/",
         "label": "官方狀態頁",
-        "tier": 4
+        "tier": 50,
+        "kind": "official-status",
+        "priority": 50
       }
     ]
   },
@@ -209,13 +245,17 @@ window.CLOUDSTATUS_SERVICES = [
         "type": "reader",
         "url": "https://www.dmit.io/serverstatus.php",
         "label": "官方 Server Status",
-        "tier": 4
+        "tier": 50,
+        "kind": "official-status",
+        "priority": 50
       },
       {
         "type": "reader",
         "url": "https://t.me/s/DMIT_INC",
-        "label": "Telegram 備援",
-        "tier": 6
+        "label": "官方 Telegram 公告",
+        "tier": 60,
+        "kind": "official-announcement",
+        "priority": 60
       }
     ]
   },
@@ -231,7 +271,9 @@ window.CLOUDSTATUS_SERVICES = [
         "type": "reader",
         "url": "https://www.equinix.com/contact-us/customer-support",
         "label": "官方頁",
-        "tier": 4
+        "tier": 50,
+        "kind": "official-status",
+        "priority": 50
       }
     ]
   },
@@ -247,7 +289,9 @@ window.CLOUDSTATUS_SERVICES = [
         "type": "reader",
         "url": "https://status.digitalrealty.com/",
         "label": "官方 Status",
-        "tier": 4
+        "tier": 50,
+        "kind": "official-status",
+        "priority": 50
       }
     ]
   },
@@ -263,7 +307,9 @@ window.CLOUDSTATUS_SERVICES = [
         "type": "reader",
         "url": "https://services.global.ntt/",
         "label": "官方頁",
-        "tier": 4
+        "tier": 50,
+        "kind": "official-status",
+        "priority": 50
       }
     ]
   },
@@ -279,7 +325,9 @@ window.CLOUDSTATUS_SERVICES = [
         "type": "reader",
         "url": "https://www.arelion.com/",
         "label": "官方頁",
-        "tier": 4
+        "tier": 50,
+        "kind": "official-status",
+        "priority": 50
       }
     ]
   },
@@ -295,7 +343,9 @@ window.CLOUDSTATUS_SERVICES = [
         "type": "reader",
         "url": "https://www.nttdata.com/global/en/services/connectivity/global-ip-network",
         "label": "官方頁",
-        "tier": 4
+        "tier": 50,
+        "kind": "official-status",
+        "priority": 50
       }
     ]
   },
@@ -311,7 +361,9 @@ window.CLOUDSTATUS_SERVICES = [
         "type": "reader",
         "url": "https://status.cogentco.com/",
         "label": "官方 Network Status",
-        "tier": 4
+        "tier": 50,
+        "kind": "official-status",
+        "priority": 50
       }
     ]
   }
