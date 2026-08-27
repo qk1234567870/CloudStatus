@@ -1,4 +1,4 @@
-from core.statuspage import fetch_statuspage
+from core.webstatus import fetch_public_status_page
 
 SERVICE = {
     "id": 'ntt-gdc',
@@ -6,8 +6,7 @@ SERVICE = {
     "desc": '全球數據中心與園區基礎設施',
     "category": 'datacenter',
     "page_url": 'https://status.global.ntt',
-    "data_url": 'https://status.global.ntt/api/v2/incidents.json',
 }
 
 def fetch(ctx):
-    return fetch_statuspage(SERVICE, ctx)
+    return fetch_public_status_page(SERVICE, ctx)

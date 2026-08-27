@@ -1,4 +1,4 @@
-from core.statuspage import fetch_statuspage
+from core.webstatus import fetch_public_status_page
 
 SERVICE = {
     "id": 'ntt-global-network',
@@ -6,8 +6,7 @@ SERVICE = {
     "desc": '全球 Tier-1 IP 骨幹與跨洋網路',
     "category": 'backbone',
     "page_url": 'https://status.act.ntt.com',
-    "data_url": 'https://status.act.ntt.com/api/v2/incidents.json',
 }
 
 def fetch(ctx):
-    return fetch_statuspage(SERVICE, ctx)
+    return fetch_public_status_page(SERVICE, ctx)
