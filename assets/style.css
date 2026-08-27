@@ -1,0 +1,81 @@
+:root{
+  --bg:#121214;--card:#1c1c1e;--text:#d1d1d6;--muted:#8e8e93;--time:#636366;
+  --white:#fff;--blue:#0a84ff;--green:#30d158;--yellow:#ffd60a;--orange:#ff9f0a;
+  --red:#ff453a;--border:rgba(255,255,255,.075)
+}
+*{box-sizing:border-box}
+html{background:var(--bg);color-scheme:dark;-webkit-text-size-adjust:100%}
+body{
+  margin:0;min-height:100vh;background:
+  radial-gradient(circle at 15% -10%,rgba(10,132,255,.13),transparent 31rem),var(--bg);
+  color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang TC","Microsoft JhengHei",sans-serif
+}
+button,input{font:inherit}
+.shell{
+  width:min(1180px,100%);margin:0 auto;
+  padding:max(16px,env(safe-area-inset-top)) 12px max(30px,env(safe-area-inset-bottom))
+}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.heading{min-width:0}
+h1{margin:0;color:#fff;font-size:clamp(20px,5.5vw,30px);line-height:1.15;letter-spacing:-.02em}
+#updated{margin:5px 0 0;color:var(--muted);font-size:12px}
+.icon-btn{
+  flex:0 0 auto;width:42px;height:42px;border:1px solid var(--border);
+  border-radius:13px;background:var(--card);color:#fff;font-size:22px
+}
+.toolbar{
+  position:sticky;top:0;z-index:10;padding:9px 0 11px;
+  background:linear-gradient(to bottom,rgba(18,18,20,.98) 82%,rgba(18,18,20,0));
+  backdrop-filter:blur(12px)
+}
+.filters{display:flex;overflow-x:auto;gap:7px;padding-bottom:8px;scrollbar-width:none}
+.filters::-webkit-scrollbar{display:none}
+.chip{
+  flex:0 0 auto;border:1px solid var(--border);background:var(--card);color:var(--muted);
+  border-radius:999px;padding:7px 11px;font-size:12px
+}
+.chip.active{background:var(--blue);border-color:var(--blue);color:#fff}
+.tools{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px;align-items:center}
+#search{
+  width:100%;min-width:0;border:1px solid var(--border);border-radius:11px;
+  background:var(--card);color:#fff;padding:9px 11px;outline:none
+}
+.toggle{display:flex;align-items:center;gap:5px;color:var(--muted);font-size:12px;white-space:nowrap}
+.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:3px 0 12px}
+.metric{padding:10px;border:1px solid var(--border);background:var(--card);border-radius:13px}
+.metric strong{display:block;color:#fff;font-size:18px}.metric span{color:var(--muted);font-size:10px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.service{overflow:hidden;border:1px solid var(--border);background:var(--card);border-radius:14px}
+.service-head{
+  display:flex;align-items:center;gap:7px;min-height:45px;padding:9px 11px 8px;border-bottom:1px solid var(--border)
+}
+.service-name{min-width:0;color:var(--blue);font-size:13px;font-weight:700;text-decoration:none}
+.service-desc{
+  min-width:0;overflow:hidden;color:var(--muted);font-size:10px;white-space:nowrap;text-overflow:ellipsis
+}
+.source-badge{margin-left:auto;flex:0 0 auto;color:var(--muted);font-size:9px}
+.event{
+  display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:6px;
+  min-height:36px;padding:7px 11px;color:inherit;text-decoration:none
+}
+.event+.event{border-top:1px solid rgba(255,255,255,.04)}
+.tag{font-size:10px;font-weight:700;white-space:nowrap}
+.tag.resolved{color:var(--green)}
+.tag.maintenance{color:var(--yellow)}
+.tag.monitoring,.tag.identified,.tag.degraded{color:var(--orange)}
+.tag.investigating,.tag.outage{color:var(--red)}
+.event-title{
+  min-width:0;overflow:hidden;color:var(--text);font-size:11px;white-space:nowrap;text-overflow:ellipsis
+}
+.event-time{color:var(--time);font-size:9.5px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.message{display:block;padding:12px 11px;color:var(--muted);font-size:11px;text-decoration:none}
+.message.good{color:var(--green)}.message.warn{color:var(--orange)}
+.message.bad{color:var(--red)}.message.link{color:var(--blue)}
+.empty{grid-column:1/-1;padding:48px 16px;color:var(--muted);text-align:center}
+footer{margin-top:18px;color:var(--time);font-size:10px;text-align:center}
+@media(max-width:760px){.grid{grid-template-columns:1fr}}
+@media(max-width:430px){
+  .shell{padding-left:10px;padding-right:10px}
+  h1{font-size:25px}.toggle span{display:none}
+  .service-desc{font-size:9.5px}
+}
