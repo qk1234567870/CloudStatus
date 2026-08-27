@@ -768,7 +768,8 @@
     var tag = e.status && STATUS_LABELS[e.status]
       ? '<span class="tag '+escapeHtml(e.status)+'">['+escapeHtml(STATUS_LABELS[e.status])+']</span>'
       : '';
-    return '<a class="event" href="'+escapeHtml(e.url||service.page)+'" target="_blank" rel="noopener">'+
+    var eventClass = e.status && STATUS_LABELS[e.status] ? "event" : "event no-status";
+    return '<a class="'+eventClass+'" href="'+escapeHtml(e.url||service.page)+'" target="_blank" rel="noopener">'+
       tag+
       '<span class="event-title" title="'+escapeHtml(e.title+(e.sourceLabel?" · "+e.sourceLabel:""))+'">'+escapeHtml(e.title)+'</span>'+
       '<span class="event-time">'+escapeHtml(formatRange(e.start,e.end))+'</span>'+
