@@ -1,6 +1,0 @@
-{
-  "max_events": 3,
-  "request_timeout": 12,
-  "refresh_minutes": 15,
-  "debug": false
-}
