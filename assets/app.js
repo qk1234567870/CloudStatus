@@ -5,6 +5,9 @@
   var state = { services: [], filter: "all", search: "", activeOnly: false };
 
   var REFRESH_INTERVAL = 5 * 60 * 1000;
+  var CACHE_KEY = "cloudstatus-cache-v26";
+  var CACHE_MAX_AGE = 15 * 60 * 1000;
+  var FALLBACK_CONCURRENCY = 4;
   var FOREGROUND_REFRESH_THRESHOLD = 2 * 60 * 1000;
   var lastRefresh = 0;
   var refreshInFlight = false;
@@ -736,67 +739,136 @@
     );
   }
 
-  async function loadService(service) {
-    var events=[], health=null, healthText=null, sourceLabels=[], failures=[];
+  async function loadPrimarySource(service) {
     var sources=service.sources.slice().sort(function(a,b){return sourcePriority(a)-sourcePriority(b);});
+    var source=sources[0];
 
-    // 同一優先級來源並行請求；不同優先級仍嚴格依序。
-    // 因此不改變「官方 JSON → 官方 Status → Pingoru → 官方頁」的資料優先級，
-    // 但同級來源不再一個等完才抓下一個。
-    var groups=[];
-    sources.forEach(function(source){
-      var pri=sourcePriority(source);
-      var g=groups.length?groups[groups.length-1]:null;
-      if(!g || g.priority!==pri){
-        g={priority:pri,sources:[]};
-        groups.push(g);
-      }
-      g.sources.push(source);
-    });
+    if(!source){
+      return {
+        id:service.id,name:service.name,desc:service.desc,category:service.category,page:service.page,
+        events:[],health:null,healthText:null,sourceLabel:"官方頁",fallback:true,failures:["No source"],
+        _remainingSources:[]
+      };
+    }
 
-    for(var gi=0;gi<groups.length;gi++){
-      var group=groups[gi];
+    try{
+      var result=await runSource(source,service);
+      var events=(result.events||[]).slice(0,3);
+      var health=result.health||null;
+      var healthText=result.healthText||null;
 
-      // 官方資料已完整時不再啟動後面的第三方備援。
-      if(group.sources.length && isThirdPartySource(group.sources[0]) && health && events.length>=3) break;
+      return {
+        id:service.id,name:service.name,desc:service.desc,category:service.category,page:service.page,
+        events:events,health:health,healthText:healthText,
+        sourceLabel:(events.length||health)?source.label:"官方頁",
+        fallback:!events.length&&!health,
+        failures:[],
+        _remainingSources:sources.slice(1)
+      };
+    }catch(e){
+      return {
+        id:service.id,name:service.name,desc:service.desc,category:service.category,page:service.page,
+        events:[],health:null,healthText:null,sourceLabel:"官方頁",fallback:true,
+        failures:[source.label+": "+String(e)],
+        _remainingSources:sources.slice(1)
+      };
+    }
+  }
 
-      var settled=await Promise.all(group.sources.map(async function(source){
-        try {
-          return {source:source,result:await runSource(source,service),error:null};
-        } catch(e) {
-          return {source:source,result:null,error:e};
-        }
-      }));
+  async function completeService(service, partial) {
+    var events=(partial.events||[]).slice();
+    var health=partial.health||null;
+    var healthText=partial.healthText||null;
+    var labels=[];
+    if(partial.sourceLabel && partial.sourceLabel!=="官方頁") labels.push(partial.sourceLabel);
+    var failures=(partial.failures||[]).slice();
+    var sources=(partial._remainingSources||[]).slice();
 
-      // 按原 sources 順序合併，確保來源優先級/同級順序不變。
-      settled.forEach(function(item){
-        var source=item.source;
-        if(item.error){
-          failures.push(source.label+": "+String(item.error));
-          return;
-        }
-        var result=item.result||{};
+    for(var i=0;i<sources.length;i++){
+      var source=sources[i];
+
+      // 已取得完整官方資料時，不再啟動第三方來源。
+      if(isThirdPartySource(source) && health && events.length>=3) break;
+
+      try{
+        var result=await runSource(source,service);
+
         if(result.events && result.events.length){
           events=mergeEvents(events,result.events);
-          if(sourceLabels.indexOf(source.label)<0) sourceLabels.push(source.label);
+          if(labels.indexOf(source.label)<0) labels.push(source.label);
         }
+
         if(result.health && !health){
           health=result.health;
           healthText=result.healthText||null;
-          if(sourceLabels.indexOf(source.label)<0) sourceLabels.push(source.label);
+          if(labels.indexOf(source.label)<0) labels.push(source.label);
         }
-      });
 
-      if(events.length>=3 && health) break;
+        if(events.length>=3 && health) break;
+      }catch(e){
+        failures.push(source.label+": "+String(e));
+      }
     }
 
     return {
       id:service.id,name:service.name,desc:service.desc,category:service.category,page:service.page,
       events:events.slice(0,3),health:health,healthText:healthText,
-      sourceLabel:sourceLabels.length===1?sourceLabels[0]:(sourceLabels.length>1?"多來源":"官方頁"),
-      fallback:!events.length && !health,
+      sourceLabel:labels.length===1?labels[0]:(labels.length>1?"多來源":"官方頁"),
+      fallback:!events.length&&!health,
       failures:failures
     };
+  }
+
+  async function runWithConcurrency(items, limit, worker) {
+    var next=0;
+    var workers=[];
+
+    async function runOne(){
+      while(true){
+        var index=next++;
+        if(index>=items.length) return;
+        await worker(items[index], index);
+      }
+    }
+
+    for(var i=0;i<Math.min(limit,items.length);i++){
+      workers.push(runOne());
+    }
+
+    await Promise.all(workers);
+  }
+
+  function saveCache() {
+    try{
+      localStorage.setItem(CACHE_KEY, JSON.stringify({
+        timestamp: Date.now(),
+        services: state.services
+      }));
+    }catch(e){}
+  }
+
+  function loadCache() {
+    try{
+      var raw=localStorage.getItem(CACHE_KEY);
+      if(!raw) return false;
+
+      var cache=JSON.parse(raw);
+      if(!cache || !Array.isArray(cache.services) || !cache.timestamp) return false;
+      if(Date.now()-cache.timestamp>CACHE_MAX_AGE) return false;
+
+      state.services=cache.services;
+      lastRefresh=cache.timestamp;
+      render();
+
+      var now=new Intl.DateTimeFormat("zh-TW",{
+        month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit",hour12:false
+      }).format(new Date(cache.timestamp));
+
+      $("#updated").textContent="快取於 "+now+" · 正在背景更新";
+      return true;
+    }catch(e){
+      return false;
+    }
   }
 
   function isActive(service) {
@@ -878,41 +950,74 @@
 
   async function refresh(options) {
     options=options||{};
-    if (refreshInFlight && !options.force) return;
+    if(refreshInFlight && !options.force) return;
+
     refreshInFlight=true;
-    var reload=$("#reload"); reload.disabled=true;
-    $("#updated").textContent="正在更新官方來源…";
+    var reload=$("#reload");
+    reload.disabled=true;
 
-    try {
-      var results=new Array(SERVICES.length);
-      var completed=0;
+    if(!state.services.length){
+      $("#updated").textContent="正在讀取官方來源…";
+    }
 
-      await Promise.all(SERVICES.map(function(service,index){
-        return loadService(service).then(function(result){
-          results[index]=result;
-          completed++;
+    try{
+      var partials=new Array(SERVICES.length);
 
-          // 首批結果立即顯示，不必等待全部服務完成。
-          state.services=results.filter(Boolean);
-          render();
-
-          $("#updated").textContent="正在更新官方來源… "+completed+"/"+SERVICES.length;
-        }).catch(function(){
-          completed++;
-          $("#updated").textContent="正在更新官方來源… "+completed+"/"+SERVICES.length;
-        });
+      // 第一階段：每個服務只抓最高優先級來源，全部並行。
+      await Promise.all(SERVICES.map(async function(service,index){
+        partials[index]=await loadPrimarySource(service);
       }));
 
-      state.services=results.filter(Boolean);
+      // 第一階段完成立刻顯示。
+      state.services=partials.map(function(x){
+        var copy=Object.assign({},x);
+        delete copy._remainingSources;
+        return copy;
+      });
+      render();
+      $("#updated").textContent="主要來源已載入 · 正在補充備援資料…";
+
+      // 第二階段：只處理仍不足的服務，而且限制併發，避免一次開太多 Reader 連線。
+      var needs=[];
+      partials.forEach(function(p,index){
+        if(!p) return;
+        if((p.events||[]).length<3 || !p.health){
+          if(p._remainingSources && p._remainingSources.length){
+            needs.push({index:index,partial:p,service:SERVICES[index]});
+          }
+        }
+      });
+
+      await runWithConcurrency(needs,FALLBACK_CONCURRENCY,async function(item){
+        var result=await completeService(item.service,item.partial);
+        state.services[item.index]=result;
+        render();
+      });
+
+      // 清理任何殘留的內部欄位。
+      state.services=state.services.map(function(x){
+        var copy=Object.assign({},x);
+        delete copy._remainingSources;
+        return copy;
+      });
+
       lastRefresh=Date.now();
-      var now=new Intl.DateTimeFormat("zh-TW",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit",hour12:false}).format(new Date(lastRefresh));
+      saveCache();
+
+      var now=new Intl.DateTimeFormat("zh-TW",{
+        month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit",hour12:false
+      }).format(new Date(lastRefresh));
+
       $("#updated").textContent="最後讀取於 "+now;
       render();
-    } catch(e) {
+    }catch(e){
       $("#updated").textContent="更新失敗";
-      if (!state.services.length) $("#services").innerHTML='<div class="empty">資料載入失敗，請稍後重試。</div>';
-    } finally {
-      refreshInFlight=false; reload.disabled=false;
+      if(!state.services.length){
+        $("#services").innerHTML='<div class="empty">資料載入失敗，請稍後重試。</div>';
+      }
+    }finally{
+      refreshInFlight=false;
+      reload.disabled=false;
     }
   }
 
@@ -942,6 +1047,7 @@
   $("#activeOnly").addEventListener("change",function(e){state.activeOnly=e.target.checked;render();});
   $("#reload").addEventListener("click",function(){refresh({force:true});});
 
+  loadCache();
   refresh({force:true});
   startAutoRefresh();
 })();
