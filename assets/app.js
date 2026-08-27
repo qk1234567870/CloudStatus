@@ -166,6 +166,26 @@
     return isNaN(d.getTime()) ? null : d.toISOString();
   }
 
+  function findAnyDate(text) {
+    var raw=String(text||"");
+
+    // ISO / Telegram / common machine-readable forms.
+    var patterns=[
+      /\b\d{4}-\d{2}-\d{2}[T\s]\d{1,2}:\d{2}(?::\d{2})?(?:Z|[+-]\d{2}:?\d{2})?\b/,
+      /\b\d{4}\/\d{1,2}\/\d{1,2}\s+\d{1,2}:\d{2}\b/,
+      /\b(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{1,2},?\s+\d{4}(?:\s+(?:at\s+)?)?\d{1,2}:\d{2}\s*(?:AM|PM)?(?:\s+[A-Z]{2,5})?\b/i
+    ];
+
+    for(var i=0;i<patterns.length;i++){
+      var m=raw.match(patterns[i]);
+      if(!m) continue;
+      var d=new Date(m[0]);
+      if(!isNaN(d.getTime())) return d.toISOString();
+    }
+
+    return findDate(raw);
+  }
+
   function findDateRange(text) {
     var ds = [];
     var re = /(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{1,2},?\s+\d{4}\s+\d{1,2}:\d{2}\s*(?:AM|PM)?(?:\s*\([^)]+\)|\s+[A-Z]{2,5})?/gi;
@@ -596,13 +616,33 @@
 
   function parseDMIT(text, service, source) {
     var ls=lines(text), events=[];
-    // No status inference. Telegram/HTML entries are accepted as events only if they
-    // contain strong incident semantics; status remains null unless an explicit label exists.
-    var eventWords=/(maintenance|incident|outage|packet loss|fiber|cable|emergency|interruption|latency|routing issue|network issue)/i;
-    for (var i=0;i<ls.length;i++) {
-      if (!eventWords.test(ls[i]) || looksNoise(ls[i])) continue;
-      events.push({title:ls[i],status:null,statusRaw:null,start:findDate(ls.slice(Math.max(0,i-2),i+5).join(" ")),end:null,url:source.url,sourceLabel:source.label});
+
+    // Telegram / Server Status 的公告正文常包含 Impact / Additional 等句子。
+    // 只接受公告標題，不再把正文每一行都當成獨立事件。
+    var headingWords=/(maintenance notification|incident notification|network incident|outage notification|emergency maintenance|scheduled maintenance|service interruption|routing issue|network issue|packet loss)/i;
+    var continuation=/^(impact\s*:|additional\b|update\s*:|details?\s*:|affected\b|•|\-|\*)/i;
+
+    for(var i=0;i<ls.length;i++){
+      var title=cleanText(ls[i]);
+
+      if(!title || continuation.test(title) || looksNoise(title)) continue;
+      if(!headingWords.test(title)) continue;
+
+      // 向標題前後擴大範圍找 Telegram/官方頁時間。
+      var block=ls.slice(Math.max(0,i-5),Math.min(ls.length,i+12)).join(" ");
+      var startDate=findAnyDate(block);
+
+      events.push({
+        title:title,
+        status:null,
+        statusRaw:null,
+        start:startDate,
+        end:null,
+        url:source.url,
+        sourceLabel:source.label
+      });
     }
+
     return {events:sortRecent(events),health:null,healthText:null};
   }
 

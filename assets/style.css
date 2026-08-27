@@ -613,3 +613,49 @@ button { font-size: 14px; }
     white-space:nowrap !important;
   }
 }
+
+
+/* =========================================================
+   v23 — 雙欄卡片事件時間改為第二行
+   解決 Google Cloud 長標題與時間互相擠壓。
+   ========================================================= */
+@media (min-width:981px){
+  .event{
+    grid-template-columns:auto minmax(0,1fr) !important;
+    grid-template-areas:
+      "tag title"
+      ". time" !important;
+    column-gap:7px !important;
+    row-gap:3px !important;
+    align-items:center !important;
+  }
+
+  .event .tag{
+    grid-area:tag !important;
+  }
+
+  .event-title{
+    grid-area:title !important;
+    min-width:0 !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+    white-space:nowrap !important;
+  }
+
+  .event-time{
+    grid-area:time !important;
+    justify-self:end !important;
+    text-align:right !important;
+    max-width:100% !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+    white-space:nowrap !important;
+  }
+
+  .event.no-status{
+    grid-template-columns:minmax(0,1fr) !important;
+    grid-template-areas:
+      "title"
+      "time" !important;
+  }
+}
