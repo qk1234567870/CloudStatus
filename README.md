@@ -127,3 +127,45 @@ Apple System Status Reader 也改成 Markdown-aware：
 - 不用備援資料覆蓋已成功取得的官方事件。
 - 修正 Apple epoch 秒 / 毫秒時間戳相容。
 - 強化手機與桌面事件時間欄位的 max-width / overflow，避免日期超出卡片右邊界。
+
+
+## v19：全服務來源優先級統一
+
+所有服務現在使用同一套「可信度層級」，但不強迫每家公司一定要有相同格式的來源。
+
+```text
+1. 官方 API
+2. 官方 JSON
+3. 官方 RSS / Atom
+4. 官方 Incident History
+5. 官方 System Status / Health / Network Status
+6. 官方公告頻道（例如官方 Telegram）
+7. 官方備援狀態頁
+8. 可信第三方事件資料
+9. 其他備援
+10. 全部自動來源不可用 → 官方頁入口
+```
+
+注意：`Reader` 只是「讀取方式」，不是可信度層級。
+例如「官方 Status 頁經 Reader 解析」仍屬於官方 Status，而不是第三方。
+
+各服務只使用它實際存在的來源，例如：
+
+```text
+GitHub
+官方 API → 官方 Status → 官方頁入口
+
+AWS
+官方 RSS → 官方 Health Dashboard → 官方頁入口
+
+Google Cloud
+官方 JSON → 官方 Status → 官方頁入口
+
+Apple
+官方 JSON → 官方 System Status → Pingoru 備援 → 官方頁入口
+
+DMIT
+官方 Server Status → 官方 Telegram 公告 → 官方頁入口
+```
+
+第三方來源永遠不能排在任何官方來源之前，也不會覆蓋已取得的官方事件；只在官方資料不足時補足最近事件。

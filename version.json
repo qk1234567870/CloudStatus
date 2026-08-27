@@ -1,6 +1,6 @@
 {
   "name": "CloudStatus Pure Pages",
-  "version": "18.0.0",
+  "version": "19.0.0",
   "updated": "2026-08-27",
   "current_state_and_history_independent": true,
   "status_inference": false,
@@ -21,5 +21,18 @@
   "apple_markdown_reader_parser": true,
   "apple_backup": "Pingoru (only after official sources)",
   "apple_epoch_seconds_fix": true,
-  "event_time_boundary_hardening": true
+  "event_time_boundary_hardening": true,
+  "source_priority_normalized": true,
+  "source_priority": [
+    "official-api",
+    "official-json",
+    "official-rss",
+    "official-history",
+    "official-status",
+    "official-announcement",
+    "official-backup",
+    "trusted-third-party",
+    "other-backup",
+    "official-page-entry"
+  ]
 }
