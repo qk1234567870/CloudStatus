@@ -100,3 +100,21 @@ CloudStatus 會以結構化資料呈現：
 ```
 
 並保留官方開始與結束時間。
+
+
+## v17：Apple Pages/CORS 修正
+
+Apple 在純 GitHub Pages 環境可能因瀏覽器 CORS 無法直接讀取官方 JSON。
+
+現在 Apple 來源會：
+
+```text
+官方 JSON 直連
+→ 若被 CORS 阻擋，改用 Reader 讀官方 JSON
+→ 官方 System Status 頁 Reader
+→ 官方頁入口
+```
+
+Apple System Status Reader 也改成 Markdown-aware：
+會先移除 `###`、列表符號、粗體標記，再解析
+`Maps Display - Resolved Performance` 等事件標題。
