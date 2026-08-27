@@ -1,170 +1,68 @@
 # CloudStatus
 
-純 GitHub Pages 的雲端、AI、數據中心、骨幹網與 Hosting 狀態聚合頁。
+純 GitHub Pages 的全球雲端、AI、平台、Hosting、數據中心與骨幹網狀態聚合頁。
 
-不使用 GitHub Actions、不使用 Python、不生成 `status.json`。所有資料都由瀏覽器直接讀取公開來源。
+## 核心原則
 
-## 目前功能
+CloudStatus 只顯示來源本身能證明的資料：
 
-- 16 個服務
-- 每個服務最多顯示最近 3 筆有效事件
-- 依來源優先級補足事件
-- 各服務獨立 Parser Policy
-- Reader / HTML 嚴格垃圾過濾
-- 跨來源去重
-- 不為了湊滿 3 筆而加入低可信內容
-- 來源沒有明確 `status` 時不推斷狀態
-- 每 5 分鐘背景刷新
-- iOS / Safari 回到前景後自動補刷新
-- 搜尋、分類、只看異常
-- 不整頁重新載入
+- 有結構化 `status` 才顯示狀態標籤
+- 沒有 `status` 不猜、不補、不假設
+- 「目前正常」與「近期已解決事件」可以同時存在
+- 沒抓到事件不等於正常
+- Reader 只作備援，不用通用關鍵字把整頁文字硬判成事件
 
 ## 來源優先級
 
-來源不是全部同級，也不是第一個成功就結束。
-
 ```text
-1. 官方 API / 官方結構化 JSON
-2. 官方 RSS / Atom
-3. 官方 Incident History / History Feed
-4. 官方 Status / Maintenance / Notice 頁
-5. Jina Reader 讀官方頁
-6. 官方 Telegram / 公告 / 服務專屬備援
-7. 其他低優先級備援
-8. 官方狀態頁入口
+官方 API / 官方 JSON
+→ 官方 RSS / Atom
+→ 官方 Incident History
+→ 官方 Status / Maintenance 頁
+→ Reader
+→ 專屬備援（例如 Telegram）
+→ 官方頁入口
 ```
 
-程式會按照層級補足有效事件。
+取得可靠事件後最多顯示最近 3 筆，不為了湊滿 3 筆加入導航、產品文案或無關文字。
 
-例如：
+## 專用解析器
 
-```text
-官方 API 找到 2 筆
-→ 再嘗試 RSS / History 補第 3 筆
+16 個服務使用各自的 adapter / parser，而不是共用一個寬鬆全文關鍵字解析器。
 
-已取得 3 筆可靠事件
-→ 停止向下使用低可信來源
+特別處理：
 
-最終只有 1 筆可靠事件
-→ 就只顯示 1 筆
-```
+- Apple：區分「所有服務正常」與「今天已解決事件」
+- Google Cloud：官方 JSON 顯示歷史事件；官方 Status 頁顯示當前健康
+- BandwagonHost：只抓事件卡片的標題、明確狀態與時間，不抓正文句子
+- Oracle Cloud：排除 `網址來源`、導航與 History 頁文案
+- NTT / Arelion / Cogent：排除 BGP、routing policy、outage-free 等產品與網路介紹文字
+- DMIT：Telegram / HTML 無明確 status 時只顯示事件，不猜狀態
 
-不會用導航文字、產品介紹或無關內容硬湊成 3 筆。
+## 狀態
 
-## 事件判定
-
-每個服務都有自己的 Parser Policy。
-
-目前包含：
-
-- Cloudflare
-- AWS
-- Microsoft Azure
-- Google Cloud
-- GitHub
-- OpenAI
-- Apple
-- Oracle Cloud
-- BandwagonHost
-- DMIT
-- Equinix
-- Digital Realty
-- NTT GDC
-- Arelion
-- NTT Global Network
-- Cogent
-
-Reader 只負責取得文字；是否為事件由服務自己的規則判定。
-
-全域還會排除常見垃圾內容，例如：
-
-```text
-No known service issues
-Recent incidents
-Past incidents
-View All
-Subscribe
-Email / SMS notifications
-RSS / Atom / Webhook
-Privacy / Terms
-Powered by
-Markdown 標題與純連結
-BGP communities
-Routing policies
-產品介紹與導航文字
-```
-
-## 狀態規則
-
-CloudStatus 不再自行猜事件狀態。
-
-```text
-來源明確提供結構化 status
-→ 保留來源 status
-→ UI 只做中文顯示
-
-來源沒有明確 status
-→ status = null
-→ 不顯示狀態標籤
-```
-
-因此不會再出現：
-
-```text
-看到 outage → 自動猜「服務中斷」
-看到 maintenance → 自動猜「維護中」
-沒有 end time → 自動猜「調查中」
-RSS item → 自動標「已解決」
-```
-
-只有來源本身提供狀態時才顯示，例如：
+只有資料來源明確提供才顯示，例如：
 
 ```text
 investigating → 調查中
 identified    → 已確認
 monitoring    → 監控中
 resolved      → 已解決
-postmortem    → 事後分析
+maintenance   → 維護
 ```
 
-如果來源只有事件標題而沒有狀態，就只顯示事件標題。
-
-## 正常狀態
-
-「抓不到事件」不等於「服務正常」。
-
-只有來源明確提供正常訊號時，才顯示：
-
-```text
-[正常]
-```
-
-如果所有自動來源都沒有可靠事件，也沒有明確正常訊號，則退回：
-
-```text
-[官方狀態頁] 查看官方即時狀態 →
-```
+RSS、Reader、Telegram 純文字沒有明確狀態時，事件前不顯示任何狀態標籤。
 
 ## 自動刷新
 
 ```text
-首次開啟
-→ 立即抓取
-
-每 5 分鐘
-→ 頁面在前景時背景刷新
-
-右上 ↻
-→ 強制立即刷新
-
-iOS / Safari 回到前景
-→ 若距離上次成功刷新 ≥ 2 分鐘
-→ 自動補刷新
+首次開啟 → 立即刷新
+前景每 5 分鐘 → 背景重新抓取
+右上 ↻ → 強制刷新
+iOS / Safari 回到前景且距上次刷新 ≥ 2 分鐘 → 補刷新
 ```
 
-不使用 `location.reload()`，不會整頁重載。
-
-`最後讀取於` 只會在本輪資料刷新完成後更新。
+不使用整頁 `location.reload()`。
 
 ## 專案結構
 
@@ -179,22 +77,9 @@ CloudStatus/
 └── version.json
 ```
 
-不包含：
+不包含 GitHub Actions、Python、`status.json`、`CNAME`、固定帳號、固定 Repo 或固定自訂域名。
 
-```text
-.github/workflows/
-Python
-requirements.txt
-status.json
-CNAME
-任何固定 GitHub 帳號
-任何固定 Repository 名稱
-任何固定自訂網域
-```
-
-## 部署到 GitHub Pages
-
-Repository 設為：
+## GitHub Pages
 
 ```text
 Settings
@@ -204,18 +89,8 @@ Settings
 → Folder: /(root)
 ```
 
-如果要使用自訂域名，請自行到：
-
-```text
-Settings
-→ Pages
-→ Custom domain
-```
-
-設定自己的域名。
+自訂域名請自行在 GitHub Pages 設定。
 
 ## 翻譯
 
-CloudStatus 不內建 DeepL 或 Google Translate。
-
-事件內容保留來源原文，需要翻譯時直接使用瀏覽器整頁翻譯。
+事件保留來源原文。需要中文時使用瀏覽器整頁翻譯。
