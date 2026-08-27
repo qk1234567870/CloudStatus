@@ -1,20 +1,65 @@
-# CloudStatus Static Pages
+# CloudStatus Pure GitHub Pages
 
-純 GitHub Pages 版本，不使用 GitHub Actions、不使用 Python、不生成 status.json。
+純 GitHub Pages 版本，不使用 GitHub Actions、Python、status.json。
 
-部署：
-1. 刪除或停用 `.github/workflows/pages.yml`
-2. 把本套件內容放到 Repo 根目錄
-3. Settings → Pages
-4. Source 選 `Deploy from a branch`
-5. Branch 選 `main`
-6. Folder 選 `/(root)`
-7. Save
+## 來源優先級
 
-套件已附 `CNAME`，內容為 `cloudstatus.htbq.org`。
+每個服務都有自己的 `sources`：
 
-Cloudflare / GitHub / OpenAI / Google Cloud 會嘗試直接由瀏覽器讀官方 API。
-如果官方 API 不允許 CORS，頁面會自動顯示官方狀態頁入口，不會誤判成服務故障。
-其他服務直接顯示官方狀態頁入口。
+```text
+1. 官方 API / JSON / RSS
+2. 官方狀態頁
+3. Jina Reader
+4. 服務專屬備援
+5. 官方狀態頁入口
+```
 
-事件保留官方原文；需要中文時使用瀏覽器翻譯。
+只有所有自動來源都失敗時，才顯示：
+
+```text
+[官方狀態頁] 自動來源不可用，查看官方即時狀態 →
+```
+
+不會把來源問題誤判成服務故障。
+
+## DMIT
+
+```text
+官方 server status
+→ Reader
+→ Telegram DMIT_INC 備援
+→ 官方頁
+```
+
+## 相容性
+
+不使用 ES Module / import。
+
+```html
+<script src="./assets/services.js"></script>
+<script src="./assets/app.js"></script>
+```
+
+因此 iOS Safari、內建 WebView、Scriptable WebView 相容性比上一版高。
+
+## 自動刷新
+
+瀏覽器每 60 秒重新執行完整來源優先級。
+
+## 部署
+
+GitHub Pages：
+
+```text
+Settings
+→ Pages
+→ Source: Deploy from a branch
+→ Branch: main
+→ /(root)
+```
+
+已附 `CNAME`：
+
+```text
+cloudstatus.htbq.org
+```

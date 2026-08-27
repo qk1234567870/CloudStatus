@@ -11,11 +11,11 @@
 <body>
   <main class="shell">
     <header class="topbar">
-      <div>
+      <div class="heading">
         <h1>☁️ 全球雲端與網路服務狀態</h1>
-        <p id="updated">即時讀取官方來源…</p>
+        <p id="updated">準備讀取官方來源…</p>
       </div>
-      <button id="reload" class="icon-btn" type="button">↻</button>
+      <button id="reload" class="icon-btn" type="button" aria-label="重新整理">↻</button>
     </header>
 
     <section class="toolbar">
@@ -29,6 +29,7 @@
         <button class="chip" data-filter="datacenter">數據中心</button>
         <button class="chip" data-filter="backbone">骨幹網</button>
       </div>
+
       <div class="tools">
         <input id="search" type="search" placeholder="搜尋服務或事件…" autocomplete="off">
         <label class="toggle">
@@ -41,8 +42,12 @@
     <section class="summary" id="summary"></section>
     <section class="grid" id="services"></section>
 
-    <footer>可跨域讀取的官方 API 直接顯示；其餘服務直接連到官方狀態頁。</footer>
+    <footer>
+      來源優先級：官方 API / Feed → 官方頁 → Reader → 專屬備援 → 官方狀態頁。
+    </footer>
   </main>
-  <script type="module" src="./assets/app.js"></script>
+
+  <script src="./assets/services.js"></script>
+  <script src="./assets/app.js"></script>
 </body>
 </html>
