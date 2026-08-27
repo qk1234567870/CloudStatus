@@ -171,3 +171,25 @@ footer{
   .event{grid-template-columns:auto minmax(0,1fr) auto}
   .event-title{font-size:10.8px}
 }
+
+/* v12 — current state and incident history are intentionally independent */
+.current-state{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  background:rgba(255,255,255,.018);
+}
+.current-state .state-dot{
+  width:7px;height:7px;border-radius:50%;flex:0 0 auto;background:currentColor
+}
+.current-state strong{font-weight:700}
+.section-label{
+  border-bottom:1px solid var(--hairline);
+  padding-top:8px;
+  padding-bottom:6px;
+}
+.history-empty{
+  padding:9px 11px 11px;
+  color:var(--time);
+  font-size:10px;
+}

@@ -394,14 +394,6 @@
       }
     }
 
-    var hasExplicitActive = events.some(function(e){
-      return e.status && ["resolved","postmortem","completed","closed"].indexOf(e.status)===-1;
-    });
-    if (hasExplicitActive && health==="normal") {
-      health="incident";
-      healthText="目前有未解決事件";
-    }
-
     return {
       id:service.id,name:service.name,desc:service.desc,category:service.category,page:service.page,
       events:events.slice(0,3),health:health,healthText:healthText,
@@ -454,20 +446,22 @@
   function renderService(service) {
     var body="";
 
+    // 「目前狀態」只來自來源本身明確提供的 current health。
+    // 歷史事件不反推目前服務狀態。
     if (service.health==="normal") {
-      body += '<div class="current-state good">[正常] '+escapeHtml(service.healthText||"官方來源顯示正常")+'</div>';
+      body += '<div class="current-state good"><span class="state-dot"></span><strong>[目前正常]</strong> '+escapeHtml(service.healthText||"官方來源顯示目前正常")+'</div>';
     } else if (service.health==="incident" && service.healthText) {
-      body += '<div class="current-state warn">'+escapeHtml(service.healthText)+'</div>';
+      body += '<div class="current-state warn"><span class="state-dot"></span><strong>[目前異常]</strong> '+escapeHtml(service.healthText)+'</div>';
     }
 
     if (service.events.length) {
-      if (service.health) {
-        body += '<div class="section-label">近期事件</div>';
-      }
-      body += service.events.map(function(e){return renderEvent(e,service);}).join("");
+      body += '<div class="section-label">最近 '+service.events.length+' 筆事件</div>';
+      body += service.events.slice(0,3).map(function(e){return renderEvent(e,service);}).join("");
+    } else if (service.health) {
+      body += '<div class="history-empty">近期沒有可顯示的可靠事件</div>';
     } else if (service.fallback) {
       body += '<a class="message link" href="'+escapeHtml(service.page)+'" target="_blank" rel="noopener">[官方狀態頁] 自動來源未取得可靠事件資料，查看官方即時狀態 →</a>';
-    } else if (!service.health) {
+    } else {
       body += '<div class="message">目前沒有可顯示的可靠事件資料</div>';
     }
 
