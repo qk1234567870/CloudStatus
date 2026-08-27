@@ -15,7 +15,7 @@
     identified: "已確認",
     degraded: "效能下降",
     maintenance: "維護中",
-    investigating: "處理中",
+    investigating: "調查中",
     outage: "服務中斷"
   };
 
@@ -639,7 +639,7 @@
         return (
           '<a class="event" href="' + escapeHtml(event.url || service.page) + '" target="_blank" rel="noopener">' +
             '<span class="tag ' + escapeHtml(event.status) + '">[' +
-              escapeHtml(statusLabel[event.status] || "處理中") +
+              escapeHtml(statusLabel[event.status] || "") +
             ']</span>' +
             '<span class="event-title" title="' + escapeHtml(event.title + (event.sourceLabel ? " · " + event.sourceLabel : "")) + '">' +
               escapeHtml(event.title) +
