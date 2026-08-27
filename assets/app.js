@@ -185,6 +185,89 @@
     return events;
   }
 
+
+  // 每個服務自己的事件解析策略。
+  // Reader 只負責取得文字；是否為真正事件由這裡決定。
+  var SERVICE_PARSER_POLICIES = {
+    "cloudflare": {
+      accept: /(incident|outage|degraded|maintenance|disruption|service issue|network performance|errors?)/i,
+      reject: /(documentation|developers?|blog|community|learn more|all systems operational|no incidents?)/i
+    },
+    "aws": {
+      accept: /(service disruption|service degradation|increased error|increased latency|connectivity|operational issue|incident|outage|maintenance)/i,
+      reject: /(documentation|architecture|pricing|getting started|all services.*operating normally|no current incidents?)/i
+    },
+    "azure": {
+      accept: /(service issue|service degradation|service interruption|incident|outage|impact|mitigation|maintenance)/i,
+      reject: /(documentation|pricing|products?|learn|all services.*available|no active incidents?)/i
+    },
+    "google-cloud": {
+      accept: /(incident|service disruption|service issue|degraded|outage|latency|packet loss|maintenance)/i,
+      reject: /(documentation|products?|solutions?|pricing|all services.*available|no incidents?)/i
+    },
+    "github": {
+      accept: /(incident|disruption|degraded|outage|errors?|maintenance|performance issues?)/i,
+      reject: /(documentation|changelog|blog|all systems operational|no incidents?)/i
+    },
+    "apple": {
+      accept: /(resolved outage|resolved issue|outage|issue|maintenance|users? (?:are|were) affected)/i,
+      reject: /(available|all services.*operating normally|system status|support)/i
+    },
+    "oracle": {
+      accept: /(incident|service disruption|service degradation|outage|maintenance|availability|performance issue)/i,
+      reject: /(documentation|products?|cloud infrastructure home|all systems operational|no incidents?)/i
+    },
+    "bandwagon": {
+      accept: /(incident|outage|maintenance|network issue|packet loss|degraded|routing issue|service interruption)/i,
+      reject: /(knowledge base|client area|order|pricing|no incidents?|all systems operational)/i
+    },
+    "dmit": {
+      accept: /(maintenance|incident|outage|network issue|packet loss|fiber|cable|degraded|emergency|interruption|latency|routing issue)/i,
+      reject: /(client area|login|order|pricing|looking glass|no incidents?|operating normally)/i
+    },
+    "equinix": {
+      accept: /(incident|outage|degraded|maintenance|service disruption|connectivity issue|performance issue)/i,
+      reject: /(products?|services overview|data centers?|interconnection|learn more|all systems operational|no incidents?)/i
+    },
+    "digital-realty": {
+      accept: /(incident|outage|degraded|maintenance|service disruption|connectivity issue|performance issue)/i,
+      reject: /(products?|platformdigital|data centers?|solutions?|learn more|all systems operational|no incidents?)/i
+    },
+    "ntt-gdc": {
+      accept: /(incident|outage|degraded|maintenance|service disruption|connectivity issue|performance issue)/i,
+      reject: /(data centers?|services?|solutions?|learn more|outage[-\s]?free|no (?:network )?outages?|no incidents?)/i
+    },
+    "arelion": {
+      accept: /(incident|outage|degraded|maintenance|service disruption|packet loss|latency issue|routing issue|network issue)/i,
+      reject: /(bgp communities|routing polic(?:y|ies)|network map|products?|learn more|outage[-\s]?free|no incidents?)/i
+    },
+    "ntt-global-network": {
+      accept: /(incident|outage|degraded|maintenance|service disruption|packet loss|latency issue|routing issue|network issue)/i,
+      reject: /(no (?:network )?outages?|outage[-\s]?free|100%\s+.*outage[-\s]?free|bgp communities|routing polic(?:y|ies)|our global ip network|availability\s*[:\-]|guaranteed|learn more)/i
+    },
+    "cogent": {
+      accept: /(incident|outage|degraded|maintenance|service disruption|packet loss|latency issue|routing issue|network issue)/i,
+      reject: /(products?|network map|looking glass|bgp|routing polic(?:y|ies)|learn more|outage[-\s]?free|no incidents?)/i
+    }
+  };
+
+  function getServiceParserPolicy(service) {
+    return SERVICE_PARSER_POLICIES[service.id] || {
+      accept: /(incident|outage|degraded|maintenance|disruption|interruption|packet loss|latency issue|routing issue|network issue|service issue|performance issue|error rate|connectivity issue)/i,
+      reject: /(no\s+(?:network\s+)?outages?|no\s+(?:known\s+)?incidents?|outage[-\s]?free|all systems operational|all services operational|operating normally|documentation|learn more)/i
+    };
+  }
+
+  function filterEventsByServicePolicy(service, events) {
+    var policy = getServiceParserPolicy(service);
+    return latestThree((events || []).filter(function (event) {
+      var title = cleanText(event && event.title);
+      if (!title) return false;
+      if (policy.reject && policy.reject.test(title)) return false;
+      return !policy.accept || policy.accept.test(title);
+    }));
+  }
+
   function parseReaderEvents(text, service) {
     var lines = String(text || "").split(/\n+/).map(cleanText).filter(Boolean);
     var events = [];
@@ -227,48 +310,20 @@
     });
 
     return {
-      events: latestThree(events),
+      events: filterEventsByServicePolicy(service, events),
       normal: normalWords.test(text)
     };
   }
 
   function applyServiceReaderPolicy(service, parsed, text) {
-    var events = parsed.events || [];
     var normal = !!parsed.normal;
 
-    // NTT Global Network public product pages contain marketing copy such as
-    // "No network outages", "outage-free" and BGP/routing documentation.
-    // None of these are incidents.
-    if (service.id === "ntt-global-network") {
-      events = events.filter(function (e) {
-        var t = String(e.title || "");
-        if (/(no\s+(?:network\s+)?outages?|outage[-\s]?free|100%\s+.*outage[-\s]?free|bgp\s+communities|routing\s+polic(?:y|ies)|our\s+global\s+ip\s+network)/i.test(t)) {
-          return false;
-        }
-        return /(incident|outage|degraded|maintenance|disruption|interruption|packet loss|latency issue|routing issue|network issue|service issue)/i.test(t);
-      });
-
-      if (/(no\s+(?:network\s+)?outages?|outage[-\s]?free|100%\s+.*outage[-\s]?free)/i.test(text)) {
-        normal = true;
-      }
-    }
-
-    // Arelion / Cogent / NTT GDC product pages also contain routing/network copy.
-    // Require a concrete incident qualifier.
-    if (
-      service.id === "arelion" ||
-      service.id === "cogent" ||
-      service.id === "ntt-gdc"
-    ) {
-      events = events.filter(function (e) {
-        var t = String(e.title || "");
-        return /(incident|outage|degraded|maintenance|disruption|interruption|packet loss|latency issue|routing issue|network issue|service issue|error rate)/i.test(t) &&
-               !/(bgp\s+communities|routing\s+polic(?:y|ies)|learn\s+more|product|overview|guaranteed|outage[-\s]?free)/i.test(t);
-      });
+    if (/(no\s+(?:network\s+)?outages?|no\s+(?:known\s+)?incidents?|outage[-\s]?free|100%\s+.*outage[-\s]?free|all\s+systems?\s+(?:are\s+)?operational|all\s+services?\s+(?:are\s+)?operational|operating\s+normally)/i.test(String(text || ""))) {
+      normal = true;
     }
 
     return {
-      events: latestThree(events),
+      events: filterEventsByServicePolicy(service, parsed.events || []),
       normal: normal
     };
   }
