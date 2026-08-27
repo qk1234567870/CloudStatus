@@ -1,11 +1,10 @@
 {
   "name": "CloudStatus Pure Pages",
-  "version": "7.0.0",
+  "version": "8.0.0",
   "updated": "2026-08-27",
-  "refresh": {
-    "interval_minutes": 5,
-    "foreground_threshold_minutes": 2,
-    "manual_force_refresh": true,
-    "full_page_reload": false
+  "status_policy": {
+    "inference": false,
+    "structured_status_only": true,
+    "unknown_status": null
   }
 }

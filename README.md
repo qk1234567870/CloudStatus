@@ -199,3 +199,14 @@ Telegram               68
 - iOS 回到前景：距離上次成功刷新 ≥ 2 分鐘時自動補刷新
 - 不整頁 reload，只更新資料
 - `最後讀取於` 只在本輪資料成功完成後更新
+
+
+## v8：狀態零推斷
+
+只有實際抓取來源明確提供的結構化 status 才顯示狀態標籤。
+
+- 官方 API / JSON 有 status：保留並翻譯顯示
+- 官方頁有獨立 status 欄位：保留
+- RSS / Reader / Telegram / HTML 純文字沒有 status：不猜、不顯示
+- 不再因 title 出現 outage / maintenance / resolved 等字樣自行判定狀態
+- 不再因缺少 end time 自行標記為「調查中」
