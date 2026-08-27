@@ -1,6 +1,6 @@
 {
   "name": "CloudStatus Pure Pages",
-  "version": "23.0.0",
+  "version": "24.0.0",
   "updated": "2026-08-27",
   "current_state_and_history_independent": true,
   "status_inference": false,
@@ -54,5 +54,6 @@
   "desktop_breakpoint": "981px",
   "google_cloud_time_layout_fix": true,
   "dmit_grouped_message_parser": true,
-  "dmit_extended_date_parser": true
+  "dmit_extended_date_parser": true,
+  "event_time_second_line_all_devices": true
 }
