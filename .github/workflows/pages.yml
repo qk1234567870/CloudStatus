@@ -2,16 +2,17 @@ name: Build and Deploy CloudStatus
 
 on:
   workflow_dispatch:
+
   schedule:
     - cron: "*/15 * * * *"
+
   push:
     branches:
       - main
     paths:
-      - "web/**"
       - "scripts/**"
+      - "web/**"
       - "config.json"
-      - "requirements.txt"
       - ".github/workflows/pages.yml"
 
 permissions:
@@ -19,13 +20,13 @@ permissions:
   pages: write
   id-token: write
 
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
-
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
       - name: Checkout
@@ -35,31 +36,39 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: "pip"
 
       - name: Install dependencies
         run: pip install -r requirements.txt
 
       - name: Build data
-        env:
-          DEEPL_API_KEY: ${{ secrets.DEEPL_API_KEY }}
         run: python scripts/build.py
 
-      - name: Assemble site
+      - name: Prepare Pages
         run: |
-          rm -rf dist
-          mkdir -p dist/data
-          cp -R web/. dist/
-          cp data/status.json dist/data/status.json
+          rm -rf public
+          mkdir -p public
+          cp -R web/. public/
+          mkdir -p public/data
+          cp data/status.json public/data/status.json
+          touch public/.nojekyll
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
-          path: dist
+          path: ./public
 
-      - name: Deploy Pages
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
