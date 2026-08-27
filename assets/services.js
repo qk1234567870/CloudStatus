@@ -76,7 +76,7 @@ window.CLOUDSTATUS_SERVICES = [
       {
         "type": "gcp",
         "url": "https://status.cloud.google.com/incidents.json",
-        "label": "官方 JSON",
+        "label": "官方 JSON / Reader",
         "tier": 1
       },
       {
@@ -142,7 +142,7 @@ window.CLOUDSTATUS_SERVICES = [
       {
         "type": "apple-json",
         "url": "https://www.apple.com/support/systemstatus/data/system_status_en_US.js",
-        "label": "官方 JSON",
+        "label": "官方 JSON / Reader",
         "tier": 1
       },
       {

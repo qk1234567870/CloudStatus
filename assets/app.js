@@ -76,6 +76,33 @@
   function formatRange(a,b) {
     var x = formatDate(a);
     if (!x) return "";
+    if (!b) return x;
+
+    var da = new Date(a);
+    var db = new Date(b);
+    if (isNaN(da.getTime()) || isNaN(db.getTime())) {
+      var y0 = formatDate(b);
+      return y0 ? x + "-" + y0 : x;
+    }
+
+    var sameDay =
+      da.getFullYear() === db.getFullYear() &&
+      da.getMonth() === db.getMonth() &&
+      da.getDate() === db.getDate();
+
+    if (sameDay) {
+      try {
+        var endTime = new Intl.DateTimeFormat("zh-TW", {
+          hour:"2-digit",
+          minute:"2-digit",
+          hour12:false
+        }).format(db);
+        return x + "-" + endTime;
+      } catch (e) {
+        return x;
+      }
+    }
+
     var y = formatDate(b);
     return y ? x + "-" + y : x;
   }
@@ -314,12 +341,30 @@
   }
 
   async function fetchAppleJson(url) {
-    var raw = await fetchText(url);
+    var raw = "";
 
-    // production endpoint 為純 JSON；保留 JSONP 清理以提高兼容性。
-    raw = String(raw || "").trim()
+    try {
+      raw = await fetchText(url);
+    } catch (e) {
+      // GitHub Pages 瀏覽器可能被 Apple CORS 擋住，改由 Reader 取原始資料。
+      raw = await fetchText("https://r.jina.ai/" + url);
+    }
+
+    raw = String(raw || "").trim();
+
+    // Reader 可能包 Markdown code fence。
+    raw = raw
+      .replace(/^```(?:json|javascript|js)?\s*/i, "")
+      .replace(/\s*```$/i, "")
       .replace(/^jsonCallback\s*\(\s*/i, "")
       .replace(/\s*\)\s*;?\s*$/i, "");
+
+    // 取第一個 JSON object，避免 Reader 附加標頭。
+    var first = raw.indexOf("{");
+    var last = raw.lastIndexOf("}");
+    if (first >= 0 && last > first) {
+      raw = raw.slice(first, last + 1);
+    }
 
     return JSON.parse(raw);
   }
@@ -395,31 +440,35 @@
     return false;
   }
 
+  function stripMarkdownLine(line) {
+    return cleanText(String(line || "")
+      .replace(/^#{1,6}\s+/, "")
+      .replace(/^\s*[-*+]\s+/, "")
+      .replace(/\*\*/g, "")
+      .replace(/__/g, "")
+      .replace(/`/g, ""));
+  }
+
   function parseApple(text, service, source) {
     var t = String(text || "");
 
-    // 「目前正常」與歷史事件是兩個獨立訊號。
-    var normal =
-      /All services are operating normally/i.test(t) ||
-      /所有服務均正常運作/i.test(t);
+    // Jina/Reader 可能把 Apple HTML 轉成 Markdown。
+    var ls = lines(t).map(stripMarkdownLine).filter(Boolean);
+
+    var normal = ls.some(function (line) {
+      return /All services are operating normally/i.test(line) ||
+             /所有服務均正常運作/i.test(line);
+    });
 
     var events = [];
-    var ls = lines(t);
-
-    // Apple 實際會使用 Resolved Performance。
-    // 僅接受「服務名稱 - 官方狀態」這種事件標題，不掃整頁 available 清單。
-    var appleStatus =
-      /(Resolved Performance|Resolved Outage|Resolved Issue|Resolved Availability|Performance|Outage|Issue|Maintenance)$/i;
+    var eventTitle = /^(.+?)\s*[-–—]\s*(Resolved Performance|Resolved Outage|Resolved Issue|Resolved Availability|Performance|Outage|Issue|Maintenance)$/i;
 
     for (var i = 0; i < ls.length; i++) {
       var line = ls[i];
 
       if (!line || isAppleServiceInventoryLine(line)) continue;
 
-      var m = line.match(
-        /^(.+?)\s*[-–—]\s*(Resolved Performance|Resolved Outage|Resolved Issue|Resolved Availability|Performance|Outage|Issue|Maintenance)$/i
-      );
-
+      var m = line.match(eventTitle);
       if (!m) continue;
 
       var title = cleanText(m[1]);
@@ -427,24 +476,20 @@
 
       if (
         !title ||
-        looksNoise(title) ||
-        isAppleServiceInventoryLine(title) ||
         /^System Status$/i.test(title) ||
-        /^All services/i.test(title)
+        /^All services/i.test(title) ||
+        isAppleServiceInventoryLine(title) ||
+        looksNoise(title)
       ) {
         continue;
       }
 
       var status = null;
-
-      // 只根據 Apple 明確寫出的事件狀態映射，不從描述推斷。
       if (/^Resolved\b/i.test(raw)) status = "resolved";
       else if (/^Maintenance$/i.test(raw)) status = "maintenance";
       else if (/^Outage$/i.test(raw)) status = "outage";
 
-      // Apple 的時間通常緊接事件標題：
-      // Today, 8:46 AM - 9:30 AM
-      var block = ls.slice(i, Math.min(i + 7, ls.length)).join(" ");
+      var block = ls.slice(i, Math.min(i + 9, ls.length)).join(" ");
       var range = parseAppleClockRange(block);
 
       events.push({

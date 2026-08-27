@@ -234,3 +234,65 @@ button { font-size: 14px; }
   .event .status, .event-status, .event .title, .event-title { font-size: 13.5px; }
   .event .time, .event-time, .section-label { font-size: 11px; }
 }
+
+
+/* v16 — 時間欄防溢出：桌面與手機共用 */
+.event{
+  grid-template-columns:auto minmax(0,1fr) minmax(0,max-content);
+  width:100%;
+  min-width:0;
+}
+
+.event-title{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.event-time{
+  min-width:0;
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  justify-self:end;
+  text-align:right;
+}
+
+/* 桌面：給時間欄一個合理上限，避免長時間區間把卡片撐爆 */
+@media (min-width: 761px){
+  .event-time{
+    max-width:220px;
+  }
+}
+
+/* 手機：縮短時間欄並允許標題優先吃剩餘空間 */
+@media (max-width:760px){
+  .event{
+    grid-template-columns:auto minmax(0,1fr) minmax(82px,36%);
+    gap:6px;
+  }
+
+  .event-time{
+    width:100%;
+    max-width:100%;
+    font-size:11px;
+  }
+
+  .event-title{
+    font-size:13.5px;
+  }
+}
+
+/* 更窄手機：時間欄再壓縮，避免左右越界 */
+@media (max-width:430px){
+  .event{
+    grid-template-columns:auto minmax(0,1fr) minmax(74px,34%);
+    gap:5px;
+  }
+
+  .event-time{
+    font-size:10.5px;
+  }
+}
