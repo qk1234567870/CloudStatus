@@ -1,6 +1,6 @@
 {
   "name": "CloudStatus Pure Pages",
-  "version": "21.0.0",
+  "version": "22.0.0",
   "updated": "2026-08-27",
   "current_state_and_history_independent": true,
   "status_inference": false,
@@ -49,5 +49,7 @@
     "Arelion (Telia)",
     "NTT Global Network",
     "Cogent"
-  ]
+  ],
+  "desktop_layout": "fixed-two-column",
+  "desktop_breakpoint": "981px"
 }
