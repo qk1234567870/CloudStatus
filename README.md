@@ -61,3 +61,42 @@ Apple 改用專用事件格式解析：
 - `AppleCare on Device: available ...` 等服務清單永遠不當事件
 - 目前正常與近期已解決事件可以同時顯示
 - 仍然禁止從事件描述自行推斷 status
+
+
+## v15：Apple 改用官方結構化 JSON
+
+Apple 不再主要依賴 System Status 頁面的 Reader。
+
+優先來源：
+
+```text
+Apple 官方 system_status_en_US.js
+→ 官方 System Status 頁 Reader
+```
+
+官方 JSON 直接提供：
+
+- `serviceName`
+- `events`
+- `eventStatus`
+- `statusType`
+- `epochStartDate`
+- `epochEndDate`
+
+因此可以直接取得 Apple 事件與開始/結束時間，不需要從網頁文字猜測。
+
+`eventStatus` 才是狀態來源；`statusType` 只作事件類型資訊，不拿來推斷狀態。
+
+例如 Apple 官方頁顯示：
+
+```text
+Maps Display - Resolved Performance
+```
+
+CloudStatus 會以結構化資料呈現：
+
+```text
+[已解決] Maps Display
+```
+
+並保留官方開始與結束時間。
