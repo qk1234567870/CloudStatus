@@ -615,47 +615,50 @@ button { font-size: 14px; }
 }
 
 
+
+
 /* =========================================================
-   v23 — 雙欄卡片事件時間改為第二行
-   解決 Google Cloud 長標題與時間互相擠壓。
+   v24 — 所有裝置統一事件排版
+   第一行：狀態 + 事件標題
+   第二行：時間靠右
+   桌面雙欄與手機單欄完全一致
    ========================================================= */
-@media (min-width:981px){
-  .event{
-    grid-template-columns:auto minmax(0,1fr) !important;
-    grid-template-areas:
-      "tag title"
-      ". time" !important;
-    column-gap:7px !important;
-    row-gap:3px !important;
-    align-items:center !important;
-  }
+.event{
+  grid-template-columns:auto minmax(0,1fr) !important;
+  grid-template-areas:
+    "tag title"
+    ". time" !important;
+  column-gap:7px !important;
+  row-gap:4px !important;
+  align-items:center !important;
+}
 
-  .event .tag{
-    grid-area:tag !important;
-  }
+.event .tag{
+  grid-area:tag !important;
+}
 
-  .event-title{
-    grid-area:title !important;
-    min-width:0 !important;
-    overflow:hidden !important;
-    text-overflow:ellipsis !important;
-    white-space:nowrap !important;
-  }
+.event-title{
+  grid-area:title !important;
+  min-width:0 !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+  white-space:nowrap !important;
+}
 
-  .event-time{
-    grid-area:time !important;
-    justify-self:end !important;
-    text-align:right !important;
-    max-width:100% !important;
-    overflow:hidden !important;
-    text-overflow:ellipsis !important;
-    white-space:nowrap !important;
-  }
+.event-time{
+  grid-area:time !important;
+  justify-self:end !important;
+  text-align:right !important;
+  min-width:0 !important;
+  max-width:100% !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+  white-space:nowrap !important;
+}
 
-  .event.no-status{
-    grid-template-columns:minmax(0,1fr) !important;
-    grid-template-areas:
-      "title"
-      "time" !important;
-  }
+.event.no-status{
+  grid-template-columns:minmax(0,1fr) !important;
+  grid-template-areas:
+    "title"
+    "time" !important;
 }
