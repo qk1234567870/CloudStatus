@@ -1,6 +1,5 @@
 import importlib
 import json
-import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -11,20 +10,13 @@ sys.path.insert(0, str(BASE))
 
 from core.http import Http
 from core.registry import SERVICE_MODULES
-from core.translator import Translator
-from core.utils import select_events, make_service
+from core.utils import select_events
 
 with open(ROOT / "config.json", "r", encoding="utf-8") as f:
     CONFIG = json.load(f)
 
 http = Http(
     timeout=CONFIG.get("request_timeout", 12),
-    debug=CONFIG.get("debug", False),
-)
-
-translator = Translator(
-    language=CONFIG.get("language", "zh-TW"),
-    timeout=CONFIG.get("translate_timeout", 6),
     debug=CONFIG.get("debug", False),
 )
 
@@ -40,14 +32,12 @@ for module_name in SERVICE_MODULES:
         mod = importlib.import_module(module_name)
         result = mod.fetch(ctx)
 
+        # Only keep the latest three visible events.
+        # Event titles are preserved exactly as provided by the upstream source.
         result.events = select_events(
             result.events,
             CONFIG.get("max_events", 3),
         )
-
-        # Only translate the final three visible events.
-        for event in result.events:
-            event.title = translator.translate(event.title)
 
         results.append(result)
         print(f"[OK] {result.name}: {result.state} ({len(result.events)} events)")
@@ -56,8 +46,8 @@ for module_name in SERVICE_MODULES:
 
 payload = {
     "generated_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
-    "language": CONFIG.get("language", "zh-TW"),
     "max_events": CONFIG.get("max_events", 3),
+    "translation": "browser",
     "services": [x.to_dict() for x in results],
 }
 
