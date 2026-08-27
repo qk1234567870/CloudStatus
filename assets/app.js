@@ -189,12 +189,33 @@
     var lines = String(text || "").split(/\n+/).map(cleanText).filter(Boolean);
     var events = [];
 
-    var eventWords = /(incident|outage|degraded|maintenance|disruption|interruption|packet loss|latency|routing|network issue|service issue|performance issue|availability issue|error rate|connectivity issue)/i;
-    var normalWords = /(all systems operational|all services operational|operating normally|no active incidents|no current incidents|no incidents reported|there are currently no active events)/i;
+    // High-confidence incident words only.
+    var eventWords = /(incident|outage|degraded|maintenance|disruption|interruption|packet loss|latency issue|routing issue|network issue|service issue|performance issue|availability issue|error rate|connectivity issue|service degradation|service unavailable)/i;
+
+    // Negative/marketing wording that must NEVER be treated as an incident.
+    var negativeWords = /(no\s+(?:network\s+)?outages?|no\s+(?:known\s+)?incidents?|no\s+service\s+(?:disruptions?|interruptions?)|outage[-\s]?free|100%\s+(?:network\s+)?outage[-\s]?free|all\s+systems?\s+(?:are\s+)?operational|all\s+services?\s+(?:are\s+)?operational|operating\s+normally|fully\s+operational|no\s+active\s+incidents?|no\s+current\s+incidents?|no\s+incidents?\s+reported|there\s+are\s+currently\s+no\s+active\s+events?)/i;
+
+    // Product/marketing/navigation text that often contains network/routing keywords.
+    var noiseWords = /(bgp\s+communities|routing\s+polic(?:y|ies)|service\s+level\s+agreement|sla\b|learn\s+more|our\s+global\s+ip\s+network|availability\s*[:\-]|guaranteed|network\s+overview|product\s+overview|connectivity\s+services|global\s+ip\s+network)/i;
+
+    var normalWords = /(all systems operational|all services operational|operating normally|no active incidents|no current incidents|no incidents reported|there are currently no active events|no network outages|outage[-\s]?free)/i;
 
     lines.forEach(function (line) {
       if (line.length < 8 || line.length > 220) return;
+
+      // Explicit normal/negative statement: skip as event.
+      if (negativeWords.test(line)) return;
+
+      // Known page copy / marketing copy: skip.
+      if (noiseWords.test(line)) return;
+
+      // Must have a high-confidence incident phrase.
       if (!eventWords.test(line)) return;
+
+      // Extra protection: generic "network", "routing", "availability" alone are not enough.
+      if (/^(availability|network|routing|bgp)\b/i.test(line) && !/(issue|incident|outage|degraded|maintenance|disruption|interruption|loss|latency|error|unavailable)/i.test(line)) {
+        return;
+      }
 
       events.push({
         title: line,
@@ -211,9 +232,51 @@
     };
   }
 
+  function applyServiceReaderPolicy(service, parsed, text) {
+    var events = parsed.events || [];
+    var normal = !!parsed.normal;
+
+    // NTT Global Network public product pages contain marketing copy such as
+    // "No network outages", "outage-free" and BGP/routing documentation.
+    // None of these are incidents.
+    if (service.id === "ntt-global-network") {
+      events = events.filter(function (e) {
+        var t = String(e.title || "");
+        if (/(no\s+(?:network\s+)?outages?|outage[-\s]?free|100%\s+.*outage[-\s]?free|bgp\s+communities|routing\s+polic(?:y|ies)|our\s+global\s+ip\s+network)/i.test(t)) {
+          return false;
+        }
+        return /(incident|outage|degraded|maintenance|disruption|interruption|packet loss|latency issue|routing issue|network issue|service issue)/i.test(t);
+      });
+
+      if (/(no\s+(?:network\s+)?outages?|outage[-\s]?free|100%\s+.*outage[-\s]?free)/i.test(text)) {
+        normal = true;
+      }
+    }
+
+    // Arelion / Cogent / NTT GDC product pages also contain routing/network copy.
+    // Require a concrete incident qualifier.
+    if (
+      service.id === "arelion" ||
+      service.id === "cogent" ||
+      service.id === "ntt-gdc"
+    ) {
+      events = events.filter(function (e) {
+        var t = String(e.title || "");
+        return /(incident|outage|degraded|maintenance|disruption|interruption|packet loss|latency issue|routing issue|network issue|service issue|error rate)/i.test(t) &&
+               !/(bgp\s+communities|routing\s+polic(?:y|ies)|learn\s+more|product|overview|guaranteed|outage[-\s]?free)/i.test(t);
+      });
+    }
+
+    return {
+      events: latestThree(events),
+      normal: normal
+    };
+  }
+
   async function sourceReader(source, service) {
     var text = await fetchReader(source.url);
     var parsed = parseReaderEvents(text, service);
+    parsed = applyServiceReaderPolicy(service, parsed, text);
 
     return {
       events: parsed.events,
