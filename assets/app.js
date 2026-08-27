@@ -4,6 +4,11 @@
   var SERVICES = window.CLOUDSTATUS_SERVICES || [];
   var state = { services: [], filter: "all", search: "", activeOnly: false };
 
+  var REFRESH_INTERVAL = 5 * 60 * 1000;
+  var FOREGROUND_REFRESH_THRESHOLD = 2 * 60 * 1000;
+  var lastRefresh = 0;
+  var refreshInFlight = false;
+
   var statusLabel = {
     resolved: "已解決",
     monitoring: "監控中",
@@ -670,35 +675,56 @@
       : '<div class="empty">沒有符合條件的服務或事件。</div>';
   }
 
-  async function refresh() {
+  async function refresh(options) {
+    options = options || {};
+    var force = !!options.force;
+
+    if (refreshInFlight && !force) return;
+
     var reload = $("#reload");
+    refreshInFlight = true;
     reload.disabled = true;
-    $("#updated").textContent = "正在依優先級讀取來源…";
+    $("#updated").textContent = "正在依優先級更新資料…";
 
     try {
       state.services = await Promise.all(
-        SERVICES.map(function (service) {
-          return loadService(service);
-        })
+        SERVICES.map(function (service) { return loadService(service); })
       );
 
+      lastRefresh = Date.now();
       var now = new Intl.DateTimeFormat("zh-TW", {
-        month: "numeric",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false
-      }).format(new Date());
+        month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false
+      }).format(new Date(lastRefresh));
 
       $("#updated").textContent = "最後讀取於 " + now;
       render();
     } catch (e) {
-      $("#updated").textContent = "載入失敗：" + String(e);
-      $("#services").innerHTML =
-        '<div class="empty">前端載入失敗，請重新整理頁面。</div>';
+      $("#updated").textContent = "更新失敗：" + String(e);
+      if (!state.services.length) {
+        $("#services").innerHTML = '<div class="empty">前端載入失敗，請稍後重新整理。</div>';
+      }
     } finally {
+      refreshInFlight = false;
       reload.disabled = false;
     }
+  }
+
+  function shouldRefreshOnForeground() {
+    return !lastRefresh || (Date.now() - lastRefresh >= FOREGROUND_REFRESH_THRESHOLD);
+  }
+
+  function startAutoRefresh() {
+    setInterval(function () {
+      if (document.visibilityState === "visible") refresh();
+    }, REFRESH_INTERVAL);
+
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "visible" && shouldRefreshOnForeground()) refresh();
+    });
+
+    window.addEventListener("focus", function () {
+      if (shouldRefreshOnForeground()) refresh();
+    });
   }
 
   $("#filters").addEventListener("click", function (e) {
@@ -724,8 +750,7 @@
     render();
   });
 
-  $("#reload").addEventListener("click", refresh);
-
-  refresh();
-  setInterval(refresh, 60000);
+  $("#reload").addEventListener("click", function () { refresh({ force: true }); });
+  refresh({ force: true });
+  startAutoRefresh();
 })();
