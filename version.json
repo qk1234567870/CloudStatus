@@ -1,6 +1,6 @@
 {
   "name": "CloudStatus Pure Pages",
-  "version": "20.0.0",
+  "version": "21.0.0",
   "updated": "2026-08-27",
   "current_state_and_history_independent": true,
   "status_inference": false,
@@ -40,5 +40,14 @@
     "desktop": "auto-fit multi-column",
     "tablet": "auto-fit",
     "mobile": "single-column stacked event rows"
-  }
+  },
+  "six_service_source_refinement": true,
+  "services_refined": [
+    "Equinix",
+    "Digital Realty",
+    "NTT GDC",
+    "Arelion (Telia)",
+    "NTT Global Network",
+    "Cogent"
+  ]
 }

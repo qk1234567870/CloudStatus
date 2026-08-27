@@ -181,3 +181,16 @@ DMIT
 - 手機事件列會把時間移到第二行，避免右側越界
 - 無 status 的事件會自動切成「標題 + 時間」兩行
 - 超窄手機服務來源會自動換到第三行
+
+
+## v21：六個網路 / 資料中心服務來源精修
+
+本版針對先前容易落入「官方頁入口」的六個服務逐家處理：
+
+- Equinix：官方 Statuspage API → 官方 RSS → Incident History → Status。
+- Digital Realty：官方 System Status → 官方 Status & Maintenance。
+- Cogent：官方 Network Status / Network Event Board → 官方 Maintenance 資訊。
+- NTT Global Network：加入 NTT DOCOMO BUSINESS Global IP Network 官方 Outages / Maintenance。
+- NTT GDC、Arelion：沒有確認到可公開、免登入且可靠的結構化事件源時，不製造事件；保留官方來源與官方頁入口。
+
+另外 Reader 現在只會在官方頁**明確寫出** `There are no issues`、`All services are operating normally` 等文字時建立「目前正常」健康狀態；仍然不根據關鍵字猜測事件 status。
