@@ -157,7 +157,7 @@
     return list.map(function (inc) {
       return {
         title: inc.external_desc || inc.service_name || "",
-        status: inc.end ? "resolved" : "investigating",
+        status: null,
         start: inc.begin || null,
         end: inc.end || null,
         url: service.page
@@ -307,7 +307,7 @@
 
       events.push({
         title: line,
-        status: normalizeStatus(line),
+        status: null,
         start: null,
         end: null,
         url: service.page
