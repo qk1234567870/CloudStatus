@@ -264,16 +264,40 @@ window.CLOUDSTATUS_SERVICES = [
     "name": "Equinix",
     "desc": "全球大型數據中心與機房互聯平台",
     "category": "datacenter",
-    "page": "https://www.equinix.com/contact-us/customer-support",
+    "page": "https://equinixproductstatus.statuspage.io/",
     "parser": "equinix",
     "sources": [
       {
+        "type": "statuspage",
+        "url": "https://equinixproductstatus.statuspage.io",
+        "label": "官方 API",
+        "kind": "official-api",
+        "priority": 10,
+        "tier": 10
+      },
+      {
+        "type": "rss",
+        "url": "https://equinixproductstatus.statuspage.io/history.rss",
+        "label": "官方 RSS",
+        "kind": "official-rss",
+        "priority": 30,
+        "tier": 30
+      },
+      {
         "type": "reader",
-        "url": "https://www.equinix.com/contact-us/customer-support",
-        "label": "官方頁",
-        "tier": 50,
+        "url": "https://equinixproductstatus.statuspage.io/history",
+        "label": "官方 Incident History",
+        "kind": "official-history",
+        "priority": 40,
+        "tier": 40
+      },
+      {
+        "type": "reader",
+        "url": "https://equinixproductstatus.statuspage.io/",
+        "label": "官方 Status",
         "kind": "official-status",
-        "priority": 50
+        "priority": 50,
+        "tier": 50
       }
     ]
   },
@@ -288,10 +312,18 @@ window.CLOUDSTATUS_SERVICES = [
       {
         "type": "reader",
         "url": "https://status.digitalrealty.com/",
-        "label": "官方 Status",
-        "tier": 50,
+        "label": "官方 System Status",
         "kind": "official-status",
-        "priority": 50
+        "priority": 50,
+        "tier": 50
+      },
+      {
+        "type": "reader",
+        "url": "https://developer.digitalrealty.com/docs/status-maintenance",
+        "label": "官方 Status & Maintenance",
+        "kind": "official-status",
+        "priority": 51,
+        "tier": 51
       }
     ]
   },
@@ -311,7 +343,8 @@ window.CLOUDSTATUS_SERVICES = [
         "kind": "official-status",
         "priority": 50
       }
-    ]
+    ],
+    "publicStructuredFeed": false
   },
   {
     "id": "arelion",
@@ -329,7 +362,8 @@ window.CLOUDSTATUS_SERVICES = [
         "kind": "official-status",
         "priority": 50
       }
-    ]
+    ],
+    "publicStructuredFeed": false
   },
   {
     "id": "ntt-global-network",
@@ -354,16 +388,24 @@ window.CLOUDSTATUS_SERVICES = [
     "name": "Cogent",
     "desc": "全球大型 IP Transit 與頻寬批發網路",
     "category": "backbone",
-    "page": "https://status.cogentco.com/",
+    "page": "https://ecogent.cogentco.com/network-status",
     "parser": "cogent",
     "sources": [
       {
         "type": "reader",
-        "url": "https://status.cogentco.com/",
+        "url": "https://ecogent.cogentco.com/network-status",
         "label": "官方 Network Status",
-        "tier": 50,
         "kind": "official-status",
-        "priority": 50
+        "priority": 50,
+        "tier": 50
+      },
+      {
+        "type": "reader",
+        "url": "https://www.cogentco.com/en/sprint-portal",
+        "label": "官方 Maintenance 資訊",
+        "kind": "official-status",
+        "priority": 55,
+        "tier": 55
       }
     ]
   }
