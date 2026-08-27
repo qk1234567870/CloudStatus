@@ -394,10 +394,18 @@
       }
     }
 
+    var hasExplicitActive = events.some(function(e){
+      return e.status && ["resolved","postmortem","completed","closed"].indexOf(e.status)===-1;
+    });
+    if (hasExplicitActive && health==="normal") {
+      health="incident";
+      healthText="目前有未解決事件";
+    }
+
     return {
       id:service.id,name:service.name,desc:service.desc,category:service.category,page:service.page,
       events:events.slice(0,3),health:health,healthText:healthText,
-      sourceLabel:sourceLabels.length?sourceLabels.join(" + "):"官方頁",
+      sourceLabel:sourceLabels.length===1?sourceLabels[0]:(sourceLabels.length>1?"多來源":"官方頁"),
       fallback:!events.length && !health,
       failures:failures
     };
@@ -445,13 +453,17 @@
 
   function renderService(service) {
     var body="";
+
     if (service.health==="normal") {
-      body += '<div class="message good">[正常] '+escapeHtml(service.healthText||"官方來源顯示正常")+'</div>';
+      body += '<div class="current-state good">[正常] '+escapeHtml(service.healthText||"官方來源顯示正常")+'</div>';
     } else if (service.health==="incident" && service.healthText) {
-      body += '<div class="message warn">'+escapeHtml(service.healthText)+'</div>';
+      body += '<div class="current-state warn">'+escapeHtml(service.healthText)+'</div>';
     }
 
     if (service.events.length) {
+      if (service.health) {
+        body += '<div class="section-label">近期事件</div>';
+      }
       body += service.events.map(function(e){return renderEvent(e,service);}).join("");
     } else if (service.fallback) {
       body += '<a class="message link" href="'+escapeHtml(service.page)+'" target="_blank" rel="noopener">[官方狀態頁] 自動來源未取得可靠事件資料，查看官方即時狀態 →</a>';
@@ -478,7 +490,7 @@
     if (refreshInFlight && !options.force) return;
     refreshInFlight=true;
     var reload=$("#reload"); reload.disabled=true;
-    $("#updated").textContent="載入中…";
+    $("#updated").textContent="正在更新官方來源…";
     try {
       state.services=await Promise.all(SERVICES.map(loadService));
       lastRefresh=Date.now();
