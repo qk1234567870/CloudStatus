@@ -1,9 +1,11 @@
 {
   "name": "CloudStatus Pure Pages",
-  "version": "11.0.0",
+  "version": "12.0.0",
   "updated": "2026-08-27",
-  "focus": "UI and state presentation refinement",
+  "current_state_and_history_independent": true,
   "status_inference": false,
   "max_events": 3,
-  "refresh_minutes": 5
+  "refresh_minutes": 5,
+  "github_actions_required": false,
+  "bundled_cname": false
 }
