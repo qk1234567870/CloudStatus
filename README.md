@@ -48,3 +48,16 @@
 **不推斷、不造假、不硬湊三筆。**
 
 頁面只顯示來源能明確支持的目前狀態與事件資料。
+
+
+## v14：Apple System Status 精修
+
+Apple 改用專用事件格式解析：
+
+- 支援 `Resolved Performance`
+- 支援 `Resolved Outage / Resolved Issue / Resolved Availability`
+- 支援 `Today, 8:46 AM - 9:30 AM` 這類 Apple 時間區間
+- `All services are operating normally` 只作為「目前狀態」
+- `AppleCare on Device: available ...` 等服務清單永遠不當事件
+- 目前正常與近期已解決事件可以同時顯示
+- 仍然禁止從事件描述自行推斷 status

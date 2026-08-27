@@ -1,11 +1,17 @@
 {
   "name": "CloudStatus Pure Pages",
-  "version": "12.0.0",
+  "version": "14.0.0",
   "updated": "2026-08-27",
   "current_state_and_history_independent": true,
   "status_inference": false,
   "max_events": 3,
   "refresh_minutes": 5,
   "github_actions_required": false,
-  "bundled_cname": false
+  "bundled_cname": false,
+  "apple_parser": {
+    "resolved_performance": true,
+    "today_time_range": true,
+    "service_inventory_filter": true,
+    "current_health_separate_from_history": true
+  }
 }
