@@ -196,3 +196,38 @@ Jina Reader 備援
 AWS：公開 AWS Health Dashboard 優先，舊 RSS 僅備援。
 
 Azure：使用目前的 `azure.status.microsoft/status`，並加入官方 backup status 頁。
+
+
+## 2.2 來源狀態語義整改
+
+不再把「沒有匿名事件 API」錯誤顯示為「取得失敗」。
+
+新增兩種狀態：
+
+```text
+[受限]
+官方事件明細需要登入，或供應商沒有提供匿名公開事件歷史來源。
+
+[狀態頁]
+官方狀態頁可公開訪問，但沒有穩定可程式化取得的公開事件歷史介面。
+```
+
+目前：
+
+- Equinix → 受限（Service Availability / Service Insight 為帳戶型服務）
+- NTT GDC → 受限
+- Arelion → 受限
+- NTT Global Network → 受限
+- Cogent → 狀態頁（官方 Network Status Page 存在，但公開頁為 JS App）
+- Digital Realty → 正式解析公開 System Status；Operational 時顯示正常
+- AWS → 使用 Jina Reader 解析官方 AWS Health Dashboard
+- Azure → 保留 2.1 已修正的官方 Azure Status 邏輯
+
+「取得/解析異常」統計只計算真正的：
+
+```text
+fetch_failed
+parse_failed
+```
+
+不再把 `restricted` / `status_only` 算成故障。

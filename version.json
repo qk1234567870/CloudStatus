@@ -1,8 +1,14 @@
 {
   "name": "CloudStatus Web Dashboard",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "updated": "2026-08-27",
   "services": 16,
   "max_events": 3,
-  "notes": "Reworked AWS, Azure, Equinix, Digital Realty, NTT GDC, Arelion, NTT Global Network and Cogent source adapters."
+  "notes": [
+    "AWS now parses the public AWS Health Dashboard through Reader.",
+    "Digital Realty explicitly parses public operational state.",
+    "Equinix/NTT/Arelion sources without anonymous incident feeds no longer show false fetch failures.",
+    "Cogent is represented as public status-page-only rather than parser failure.",
+    "Front end supports restricted and status_only states."
+  ]
 }
