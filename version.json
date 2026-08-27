@@ -1,6 +1,6 @@
 {
   "name": "CloudStatus Pure Pages",
-  "version": "17.0.0",
+  "version": "18.0.0",
   "updated": "2026-08-27",
   "current_state_and_history_independent": true,
   "status_inference": false,
@@ -18,5 +18,8 @@
   "apple_endpoint": "system_status_en_US.js",
   "time_overflow_fix": true,
   "apple_cors_fallback": true,
-  "apple_markdown_reader_parser": true
+  "apple_markdown_reader_parser": true,
+  "apple_backup": "Pingoru (only after official sources)",
+  "apple_epoch_seconds_fix": true,
+  "event_time_boundary_hardening": true
 }

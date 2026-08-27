@@ -118,3 +118,12 @@ Apple 在純 GitHub Pages 環境可能因瀏覽器 CORS 無法直接讀取官方
 Apple System Status Reader 也改成 Markdown-aware：
 會先移除 `###`、列表符號、粗體標記，再解析
 `Maps Display - Resolved Performance` 等事件標題。
+
+
+## v18：Apple 備援與時間邊界
+
+- Apple 仍以官方 JSON / 官方 System Status 為最高優先。
+- 只有官方來源無法取得可靠事件時，才使用 Pingoru Apple outage history 備援。
+- 不用備援資料覆蓋已成功取得的官方事件。
+- 修正 Apple epoch 秒 / 毫秒時間戳相容。
+- 強化手機與桌面事件時間欄位的 max-width / overflow，避免日期超出卡片右邊界。
