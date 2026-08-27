@@ -740,30 +740,54 @@
     var events=[], health=null, healthText=null, sourceLabels=[], failures=[];
     var sources=service.sources.slice().sort(function(a,b){return sourcePriority(a)-sourcePriority(b);});
 
-    for (var i=0;i<sources.length;i++) {
-      var source=sources[i];
-
-      // 第三方只用來補資料；官方來源已同時提供目前狀態且有 3 筆事件時，不再碰第三方。
-      if (isThirdPartySource(source) && health && events.length >= 3) {
-        break;
+    // 同一優先級來源並行請求；不同優先級仍嚴格依序。
+    // 因此不改變「官方 JSON → 官方 Status → Pingoru → 官方頁」的資料優先級，
+    // 但同級來源不再一個等完才抓下一個。
+    var groups=[];
+    sources.forEach(function(source){
+      var pri=sourcePriority(source);
+      var g=groups.length?groups[groups.length-1]:null;
+      if(!g || g.priority!==pri){
+        g={priority:pri,sources:[]};
+        groups.push(g);
       }
+      g.sources.push(source);
+    });
 
-      try {
-        var result=await runSource(source,service);
-        if (result.events && result.events.length) {
+    for(var gi=0;gi<groups.length;gi++){
+      var group=groups[gi];
+
+      // 官方資料已完整時不再啟動後面的第三方備援。
+      if(group.sources.length && isThirdPartySource(group.sources[0]) && health && events.length>=3) break;
+
+      var settled=await Promise.all(group.sources.map(async function(source){
+        try {
+          return {source:source,result:await runSource(source,service),error:null};
+        } catch(e) {
+          return {source:source,result:null,error:e};
+        }
+      }));
+
+      // 按原 sources 順序合併，確保來源優先級/同級順序不變。
+      settled.forEach(function(item){
+        var source=item.source;
+        if(item.error){
+          failures.push(source.label+": "+String(item.error));
+          return;
+        }
+        var result=item.result||{};
+        if(result.events && result.events.length){
           events=mergeEvents(events,result.events);
-          if (sourceLabels.indexOf(source.label)<0) sourceLabels.push(source.label);
+          if(sourceLabels.indexOf(source.label)<0) sourceLabels.push(source.label);
         }
-        // Health is independent from history events. Prefer an explicit current-health
-        // signal from an official status page/API when available.
-        if (result.health && !health) {
-          health=result.health; healthText=result.healthText||null;
-          if (sourceLabels.indexOf(source.label)<0) sourceLabels.push(source.label);
+        if(result.health && !health){
+          health=result.health;
+          healthText=result.healthText||null;
+          if(sourceLabels.indexOf(source.label)<0) sourceLabels.push(source.label);
         }
-        if (events.length>=3 && health) break;
-      } catch(e) {
-        failures.push(source.label + ": " + String(e));
-      }
+      });
+
+      if(events.length>=3 && health) break;
     }
 
     return {
@@ -852,23 +876,145 @@
     $("#services").innerHTML=list.length?list.map(renderService).join(""):'<div class="empty">沒有符合條件的服務或事件。</div>';
   }
 
-  async function refresh(options) {
-    options=options||{};
-    if (refreshInFlight && !options.force) return;
-    refreshInFlight=true;
-    var reload=$("#reload"); reload.disabled=true;
-    $("#updated").textContent="正在更新官方來源…";
+  var lazyObserver = null;
+  var lazyGeneration = 0;
+  var lazyResults = [];
+  var lazyLoaded = new Set();
+  var lazyLoading = new Set();
+
+  function renderLazyShells() {
+    renderSummary();
+
+    var list = SERVICES.filter(function(service) {
+      if (state.filter !== "all" && service.category !== state.filter) return false;
+
+      var n = state.search.trim().toLowerCase();
+      if (n) {
+        var hay = (service.name + " " + service.desc).toLowerCase();
+        if (hay.indexOf(n) === -1) return false;
+      }
+
+      return true;
+    });
+
+    $("#services").innerHTML = list.map(function(service) {
+      var loaded = lazyResults.find(function(x){ return x && x.id === service.id; });
+      if (loaded) return renderService(loaded);
+
+      return '<article class="service lazy-service" data-service-id="'+escapeHtml(service.id)+'">'+
+        '<div class="service-head">'+
+          '<a class="service-name" href="'+escapeHtml(service.page)+'" target="_blank" rel="noopener">🔹 '+escapeHtml(service.name)+'</a>'+
+          '<span class="service-desc">('+escapeHtml(service.desc)+')</span>'+
+          '<span class="source-badge">等待載入</span>'+
+        '</div>'+
+        '<div class="lazy-placeholder">'+
+          '<span class="lazy-spinner"></span>'+
+          '<span>滑到這裡時載入</span>'+
+        '</div>'+
+      '</article>';
+    }).join("");
+
+    setupLazyObserver();
+  }
+
+  function replaceLazyCard(service) {
+    var node = document.querySelector('[data-service-id="'+CSS.escape(service.id)+'"]');
+    if (!node) {
+      renderLazyShells();
+      return;
+    }
+    var wrapper = document.createElement("div");
+    wrapper.innerHTML = renderService(service);
+    var next = wrapper.firstElementChild;
+    if (next) node.replaceWith(next);
+  }
+
+  async function loadLazyService(service, generation) {
+    if (!service || lazyLoaded.has(service.id) || lazyLoading.has(service.id)) return;
+
+    lazyLoading.add(service.id);
+
+    var card = document.querySelector('[data-service-id="'+CSS.escape(service.id)+'"]');
+    if (card) {
+      var badge = card.querySelector(".source-badge");
+      if (badge) badge.textContent = "載入中…";
+    }
+
     try {
-      state.services=await Promise.all(SERVICES.map(loadService));
-      lastRefresh=Date.now();
-      var now=new Intl.DateTimeFormat("zh-TW",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit",hour12:false}).format(new Date(lastRefresh));
-      $("#updated").textContent="最後讀取於 "+now;
-      render();
-    } catch(e) {
-      $("#updated").textContent="更新失敗";
-      if (!state.services.length) $("#services").innerHTML='<div class="empty">資料載入失敗，請稍後重試。</div>';
+      var result = await loadService(service);
+      if (generation !== lazyGeneration) return;
+
+      lazyResults = lazyResults.filter(function(x){ return x && x.id !== result.id; });
+      lazyResults.push(result);
+      lazyLoaded.add(result.id);
+
+      state.services = lazyResults.slice();
+      replaceLazyCard(result);
+
+      $("#updated").textContent =
+        "已載入 " + lazyLoaded.size + "/" + SERVICES.length + " 個服務";
+    } catch (e) {
+      if (generation !== lazyGeneration) return;
+      if (card) {
+        var body = card.querySelector(".lazy-placeholder");
+        if (body) body.innerHTML = '<span class="lazy-error">載入失敗，滑離後再回來可重試</span>';
+      }
     } finally {
-      refreshInFlight=false; reload.disabled=false;
+      lazyLoading.delete(service.id);
+    }
+  }
+
+  function setupLazyObserver() {
+    if (lazyObserver) lazyObserver.disconnect();
+
+    lazyObserver = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (!entry.isIntersecting) return;
+
+        var id = entry.target.getAttribute("data-service-id");
+        var service = SERVICES.find(function(s){ return s.id === id; });
+        if (!service) return;
+
+        loadLazyService(service, lazyGeneration);
+
+        // 一旦開始載入就不需要持續觀察這張卡。
+        lazyObserver.unobserve(entry.target);
+      });
+    }, {
+      // 提前約一個螢幕開始抓，使用者滑到卡片時通常已經完成。
+      root: null,
+      rootMargin: "80% 0px 80% 0px",
+      threshold: 0.01
+    });
+
+    document.querySelectorAll(".lazy-service").forEach(function(node) {
+      lazyObserver.observe(node);
+    });
+  }
+
+  async function refresh(options) {
+    options = options || {};
+
+    if (refreshInFlight && !options.force) return;
+
+    refreshInFlight = true;
+    var reload = $("#reload");
+    reload.disabled = true;
+
+    try {
+      lazyGeneration++;
+      lazyResults = [];
+      lazyLoaded = new Set();
+      lazyLoading = new Set();
+      state.services = [];
+
+      $("#updated").textContent = "下滑時即時載入";
+      renderLazyShells();
+
+      lastRefresh = Date.now();
+    } finally {
+      refreshInFlight = false;
+      reload.disabled = false;
     }
   }
 
@@ -892,10 +1038,10 @@
     var b=e.target.closest("[data-filter]"); if(!b)return;
     state.filter=b.getAttribute("data-filter");
     Array.prototype.forEach.call(document.querySelectorAll(".chip"),function(x){x.classList.toggle("active",x===b);});
-    render();
+    renderLazyShells();
   });
-  $("#search").addEventListener("input",function(e){state.search=e.target.value;render();});
-  $("#activeOnly").addEventListener("change",function(e){state.activeOnly=e.target.checked;render();});
+  $("#search").addEventListener("input",function(e){state.search=e.target.value;renderLazyShells();});
+  $("#activeOnly").addEventListener("change",function(e){state.activeOnly=e.target.checked; if(state.activeOnly){render();}else{renderLazyShells();}});
   $("#reload").addEventListener("click",function(){refresh({force:true});});
 
   refresh({force:true});

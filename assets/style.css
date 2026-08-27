@@ -662,3 +662,35 @@ button { font-size: 14px; }
     "title"
     "time" !important;
 }
+
+
+/* =========================================================
+   v26 — 視窗懶載入
+   卡片滑近視窗時才抓資料。
+   ========================================================= */
+.lazy-placeholder{
+  min-height:76px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:9px;
+  color:var(--time);
+  font-size:12px;
+}
+
+.lazy-spinner{
+  width:15px;
+  height:15px;
+  border-radius:50%;
+  border:2px solid rgba(255,255,255,.12);
+  border-top-color:var(--blue);
+  animation:cloudstatus-spin .8s linear infinite;
+}
+
+.lazy-error{
+  color:var(--red);
+}
+
+@keyframes cloudstatus-spin{
+  to{transform:rotate(360deg)}
+}
