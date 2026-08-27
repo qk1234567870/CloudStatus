@@ -58,13 +58,6 @@ Settings
 → /(root)
 ```
 
-已附 `CNAME`：
-
-```text
-cloudstatus.htbq.org
-```
-
-
 ## Reader 誤判修正
 
 Reader 不再單純看到 `outage / routing / network / BGP` 就當成事件。
@@ -210,3 +203,10 @@ Telegram               68
 - RSS / Reader / Telegram / HTML 純文字沒有 status：不猜、不顯示
 - 不再因 title 出現 outage / maintenance / resolved 等字樣自行判定狀態
 - 不再因缺少 end time 自行標記為「調查中」
+
+## v9：UI 狀態文字整理
+
+- 頁面自身的載入狀態統一使用「載入中…」，不再使用「處理中」。
+- 官方 `investigating` 僅在來源明確提供時顯示為「調查中」。
+- 未知/缺少 status 不再以「處理中」作預設值。
+- 通用套件不包含 CNAME 或任何使用者自訂網域。
