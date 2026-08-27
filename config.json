@@ -1,8 +1,6 @@
 {
-  "language": "zh-TW",
   "max_events": 3,
   "request_timeout": 12,
-  "translate_timeout": 6,
   "refresh_minutes": 15,
   "debug": false
 }

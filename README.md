@@ -231,3 +231,34 @@ parse_failed
 ```
 
 不再把 `restricted` / `status_only` 算成故障。
+
+
+## 2.3 移除伺服端翻譯
+
+CloudStatus 現在是 GitHub Pages Web 版，因此資料產生階段不再翻譯第三方事件。
+
+已移除：
+
+- `scripts/core/translator.py`
+- DeepL API Key
+- Google Translate fallback
+- `language`
+- `translate_timeout`
+- GitHub Actions 的 `DEEPL_API_KEY` Secret 注入
+- 翻譯快取與翻譯請求
+
+資料流程：
+
+```text
+官方來源
+↓
+GitHub Actions 抓取 / 解析 / 排序
+↓
+status.json（事件標題保留官方原文）
+↓
+GitHub Pages
+↓
+需要中文時使用瀏覽器整頁翻譯
+```
+
+CloudStatus 自己的 UI（正常、已解決、處理中、取得失敗等）仍維持繁體中文。
