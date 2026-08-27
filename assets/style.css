@@ -193,3 +193,44 @@ footer{
   color:var(--time);
   font-size:10px;
 }
+
+
+/* v13 — 網頁端字體精修：提高可讀性，保留手機單行事件布局 */
+html { font-size: 17px; }
+
+.service-name { font-size: 16px; }
+.service-desc { font-size: 12px; }
+.source-badge { font-size: 12px; }
+
+.event,
+.current-state,
+.message,
+.history-empty { font-size: 14px; }
+
+.event .status,
+.event-status { font-size: 14px; }
+
+.event .title,
+.event-title { font-size: 14px; }
+
+.event .time,
+.event-time { font-size: 12px; }
+
+.section-label { font-size: 12px; }
+
+.search input,
+.search-input,
+input[type="search"] { font-size: 16px; }
+
+.filter,
+.filter-btn,
+button { font-size: 14px; }
+
+@media (max-width: 600px) {
+  html { font-size: 16px; }
+  .service-name { font-size: 15px; }
+  .service-desc, .source-badge { font-size: 11px; }
+  .event, .current-state, .message, .history-empty { font-size: 13.5px; }
+  .event .status, .event-status, .event .title, .event-title { font-size: 13.5px; }
+  .event .time, .event-time, .section-label { font-size: 11px; }
+}

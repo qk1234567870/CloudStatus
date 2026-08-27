@@ -237,33 +237,145 @@
     return {events:sortRecent(events),health:normal?"normal":null,healthText:normal?"目前沒有公開事件":null};
   }
 
+  function parseAppleClockRange(text) {
+    var raw = String(text || "");
+
+    var m = raw.match(
+      /\b(Today|Yesterday),?\s+(\d{1,2}):(\d{2})\s*(AM|PM)\s*[-–—]\s*(\d{1,2}):(\d{2})\s*(AM|PM)/i
+    );
+
+    if (!m) {
+      m = raw.match(
+        /\b([A-Z][a-z]+\s+\d{1,2},\s+\d{4}),?\s+(\d{1,2}):(\d{2})\s*(AM|PM)\s*[-–—]\s*(\d{1,2}):(\d{2})\s*(AM|PM)/i
+      );
+    }
+
+    if (!m) return { start:null, end:null };
+
+    function to24(hour, minute, ampm) {
+      var h = parseInt(hour, 10);
+      var min = parseInt(minute, 10);
+      var p = String(ampm || "").toUpperCase();
+      if (p === "PM" && h < 12) h += 12;
+      if (p === "AM" && h === 12) h = 0;
+      return { h:h, m:min };
+    }
+
+    var dateBase;
+    var label = m[1];
+
+    if (/^Today$/i.test(label) || /^Yesterday$/i.test(label)) {
+      var now = new Date();
+      dateBase = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      if (/^Yesterday$/i.test(label)) {
+        dateBase.setDate(dateBase.getDate() - 1);
+      }
+    } else {
+      dateBase = new Date(label);
+      if (isNaN(dateBase.getTime())) return { start:null, end:null };
+    }
+
+    var a = to24(m[2], m[3], m[4]);
+    var b = to24(m[5], m[6], m[7]);
+
+    var start = new Date(
+      dateBase.getFullYear(), dateBase.getMonth(), dateBase.getDate(),
+      a.h, a.m, 0
+    );
+
+    var end = new Date(
+      dateBase.getFullYear(), dateBase.getMonth(), dateBase.getDate(),
+      b.h, b.m, 0
+    );
+
+    if (end.getTime() < start.getTime()) {
+      end = new Date(end.getTime() + 86400000);
+    }
+
+    return {
+      start:start.toISOString(),
+      end:end.toISOString()
+    };
+  }
+
+  function isAppleServiceInventoryLine(line) {
+    var t = cleanText(line);
+
+    // Apple System Status 的「available」服務清單不是事件。
+    if ((t.match(/\bavailable\b/gi) || []).length >= 2) return true;
+    if ((t.match(/:\s*available\b/gi) || []).length >= 1) return true;
+
+    return false;
+  }
+
   function parseApple(text, service, source) {
-    var t=String(text||"");
-    var normal=/All services are operating normally|所有服務均正常運作|All services.*normal/i.test(t);
-    var events=[];
-    var ls=lines(t);
-    var statusLine=/^(Resolved Outage|Resolved Issue|Outage|Issue|Maintenance)$/i;
-    for (var i=0;i<ls.length;i++) {
-      var m=ls[i].match(/^(.+?)\s*-\s*(Resolved Outage|Resolved Issue|Outage|Issue|Maintenance)$/i);
-      if (m) {
-        var raw=m[2], st=null;
-        if (/^Resolved/i.test(raw)) st="resolved";
-        else if (/^Maintenance$/i.test(raw)) st="maintenance";
-        else if (/^Outage$/i.test(raw)) st="outage";
-        var block=ls.slice(i,i+8).join(" ");
-        events.push({title:cleanText(m[1]),status:st,statusRaw:raw,start:findDate(block),end:null,url:service.page,sourceLabel:source.label});
+    var t = String(text || "");
+
+    // 「目前正常」與歷史事件是兩個獨立訊號。
+    var normal =
+      /All services are operating normally/i.test(t) ||
+      /所有服務均正常運作/i.test(t);
+
+    var events = [];
+    var ls = lines(t);
+
+    // Apple 實際會使用 Resolved Performance。
+    // 僅接受「服務名稱 - 官方狀態」這種事件標題，不掃整頁 available 清單。
+    var appleStatus =
+      /(Resolved Performance|Resolved Outage|Resolved Issue|Resolved Availability|Performance|Outage|Issue|Maintenance)$/i;
+
+    for (var i = 0; i < ls.length; i++) {
+      var line = ls[i];
+
+      if (!line || isAppleServiceInventoryLine(line)) continue;
+
+      var m = line.match(
+        /^(.+?)\s*[-–—]\s*(Resolved Performance|Resolved Outage|Resolved Issue|Resolved Availability|Performance|Outage|Issue|Maintenance)$/i
+      );
+
+      if (!m) continue;
+
+      var title = cleanText(m[1]);
+      var raw = cleanText(m[2]);
+
+      if (
+        !title ||
+        looksNoise(title) ||
+        isAppleServiceInventoryLine(title) ||
+        /^System Status$/i.test(title) ||
+        /^All services/i.test(title)
+      ) {
         continue;
       }
-      if (statusLine.test(ls[i]) && i>0) {
-        var raw2=ls[i], st2=null;
-        if (/^Resolved/i.test(raw2)) st2="resolved";
-        else if (/^Maintenance$/i.test(raw2)) st2="maintenance";
-        else if (/^Outage$/i.test(raw2)) st2="outage";
-        var title2=ls[i-1];
-        if (!looksNoise(title2)) events.push({title:title2,status:st2,statusRaw:raw2,start:findDate(ls.slice(i,i+8).join(" ")),end:null,url:service.page,sourceLabel:source.label});
-      }
+
+      var status = null;
+
+      // 只根據 Apple 明確寫出的事件狀態映射，不從描述推斷。
+      if (/^Resolved\b/i.test(raw)) status = "resolved";
+      else if (/^Maintenance$/i.test(raw)) status = "maintenance";
+      else if (/^Outage$/i.test(raw)) status = "outage";
+
+      // Apple 的時間通常緊接事件標題：
+      // Today, 8:46 AM - 9:30 AM
+      var block = ls.slice(i, Math.min(i + 7, ls.length)).join(" ");
+      var range = parseAppleClockRange(block);
+
+      events.push({
+        title:title,
+        status:status,
+        statusRaw:raw,
+        start:range.start,
+        end:range.end,
+        url:service.page,
+        sourceLabel:source.label
+      });
     }
-    return {events:sortRecent(events),health:normal?"normal":null,healthText:normal?"所有服務均正常運作":null};
+
+    return {
+      events:sortRecent(events),
+      health:normal ? "normal" : null,
+      healthText:normal ? "所有服務均正常運作" : null
+    };
   }
 
   function parseBandwagon(text, service, source) {
