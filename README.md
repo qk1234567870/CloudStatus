@@ -63,3 +63,33 @@ Settings
 ```text
 cloudstatus.htbq.org
 ```
+
+
+## Reader 誤判修正
+
+Reader 不再單純看到 `outage / routing / network / BGP` 就當成事件。
+
+已新增：
+
+```text
+否定詞過濾
+No network outages
+No active incidents
+Outage-free
+100% outage-free
+All systems operational
+Operating normally
+```
+
+以及：
+
+```text
+產品/文件內容過濾
+BGP communities
+Routing policies
+Network overview
+Product overview
+Guaranteed
+```
+
+NTT Global Network、Arelion、Cogent、NTT GDC 另外有服務專屬規則，避免把產品介紹或路由文件誤判成事故。
