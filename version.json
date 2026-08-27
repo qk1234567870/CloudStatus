@@ -1,6 +1,6 @@
 {
   "name": "CloudStatus Pure Pages",
-  "version": "25.0.0",
+  "version": "26.0.0",
   "updated": "2026-08-27",
   "current_state_and_history_independent": true,
   "status_inference": false,
@@ -57,5 +57,8 @@
   "dmit_extended_date_parser": true,
   "event_time_second_line_all_devices": true,
   "progressive_render": true,
-  "parallel_same_priority_sources": true
+  "parallel_same_priority_sources": true,
+  "instant_cache_render": true,
+  "two_phase_loading": true,
+  "fallback_concurrency": 4
 }
