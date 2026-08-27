@@ -876,145 +876,43 @@
     $("#services").innerHTML=list.length?list.map(renderService).join(""):'<div class="empty">沒有符合條件的服務或事件。</div>';
   }
 
-  var lazyObserver = null;
-  var lazyGeneration = 0;
-  var lazyResults = [];
-  var lazyLoaded = new Set();
-  var lazyLoading = new Set();
-
-  function renderLazyShells() {
-    renderSummary();
-
-    var list = SERVICES.filter(function(service) {
-      if (state.filter !== "all" && service.category !== state.filter) return false;
-
-      var n = state.search.trim().toLowerCase();
-      if (n) {
-        var hay = (service.name + " " + service.desc).toLowerCase();
-        if (hay.indexOf(n) === -1) return false;
-      }
-
-      return true;
-    });
-
-    $("#services").innerHTML = list.map(function(service) {
-      var loaded = lazyResults.find(function(x){ return x && x.id === service.id; });
-      if (loaded) return renderService(loaded);
-
-      return '<article class="service lazy-service" data-service-id="'+escapeHtml(service.id)+'">'+
-        '<div class="service-head">'+
-          '<a class="service-name" href="'+escapeHtml(service.page)+'" target="_blank" rel="noopener">🔹 '+escapeHtml(service.name)+'</a>'+
-          '<span class="service-desc">('+escapeHtml(service.desc)+')</span>'+
-          '<span class="source-badge">等待載入</span>'+
-        '</div>'+
-        '<div class="lazy-placeholder">'+
-          '<span class="lazy-spinner"></span>'+
-          '<span>滑到這裡時載入</span>'+
-        '</div>'+
-      '</article>';
-    }).join("");
-
-    setupLazyObserver();
-  }
-
-  function replaceLazyCard(service) {
-    var node = document.querySelector('[data-service-id="'+CSS.escape(service.id)+'"]');
-    if (!node) {
-      renderLazyShells();
-      return;
-    }
-    var wrapper = document.createElement("div");
-    wrapper.innerHTML = renderService(service);
-    var next = wrapper.firstElementChild;
-    if (next) node.replaceWith(next);
-  }
-
-  async function loadLazyService(service, generation) {
-    if (!service || lazyLoaded.has(service.id) || lazyLoading.has(service.id)) return;
-
-    lazyLoading.add(service.id);
-
-    var card = document.querySelector('[data-service-id="'+CSS.escape(service.id)+'"]');
-    if (card) {
-      var badge = card.querySelector(".source-badge");
-      if (badge) badge.textContent = "載入中…";
-    }
-
-    try {
-      var result = await loadService(service);
-      if (generation !== lazyGeneration) return;
-
-      lazyResults = lazyResults.filter(function(x){ return x && x.id !== result.id; });
-      lazyResults.push(result);
-      lazyLoaded.add(result.id);
-
-      state.services = lazyResults.slice();
-      replaceLazyCard(result);
-
-      $("#updated").textContent =
-        "已載入 " + lazyLoaded.size + "/" + SERVICES.length + " 個服務";
-    } catch (e) {
-      if (generation !== lazyGeneration) return;
-      if (card) {
-        var body = card.querySelector(".lazy-placeholder");
-        if (body) body.innerHTML = '<span class="lazy-error">載入失敗，滑離後再回來可重試</span>';
-      }
-    } finally {
-      lazyLoading.delete(service.id);
-    }
-  }
-
-  function setupLazyObserver() {
-    if (lazyObserver) lazyObserver.disconnect();
-
-    lazyObserver = new IntersectionObserver(function(entries) {
-      entries.forEach(function(entry) {
-        if (!entry.isIntersecting) return;
-
-        var id = entry.target.getAttribute("data-service-id");
-        var service = SERVICES.find(function(s){ return s.id === id; });
-        if (!service) return;
-
-        loadLazyService(service, lazyGeneration);
-
-        // 一旦開始載入就不需要持續觀察這張卡。
-        lazyObserver.unobserve(entry.target);
-      });
-    }, {
-      // 提前約一個螢幕開始抓，使用者滑到卡片時通常已經完成。
-      root: null,
-      rootMargin: "80% 0px 80% 0px",
-      threshold: 0.01
-    });
-
-    document.querySelectorAll(".lazy-service").forEach(function(node) {
-      lazyObserver.observe(node);
-    });
-  }
-
   async function refresh(options) {
-    options = options || {};
-
+    options=options||{};
     if (refreshInFlight && !options.force) return;
-
-    refreshInFlight = true;
-    var reload = $("#reload");
-    reload.disabled = true;
+    refreshInFlight=true;
+    var reload=$("#reload"); reload.disabled=true;
+    $("#updated").textContent="正在更新官方來源…";
 
     try {
-      lazyGeneration++;
-      lazyResults = [];
-      lazyLoaded = new Set();
-      lazyLoading = new Set();
-      state.services = [];
+      var results=new Array(SERVICES.length);
+      var completed=0;
 
-      $("#updated").textContent = "下滑時即時載入";
-      renderLazyShells();
+      await Promise.all(SERVICES.map(function(service,index){
+        return loadService(service).then(function(result){
+          results[index]=result;
+          completed++;
 
-      lastRefresh = Date.now();
+          // 首批結果立即顯示，不必等待全部服務完成。
+          state.services=results.filter(Boolean);
+          render();
+
+          $("#updated").textContent="正在更新官方來源… "+completed+"/"+SERVICES.length;
+        }).catch(function(){
+          completed++;
+          $("#updated").textContent="正在更新官方來源… "+completed+"/"+SERVICES.length;
+        });
+      }));
+
+      state.services=results.filter(Boolean);
+      lastRefresh=Date.now();
+      var now=new Intl.DateTimeFormat("zh-TW",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit",hour12:false}).format(new Date(lastRefresh));
+      $("#updated").textContent="最後讀取於 "+now;
+      render();
+    } catch(e) {
+      $("#updated").textContent="更新失敗";
+      if (!state.services.length) $("#services").innerHTML='<div class="empty">資料載入失敗，請稍後重試。</div>';
     } finally {
-      refreshInFlight = false;
-      reload.disabled = false;
+      refreshInFlight=false; reload.disabled=false;
     }
   }
 
@@ -1038,10 +936,10 @@
     var b=e.target.closest("[data-filter]"); if(!b)return;
     state.filter=b.getAttribute("data-filter");
     Array.prototype.forEach.call(document.querySelectorAll(".chip"),function(x){x.classList.toggle("active",x===b);});
-    renderLazyShells();
+    render();
   });
-  $("#search").addEventListener("input",function(e){state.search=e.target.value;renderLazyShells();});
-  $("#activeOnly").addEventListener("change",function(e){state.activeOnly=e.target.checked; if(state.activeOnly){render();}else{renderLazyShells();}});
+  $("#search").addEventListener("input",function(e){state.search=e.target.value;render();});
+  $("#activeOnly").addEventListener("change",function(e){state.activeOnly=e.target.checked;render();});
   $("#reload").addEventListener("click",function(){refresh({force:true});});
 
   refresh({force:true});
