@@ -93,3 +93,41 @@ Guaranteed
 ```
 
 NTT Global Network、Arelion、Cogent、NTT GDC 另外有服務專屬規則，避免把產品介紹或路由文件誤判成事故。
+
+
+## v4：全服務 Parser Policy
+
+本版不再只對 NTT / Arelion / Cogent 做特判。
+
+所有已配置服務都有自己的 `accept` / `reject` 規則：
+
+- Cloudflare
+- AWS
+- Microsoft Azure
+- Google Cloud
+- GitHub
+- Apple
+- Oracle
+- BandwagonHost
+- DMIT
+- Equinix
+- Digital Realty
+- NTT GDC
+- Arelion
+- NTT Global Network
+- Cogent
+
+處理流程：
+
+```text
+官方 API / Feed
+→ 官方頁
+→ Reader
+→ 專屬備援
+→ 服務專屬 Parser Policy
+→ 去重 / 排序
+→ 最近 3 筆
+→ 官方狀態頁
+```
+
+Reader 現在只負責取得來源文字；事件判定交給各服務自己的 Parser Policy。
