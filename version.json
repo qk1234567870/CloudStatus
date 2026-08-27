@@ -1,6 +1,6 @@
 {
   "name": "CloudStatus Pure Pages",
-  "version": "19.0.0",
+  "version": "20.0.0",
   "updated": "2026-08-27",
   "current_state_and_history_independent": true,
   "status_inference": false,
@@ -34,5 +34,11 @@
     "trusted-third-party",
     "other-backup",
     "official-page-entry"
-  ]
+  ],
+  "adaptive_cards": true,
+  "layout": {
+    "desktop": "auto-fit multi-column",
+    "tablet": "auto-fit",
+    "mobile": "single-column stacked event rows"
+  }
 }
