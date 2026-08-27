@@ -166,3 +166,33 @@ def fetch(ctx):
 - 顯示資料來源（官方 / 備援）
 - 每 60 秒重新讀取部署中的 `status.json`
 - 15 分鐘由 GitHub Actions 重新抓取並部署
+
+
+## 2.1 來源整改
+
+以下來源不再假設存在 Atlassian Statuspage `/api/v2/incidents.json`：
+
+- AWS
+- Microsoft Azure
+- Equinix
+- Digital Realty
+- NTT GDC
+- Arelion
+- NTT Global Network
+- Cogent
+
+新策略：
+
+```text
+官方公開頁 / 官方可用 Feed
+↓
+官方頁解析
+↓
+Jina Reader 備援
+↓
+仍不可用才標記「取得失敗」
+```
+
+AWS：公開 AWS Health Dashboard 優先，舊 RSS 僅備援。
+
+Azure：使用目前的 `azure.status.microsoft/status`，並加入官方 backup status 頁。
