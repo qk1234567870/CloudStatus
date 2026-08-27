@@ -359,49 +359,216 @@
     throw new Error("Unsupported source: " + source.type);
   }
 
+
+  var SOURCE_CONFIDENCE = {
+    "statuspage": 100,
+    "gcp": 100,
+    "official-json": 100,
+    "official-api": 100,
+    "rss": 92,
+    "official-rss": 92,
+    "official-page": 82,
+    "reader": 72,
+    "telegram": 68,
+    "social": 62,
+    "third-party": 48
+  };
+
+  function sourceConfidence(source) {
+    return SOURCE_CONFIDENCE[source.type] || 60;
+  }
+
+  function normalizeEventTitle(title) {
+    return cleanText(title)
+      .toLowerCase()
+      .replace(/\[[^\]]+\]/g, " ")
+      .replace(/[^\p{L}\p{N}]+/gu, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function eventFingerprint(event) {
+    var title = normalizeEventTitle(event.title || "");
+    var date = event.start ? String(event.start).slice(0, 10) : "";
+    return title + "|" + date;
+  }
+
+  function mergeCollectedEvents(collected) {
+    var map = {};
+
+    collected.forEach(function (entry) {
+      (entry.events || []).forEach(function (event) {
+        var key = eventFingerprint(event);
+        if (!key || key === "|") return;
+
+        var candidate = Object.assign({}, event, {
+          sourceLabel: entry.sourceLabel,
+          sourceType: entry.sourceType,
+          confidence: entry.confidence
+        });
+
+        if (!map[key]) {
+          map[key] = candidate;
+          return;
+        }
+
+        var current = map[key];
+
+        // Prefer the higher-confidence source, while filling missing fields
+        // from lower-priority corroborating sources.
+        if ((candidate.confidence || 0) > (current.confidence || 0)) {
+          candidate.start = candidate.start || current.start;
+          candidate.end = candidate.end || current.end;
+          candidate.url = candidate.url || current.url;
+          map[key] = candidate;
+        } else {
+          current.start = current.start || candidate.start;
+          current.end = current.end || candidate.end;
+          current.url = current.url || candidate.url;
+        }
+      });
+    });
+
+    var events = Object.keys(map).map(function (key) { return map[key]; });
+
+    events.sort(function (a, b) {
+      var aActive = a.status !== "resolved" ? 1 : 0;
+      var bActive = b.status !== "resolved" ? 1 : 0;
+
+      if (aActive !== bActive) return bActive - aActive;
+
+      var timeDiff = timeValue(b.start || b.end) - timeValue(a.start || a.end);
+      if (timeDiff !== 0) return timeDiff;
+
+      return (b.confidence || 0) - (a.confidence || 0);
+    });
+
+    return events.slice(0, 3);
+  }
+
+  function classifySourceResult(result) {
+    if (result && Array.isArray(result.events) && result.events.length) {
+      return "events_found";
+    }
+    if (result && result.normal === true) {
+      return "explicit_normal";
+    }
+    if (result) {
+      return "no_event_data";
+    }
+    return "parse_failed";
+  }
+
   async function loadService(service) {
+    var collected = [];
+    var sourceStates = [];
+    var explicitNormal = [];
     var errors = [];
 
+    // Multi-source mode: try every configured source.
+    // This maximizes the chance of retaining recent incident history.
     for (var i = 0; i < service.sources.length; i++) {
       var source = service.sources[i];
 
       try {
         var result = await trySource(source, service);
-        var events = latestThree(result.events || []);
+        var sourceEvents = filterEventsByServicePolicy(
+          service,
+          latestThree((result && result.events) || [])
+        );
 
-        // Source succeeded if it returned events or an explicit normal state.
-        if (events.length || result.normal) {
-          return {
-            id: service.id,
-            name: service.name,
-            desc: service.desc,
-            category: service.category,
-            page: service.page,
-            state: events.length ? "ok" : "normal",
-            sourceLabel: source.label || source.type,
-            events: events
-          };
+        var normalizedResult = {
+          events: sourceEvents,
+          normal: !!(result && result.normal)
+        };
+
+        // Structured official APIs returning an empty incident array are an
+        // explicit normal signal, not merely "no data".
+        if (
+          sourceEvents.length === 0 &&
+          (
+            source.type === "statuspage" ||
+            source.type === "gcp" ||
+            source.type === "official-json" ||
+            source.type === "official-api"
+          )
+        ) {
+          normalizedResult.normal = true;
         }
 
-        // A valid API returning an empty incident array is also a normal result.
-        if (source.type === "statuspage" || source.type === "gcp") {
-          return {
-            id: service.id,
-            name: service.name,
-            desc: service.desc,
-            category: service.category,
-            page: service.page,
-            state: "normal",
+        var sourceState = classifySourceResult(normalizedResult);
+        sourceStates.push({
+          label: source.label || source.type,
+          type: source.type,
+          state: sourceState
+        });
+
+        if (sourceState === "events_found") {
+          collected.push({
             sourceLabel: source.label || source.type,
-            events: []
-          };
+            sourceType: source.type,
+            confidence: sourceConfidence(source),
+            events: sourceEvents
+          });
+        } else if (sourceState === "explicit_normal") {
+          explicitNormal.push({
+            sourceLabel: source.label || source.type,
+            sourceType: source.type,
+            confidence: sourceConfidence(source)
+          });
         }
       } catch (e) {
+        sourceStates.push({
+          label: source.label || source.type,
+          type: source.type,
+          state: "fetch_failed"
+        });
         errors.push((source.label || source.type) + ": " + String(e));
       }
     }
 
-    // All automatic sources failed: fall back to official page, not a fake service failure.
+    var mergedEvents = mergeCollectedEvents(collected);
+
+    if (mergedEvents.length) {
+      var best = collected.slice().sort(function (a, b) {
+        return b.confidence - a.confidence;
+      })[0];
+
+      return {
+        id: service.id,
+        name: service.name,
+        desc: service.desc,
+        category: service.category,
+        page: service.page,
+        state: "ok",
+        sourceLabel: collected.length > 1
+          ? "多來源"
+          : (best ? best.sourceLabel : "事件來源"),
+        events: mergedEvents,
+        sourceStates: sourceStates
+      };
+    }
+
+    if (explicitNormal.length) {
+      explicitNormal.sort(function (a, b) {
+        return b.confidence - a.confidence;
+      });
+
+      return {
+        id: service.id,
+        name: service.name,
+        desc: service.desc,
+        category: service.category,
+        page: service.page,
+        state: "normal",
+        sourceLabel: explicitNormal[0].sourceLabel,
+        events: [],
+        sourceStates: sourceStates
+      };
+    }
+
+    // No source could prove an incident or an explicit normal state.
+    // Do not fabricate "normal"; fall back to the official status page.
     return {
       id: service.id,
       name: service.name,
@@ -411,6 +578,7 @@
       state: "official_link",
       sourceLabel: "官方頁",
       events: [],
+      sourceStates: sourceStates,
       errors: errors
     };
   }
@@ -474,7 +642,7 @@
             '<span class="tag ' + escapeHtml(event.status) + '">[' +
               escapeHtml(statusLabel[event.status] || "處理中") +
             ']</span>' +
-            '<span class="event-title" title="' + escapeHtml(event.title) + '">' +
+            '<span class="event-title" title="' + escapeHtml(event.title + (event.sourceLabel ? " · " + event.sourceLabel : "")) + '">' +
               escapeHtml(event.title) +
             '</span>' +
             '<span class="event-time">' +
