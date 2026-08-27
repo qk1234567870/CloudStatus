@@ -570,3 +570,46 @@ button { font-size: 14px; }
     -webkit-box-orient:vertical !important;
   }
 }
+
+
+/* =========================================================
+   v22 — 桌面端固定雙欄
+   >= 981px：固定 2 欄
+   641–980px：自動 1～2 欄
+   <= 640px：手機單欄
+   ========================================================= */
+
+@media (min-width:981px){
+  .grid{
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:14px !important;
+  }
+
+  .service{
+    min-width:0 !important;
+    width:100% !important;
+    max-width:none !important;
+  }
+
+  .service-head{
+    grid-template-columns:auto minmax(0,1fr) auto !important;
+  }
+
+  .event{
+    grid-template-columns:auto minmax(0,1fr) auto !important;
+  }
+
+  .event-title{
+    min-width:0 !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+    white-space:nowrap !important;
+  }
+
+  .event-time{
+    max-width:180px !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+    white-space:nowrap !important;
+  }
+}
