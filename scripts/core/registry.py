@@ -1,0 +1,18 @@
+SERVICE_MODULES = [
+    "services.cloudflare",
+    "services.aws",
+    "services.azure",
+    "services.google_cloud",
+    "services.github",
+    "services.openai",
+    "services.apple",
+    "services.oracle",
+    "services.bandwagonhost",
+    "services.dmit",
+    "services.equinix",
+    "services.digital_realty",
+    "services.ntt_gdc",
+    "services.arelion",
+    "services.ntt_global_network",
+    "services.cogent",
+]
