@@ -727,3 +727,63 @@ button { font-size: 14px; }
     transform:none !important;
   }
 }
+
+
+/* =========================================================
+   v30 — 真正自適應
+   <= 720px：單欄
+   721–1100px：雙欄一般 Grid
+   > 1100px：雙欄 Masonry 自動補位
+   同時尊重觸控裝置，避免手機「桌面網站」誤套桌面 Masonry。
+   ========================================================= */
+@media (max-width:720px){
+  .grid,
+  .grid.masonry-active{
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    position:static !important;
+    height:auto !important;
+  }
+  .grid > .service,
+  .grid.masonry-active > .service{
+    position:static !important;
+    width:100% !important;
+    max-width:100% !important;
+    left:auto !important;
+    top:auto !important;
+  }
+}
+
+@media (min-width:721px) and (max-width:1100px){
+  .grid,
+  .grid.masonry-active{
+    display:grid !important;
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    position:static !important;
+    height:auto !important;
+  }
+  .grid > .service,
+  .grid.masonry-active > .service{
+    position:static !important;
+    width:100% !important;
+    max-width:100% !important;
+    left:auto !important;
+    top:auto !important;
+  }
+}
+
+/* 粗指標觸控裝置即使要求桌面網站，也不使用絕對定位 Masonry。 */
+@media (pointer:coarse) and (hover:none){
+  .grid.masonry-active{
+    display:grid !important;
+    position:static !important;
+    height:auto !important;
+  }
+  .grid.masonry-active > .service{
+    position:static !important;
+    width:100% !important;
+    max-width:100% !important;
+    left:auto !important;
+    top:auto !important;
+  }
+}

@@ -948,7 +948,8 @@
 
     var cards=Array.prototype.slice.call(grid.querySelectorAll(".service"));
 
-    if(window.innerWidth<981 || !cards.length){
+    var touchLike=window.matchMedia && window.matchMedia("(pointer: coarse) and (hover: none)").matches;
+    if(window.innerWidth<=1100 || touchLike || !cards.length){
       grid.classList.remove("masonry-active");
       grid.style.height="";
       cards.forEach(function(card){
