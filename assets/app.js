@@ -948,28 +948,46 @@
 
     var cards=Array.prototype.slice.call(grid.querySelectorAll(".service"));
 
-    if(window.innerWidth<981){
+    if(window.innerWidth<981 || !cards.length){
+      grid.classList.remove("masonry-active");
+      grid.style.height="";
       cards.forEach(function(card){
+        card.style.left="";
+        card.style.top="";
         card.style.gridRowEnd="";
       });
       return;
     }
 
-    var styles=getComputedStyle(grid);
-    var rowHeight=parseFloat(styles.gridAutoRows)||8;
-    var rowGap=parseFloat(styles.rowGap)||14;
+    var gap=14;
+    grid.classList.add("masonry-active");
 
+    // 先清掉舊位置，取得目前容器寬度與每張卡片真實高度。
     cards.forEach(function(card){
-      card.style.gridRowEnd="auto";
+      card.style.left="";
+      card.style.top="";
+      card.style.gridRowEnd="";
     });
 
-    // 等 DOM 完成排版後依卡片實際高度計算 span。
     requestAnimationFrame(function(){
+      var gridWidth=grid.clientWidth;
+      var colWidth=(gridWidth-gap)/2;
+      var heights=[0,0];
+
       cards.forEach(function(card){
+        // 每次都放進目前較短的一欄，這才是真正的自動補位。
+        var col=heights[0]<=heights[1]?0:1;
+        var x=col===0?0:(colWidth+gap);
+        var y=heights[col];
+
+        card.style.left=x+"px";
+        card.style.top=y+"px";
+
         var h=card.getBoundingClientRect().height;
-        var span=Math.ceil((h+rowGap)/(rowHeight+rowGap));
-        card.style.gridRowEnd="span "+Math.max(1,span);
+        heights[col]=y+h+gap;
       });
+
+      grid.style.height=Math.max(0,Math.max(heights[0],heights[1])-gap)+"px";
     });
   }
 

@@ -691,3 +691,39 @@ button { font-size: 14px; }
     grid-row:auto !important;
   }
 }
+
+
+/* =========================================================
+   v29 — 真正桌面雙欄自動補位
+   JS 直接把下一張卡片放到目前較短的一欄。
+   不再依賴 CSS Grid dense/span 的近似計算。
+   ========================================================= */
+@media (min-width:981px){
+  .grid.masonry-active{
+    display:block !important;
+    position:relative !important;
+  }
+
+  .grid.masonry-active > .service{
+    position:absolute !important;
+    margin:0 !important;
+    width:calc((100% - 14px) / 2) !important;
+    max-width:calc((100% - 14px) / 2) !important;
+    transition:none !important;
+  }
+}
+
+@media (max-width:980px){
+  .grid.masonry-active{
+    display:grid !important;
+    position:static !important;
+    height:auto !important;
+  }
+
+  .grid.masonry-active > .service{
+    position:static !important;
+    width:100% !important;
+    max-width:100% !important;
+    transform:none !important;
+  }
+}
