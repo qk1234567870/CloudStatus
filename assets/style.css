@@ -787,3 +787,45 @@ button { font-size: 14px; }
     top:auto !important;
   }
 }
+
+
+/* =========================================================
+   v31 — 雙欄以上全部使用階梯式自動補位
+   <=720px：單欄正常流
+   >720px：雙欄 Masonry，下一張永遠補到目前較短的一欄
+   ========================================================= */
+@media (min-width:721px){
+  .grid.masonry-active{
+    display:block !important;
+    position:relative !important;
+    height:auto;
+  }
+
+  .grid.masonry-active > .service{
+    position:absolute !important;
+    margin:0 !important;
+    width:calc((100% - 14px) / 2) !important;
+    max-width:calc((100% - 14px) / 2) !important;
+    left:0;
+    top:0;
+  }
+}
+
+@media (max-width:720px){
+  .grid,
+  .grid.masonry-active{
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    position:static !important;
+    height:auto !important;
+  }
+
+  .grid > .service,
+  .grid.masonry-active > .service{
+    position:static !important;
+    width:100% !important;
+    max-width:100% !important;
+    left:auto !important;
+    top:auto !important;
+  }
+}

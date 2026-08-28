@@ -948,39 +948,47 @@
 
     var cards=Array.prototype.slice.call(grid.querySelectorAll(".service"));
 
-    var touchLike=window.matchMedia && window.matchMedia("(pointer: coarse) and (hover: none)").matches;
-    if(window.innerWidth<=1100 || touchLike || !cards.length){
+    // 只有單欄手機不做 Masonry；只要進入雙欄就全部自動補位。
+    if(window.innerWidth<=720 || !cards.length){
       grid.classList.remove("masonry-active");
       grid.style.height="";
       cards.forEach(function(card){
         card.style.left="";
         card.style.top="";
+        card.style.width="";
+        card.style.maxWidth="";
         card.style.gridRowEnd="";
       });
       return;
     }
 
     var gap=14;
+    var columns=2;
     grid.classList.add("masonry-active");
 
-    // 先清掉舊位置，取得目前容器寬度與每張卡片真實高度。
     cards.forEach(function(card){
-      card.style.left="";
-      card.style.top="";
+      card.style.left="0px";
+      card.style.top="0px";
       card.style.gridRowEnd="";
     });
 
     requestAnimationFrame(function(){
       var gridWidth=grid.clientWidth;
-      var colWidth=(gridWidth-gap)/2;
-      var heights=[0,0];
+      var colWidth=(gridWidth-gap*(columns-1))/columns;
+      var heights=new Array(columns).fill(0);
 
       cards.forEach(function(card){
-        // 每次都放進目前較短的一欄，這才是真正的自動補位。
-        var col=heights[0]<=heights[1]?0:1;
-        var x=col===0?0:(colWidth+gap);
+        // 找目前最短的一欄，形成真正「階梯式」補位。
+        var col=0;
+        for(var i=1;i<columns;i++){
+          if(heights[i]<heights[col]) col=i;
+        }
+
+        var x=col*(colWidth+gap);
         var y=heights[col];
 
+        card.style.width=colWidth+"px";
+        card.style.maxWidth=colWidth+"px";
         card.style.left=x+"px";
         card.style.top=y+"px";
 
@@ -988,7 +996,7 @@
         heights[col]=y+h+gap;
       });
 
-      grid.style.height=Math.max(0,Math.max(heights[0],heights[1])-gap)+"px";
+      grid.style.height=Math.max(0,Math.max.apply(null,heights)-gap)+"px";
     });
   }
 
