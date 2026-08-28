@@ -662,3 +662,32 @@ button { font-size: 14px; }
     "title"
     "time" !important;
 }
+
+
+/* =========================================================
+   v28 — 桌面端卡片自動補位 / Masonry
+   >= 981px：維持固定雙欄，但短卡片下方不再留下大空白
+   ========================================================= */
+@media (min-width:981px){
+  .grid{
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    grid-auto-rows:8px !important;
+    grid-auto-flow:dense !important;
+    align-items:start !important;
+  }
+
+  .service{
+    align-self:start !important;
+  }
+}
+
+@media (max-width:980px){
+  .grid{
+    grid-auto-rows:auto !important;
+    grid-auto-flow:row !important;
+  }
+
+  .service{
+    grid-row:auto !important;
+  }
+}

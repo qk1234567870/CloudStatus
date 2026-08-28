@@ -942,10 +942,42 @@
       '</div><div class="events">'+body+'</div></article>';
   }
 
+  function layoutDesktopMasonry() {
+    var grid=$("#services");
+    if(!grid) return;
+
+    var cards=Array.prototype.slice.call(grid.querySelectorAll(".service"));
+
+    if(window.innerWidth<981){
+      cards.forEach(function(card){
+        card.style.gridRowEnd="";
+      });
+      return;
+    }
+
+    var styles=getComputedStyle(grid);
+    var rowHeight=parseFloat(styles.gridAutoRows)||8;
+    var rowGap=parseFloat(styles.rowGap)||14;
+
+    cards.forEach(function(card){
+      card.style.gridRowEnd="auto";
+    });
+
+    // 等 DOM 完成排版後依卡片實際高度計算 span。
+    requestAnimationFrame(function(){
+      cards.forEach(function(card){
+        var h=card.getBoundingClientRect().height;
+        var span=Math.ceil((h+rowGap)/(rowHeight+rowGap));
+        card.style.gridRowEnd="span "+Math.max(1,span);
+      });
+    });
+  }
+
   function render() {
     renderSummary();
     var list=visibleServices();
     $("#services").innerHTML=list.length?list.map(renderService).join(""):'<div class="empty">沒有符合條件的服務或事件。</div>';
+    layoutDesktopMasonry();
   }
 
   async function refresh(options) {
@@ -1046,6 +1078,12 @@
   $("#search").addEventListener("input",function(e){state.search=e.target.value;render();});
   $("#activeOnly").addEventListener("change",function(e){state.activeOnly=e.target.checked;render();});
   $("#reload").addEventListener("click",function(){refresh({force:true});});
+
+  var masonryResizeTimer=null;
+  window.addEventListener("resize",function(){
+    clearTimeout(masonryResizeTimer);
+    masonryResizeTimer=setTimeout(layoutDesktopMasonry,120);
+  });
 
   loadCache();
   refresh({force:true});
