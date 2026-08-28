@@ -1,6 +1,6 @@
 {
   "name": "CloudStatus Pure Pages",
-  "version": "27.0.0",
+  "version": "28.0.0",
   "updated": "2026-08-27",
   "current_state_and_history_independent": true,
   "status_inference": false,
@@ -50,7 +50,7 @@
     "NTT Global Network",
     "Cogent"
   ],
-  "desktop_layout": "fixed-two-column",
+  "desktop_layout": "2-column masonry",
   "desktop_breakpoint": "981px",
   "google_cloud_time_layout_fix": true,
   "dmit_grouped_message_parser": true,
@@ -64,5 +64,6 @@
   "event_language": "source-original",
   "automatic_event_translation": false,
   "ui_language": "zh-TW",
-  "time_zone": "Asia/Taipei"
+  "time_zone": "Asia/Taipei",
+  "desktop_card_autofill": true
 }
