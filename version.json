@@ -1,6 +1,6 @@
 {
   "name": "CloudStatus Pure Pages",
-  "version": "29.0.0",
+  "version": "30.0.0",
   "updated": "2026-08-27",
   "current_state_and_history_independent": true,
   "status_inference": false,
@@ -65,5 +65,9 @@
   "automatic_event_translation": false,
   "ui_language": "zh-TW",
   "time_zone": "Asia/Taipei",
-  "desktop_card_autofill": "true-masonry-shortest-column"
+  "desktop_card_autofill": "true-masonry-shortest-column",
+  "responsive_layout": true,
+  "mobile_breakpoint": "<=720px",
+  "tablet_breakpoint": "721-1100px",
+  "desktop_masonry": ">1100px non-touch"
 }
