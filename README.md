@@ -352,3 +352,30 @@ assets/
 新增或修改服務時，不再需要編輯一個巨大的服務清單。
 
 此版本仍是純靜態 GitHub Pages，不需要 build、Node.js 或 GitHub Actions。
+
+
+## v35：服務解析器模組化 + 全域事件規則
+
+### 全域事件規則
+事件是否成立，不再要求一定要有日期或狀態：
+
+- 明確是官方 Incident / Maintenance / Outage / Advisory → 可以收錄。
+- 沒日期 → 時間留空。
+- 沒狀態 → 狀態留空。
+- 不自行補造日期或狀態。
+- 普通說明文字仍會被過濾。
+
+### DMIT 完整模組化
+`assets/services/dmit.js` 現在同時負責：
+- DMIT 服務設定。
+- Server Status 解析。
+- Security Response 解析。
+- Telegram 公告解析。
+- Security Response 直接抓取 + Reader fallback。
+
+Telegram parser 也已加強，只抓公告標題，不再把
+`We apologize for any inconvenience...`
+這類正文當成獨立事件。
+
+核心 `app.js` 新增 parser registry；其他服務可以逐個把解析器搬進自己的 module，
+不用再往 app.js 疊服務特例。

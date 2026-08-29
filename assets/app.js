@@ -2,6 +2,7 @@
   "use strict";
 
   var SERVICES = window.CLOUDSTATUS_SERVICES || [];
+  var SERVICE_PARSERS = window.CloudStatusServiceParsers || {};
   var EXPECTED_SERVICE_COUNT = 16;
   if (SERVICES.length !== EXPECTED_SERVICE_COUNT) {
     console.warn("CloudStatus service modules loaded:", SERVICES.length, "/", EXPECTED_SERVICE_COUNT);
@@ -121,6 +122,39 @@
     if (/notification/i.test(t) && /(email|sms|text message|subscribe)/i.test(t)) return true;
     return false;
   }
+
+  function normalizeEvent(event, service, source) {
+    if (!event) return null;
+    var title=cleanText(event.title);
+    if (!title || looksNoise(title)) return null;
+
+    var status=event.status ? explicitStatus(event.status) : null;
+    if (!status && event.statusRaw) status=explicitStatus(event.statusRaw);
+
+    return {
+      title:title,
+      status:status || null,
+      statusRaw:event.statusRaw || null,
+      start:event.start || null,
+      end:event.end || null,
+      url:event.url || (source && source.url) || (service && service.page) || null,
+      sourceLabel:event.sourceLabel || (source && source.label) || null
+    };
+  }
+
+  function normalizeResult(result, service, source) {
+    result=result || {};
+    var events=(result.events || []).map(function(e){
+      return normalizeEvent(e,service,source);
+    }).filter(Boolean);
+
+    return {
+      events:sortRecent(events),
+      health:result.health || null,
+      healthText:result.healthText || null
+    };
+  }
+
 
   function fingerprint(e) {
     return cleanText(e.title).toLowerCase().replace(/[^\p{L}\p{N}]+/gu," ").trim() +
@@ -718,36 +752,60 @@
     return {events:sortRecent(events),health:normal?"normal":null,healthText:normal?"官方頁顯示正常":null};
   }
 
+  window.CloudStatusParserUtils = {
+    cleanText: cleanText,
+    lines: lines,
+    looksNoise: looksNoise,
+    explicitStatus: explicitStatus,
+    findAnyDate: findAnyDate,
+    findDate: findDate,
+    findDateRange: findDateRange,
+    sortRecent: sortRecent,
+    normalizeEvent: normalizeEvent
+  };
+
   function parseReader(text, service, source) {
+    var moduleParser=SERVICE_PARSERS[service.id];
+    if (moduleParser && typeof moduleParser.parseReader === "function") {
+      return normalizeResult(moduleParser.parseReader(text,service,source,window.CloudStatusParserUtils),service,source);
+    }
+
     switch(service.parser) {
-      case "google-cloud": return parseGooglePage(text,service,source);
-      case "azure": return parseAzure(text,service,source);
-      case "apple": return parseApple(text,service,source);
-      case "apple-backup": return parseAppleBackup(text,service,source);
-      case "oracle": return parseOracle(text,service,source);
-      case "bandwagon": return parseBandwagon(text,service,source);
-      case "dmit":
-        if (source.url && source.url.indexOf("dmit-abuse-team-temp-security-response.dmit.com") !== -1) {
-          return parseDMITSecurity(text,service,source);
-        }
-        return parseDMIT(text,service,source);
+      case "google-cloud": return normalizeResult(parseGooglePage(text,service,source),service,source);
+      case "azure": return normalizeResult(parseAzure(text,service,source),service,source);
+      case "apple": return normalizeResult(parseApple(text,service,source),service,source);
+      case "apple-backup": return normalizeResult(parseAppleBackup(text,service,source),service,source);
+      case "oracle": return normalizeResult(parseOracle(text,service,source),service,source);
+      case "bandwagon": return normalizeResult(parseBandwagon(text,service,source),service,source);
+      case "dmit": return normalizeResult(parseDMIT(text,service,source),service,source);
       case "equinix":
       case "digital-realty":
       case "ntt-gdc":
       case "arelion":
       case "ntt-global":
-      case "cogent": return parseInfrastructure(text,service,source);
-      case "aws": return parseInfrastructure(text,service,source);
-      default: return parseInfrastructure(text,service,source);
+      case "cogent": return normalizeResult(parseInfrastructure(text,service,source),service,source);
+      case "aws": return normalizeResult(parseInfrastructure(text,service,source),service,source);
+      default: return normalizeResult(parseInfrastructure(text,service,source),service,source);
     }
   }
 
   async function runSource(source,service) {
-    if (source.type==="statuspage") return statuspageAdapter(await fetchJson(source.url),service,source);
-    if (source.type==="apple-json") return appleStructuredAdapter(await fetchAppleJson(source.url),service,source);
-    if (source.type==="gcp") return gcpAdapter(await fetchJson(source.url),service,source);
-    if (source.type==="rss") return rssAdapter(await fetchText(source.url),service,source);
-    if (source.type==="apple-backup") return parseAppleBackup(await fetchReader(source.url),service,source);
+    var moduleParser=SERVICE_PARSERS[service.id];
+    if (moduleParser && typeof moduleParser.runSource === "function") {
+      var custom=await moduleParser.runSource(source,service,{
+        fetchText:fetchText,
+        fetchJson:fetchJson,
+        fetchReader:fetchReader,
+        utils:window.CloudStatusParserUtils
+      });
+      if (custom) return normalizeResult(custom,service,source);
+    }
+
+    if (source.type==="statuspage") return normalizeResult(statuspageAdapter(await fetchJson(source.url),service,source),service,source);
+    if (source.type==="apple-json") return normalizeResult(appleStructuredAdapter(await fetchAppleJson(source.url),service,source),service,source);
+    if (source.type==="gcp") return normalizeResult(gcpAdapter(await fetchJson(source.url),service,source),service,source);
+    if (source.type==="rss") return normalizeResult(rssAdapter(await fetchText(source.url),service,source),service,source);
+    if (source.type==="apple-backup") return normalizeResult(parseAppleBackup(await fetchReader(source.url),service,source),service,source);
     if (source.type==="reader") return parseReader(await fetchReader(source.url),service,source);
     throw new Error("Unsupported source " + source.type);
   }

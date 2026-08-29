@@ -1,6 +1,6 @@
 {
   "name": "CloudStatus Pure Pages",
-  "version": "34.0.0",
+  "version": "35.0.0",
   "updated": "2026-08-27",
   "current_state_and_history_independent": true,
   "status_inference": false,
@@ -77,5 +77,9 @@
   "dmit_security_advisory_without_date": true,
   "service_modules": true,
   "service_module_count": 16,
-  "service_module_directory": "assets/services/"
+  "service_module_directory": "assets/services/",
+  "service_parser_modules": true,
+  "dmit_parser_fully_modular": true,
+  "global_event_date_optional": true,
+  "global_event_status_optional": true
 }

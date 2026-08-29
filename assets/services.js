@@ -19,10 +19,23 @@
     list.push(service);
   }
 
+  var parsers = Object.create(null);
+
+  function registerParser(id, parser) {
+    if (!id || !parser) {
+      throw new Error("CloudStatus parser module requires id and parser");
+    }
+    parsers[id] = parser;
+  }
+
   window.CloudStatusServices = {
     register: registerService,
-    list: list
+    registerParser: registerParser,
+    list: list,
+    parsers: parsers
   };
+
+  window.CloudStatusServiceParsers = parsers;
 
   // app.js continues to consume the same public array.
   window.CLOUDSTATUS_SERVICES = list;
