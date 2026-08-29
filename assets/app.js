@@ -980,7 +980,7 @@
       render();
 
       var now=new Intl.DateTimeFormat("zh-TW",{
-        month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit",hour12:false
+        year:"numeric",month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit",hour12:false
       }).format(new Date(cache.timestamp));
 
       $("#updated").textContent="快取於 "+now+" · 正在背景更新";
@@ -1183,7 +1183,7 @@
       saveCache();
 
       var now=new Intl.DateTimeFormat("zh-TW",{
-        month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit",hour12:false
+        year:"numeric",month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit",hour12:false
       }).format(new Date(lastRefresh));
 
       $("#updated").textContent="最後讀取於 "+now;
