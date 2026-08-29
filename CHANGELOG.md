@@ -2,6 +2,14 @@
 
 CloudStatus 版本更新記錄。
 
+## v45.0.0
+
+- 修正 DMIT Security Response 的資料分類。
+- `dmit-abuse-team-temp-security-response.dmit.com` 屬於安全通知頁，不再視為事件來源。
+- 移除該來源的事件解析與事件抓取邏輯，避免 `DMIT network incident advisory` 被列入最近事件。
+- DMIT 事件仍由官方 Server Status 與官方 Telegram 等真正事件來源取得。
+- 所有資源同步更新至 `v45.0.0`。
+
 ## v44.0.0
 
 - 整體最大寬度維持 `1180px`。

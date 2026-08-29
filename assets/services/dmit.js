@@ -20,14 +20,6 @@
     },
     {
       "type": "reader",
-      "url": "https://dmit-abuse-team-temp-security-response.dmit.com/",
-      "label": "官方 Security Response",
-      "tier": 55,
-      "kind": "official-announcement",
-      "priority": 55
-    },
-    {
-      "type": "reader",
       "url": "https://t.me/s/DMIT_INC",
       "label": "官方 Telegram 公告",
       "tier": 60,
@@ -38,45 +30,6 @@
 };
 
   window.CloudStatusServices.register(service);
-
-  function parseSecurity(text, service, source, u) {
-    var ls=u.lines(text);
-    var full=String(text||"");
-    var title=null;
-
-    for(var i=0;i<ls.length;i++){
-      var line=u.cleanText(ls[i]);
-      if (/DMIT network incident advisory/i.test(line)) {
-        title="DMIT network incident advisory";
-        break;
-      }
-    }
-
-    if(!title && /PROACTIVE SECURITY NOTICE/i.test(full) &&
-       /DMIT Proactive Security identified potentially risky applications/i.test(full)) {
-      title="DMIT network incident advisory";
-    }
-
-    if(!title) return {events:[],health:null,healthText:null};
-
-    var rawStatus=null;
-    var sm=full.match(/\b(Investigating|Monitoring|Resolved|Completed|Closed)\b/i);
-    if(sm) rawStatus=sm[1];
-
-    return {
-      events:[{
-        title:title,
-        status:rawStatus ? u.explicitStatus(rawStatus) : null,
-        statusRaw:rawStatus,
-        start:u.findAnyDate(full),  // 日期可缺失
-        end:null,
-        url:source.url,
-        sourceLabel:source.label
-      }],
-      health:null,
-      healthText:null
-    };
-  }
 
   function parseTelegram(text, service, source, u) {
     var ls=u.lines(text), events=[], seen={};
@@ -140,30 +93,10 @@
 
   window.CloudStatusServices.registerParser("dmit", {
     parseReader: function (text, service, source, u) {
-      if (source.url.indexOf("dmit-abuse-team-temp-security-response.dmit.com") !== -1) {
-        return parseSecurity(text,service,source,u);
-      }
       if (source.url.indexOf("t.me/s/DMIT_INC") !== -1) {
         return parseTelegram(text,service,source,u);
       }
       return parseServerStatus(text,service,source,u);
-    },
-
-    runSource: async function (source, service, ctx) {
-      // Security Response 先嘗試直接抓取；失敗才走 Reader。
-      if (source.url.indexOf("dmit-abuse-team-temp-security-response.dmit.com") !== -1) {
-        try {
-          var direct=await ctx.fetchText(source.url);
-          if (direct && /DMIT network incident advisory|PROACTIVE SECURITY NOTICE/i.test(direct)) {
-            return parseSecurity(direct,service,source,ctx.utils);
-          }
-        } catch(e) {}
-
-        var reader=await ctx.fetchReader(source.url);
-        return parseSecurity(reader,service,source,ctx.utils);
-      }
-
-      return null;
     }
   });
 })();

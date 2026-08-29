@@ -10,7 +10,7 @@
   var state = { services: [], filter: "all", search: "", activeOnly: false };
 
   var REFRESH_INTERVAL = 5 * 60 * 1000;
-  var CACHE_KEY = "cloudstatus-cache-v44";
+  var CACHE_KEY = "cloudstatus-cache-v45";
   var CACHE_MAX_AGE = 15 * 60 * 1000;
   var FALLBACK_CONCURRENCY = 4;
   var FOREGROUND_REFRESH_THRESHOLD = 2 * 60 * 1000;
