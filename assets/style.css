@@ -28,7 +28,7 @@ body{
 button,input{font:inherit}
 a{-webkit-tap-highlight-color:transparent}
 .shell{
-  width:min(1600px,calc(100% - clamp(20px,4vw,64px)));
+  width:min(1180px,calc(100% - clamp(20px,4vw,64px)));
   margin:0 auto;
   padding:max(15px,env(safe-area-inset-top)) 12px max(30px,env(safe-area-inset-bottom))
 }
@@ -868,7 +868,7 @@ button { font-size: 14px; }
 
 @media (min-width:721px){
   .shell{
-    width:min(1600px,calc(100% - clamp(24px,4vw,72px))) !important;
+    width:min(1180px,calc(100% - clamp(24px,4vw,72px))) !important;
   }
 
   .grid.masonry-active{
