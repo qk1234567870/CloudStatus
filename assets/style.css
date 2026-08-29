@@ -898,3 +898,105 @@ button { font-size: 14px; }
     max-width:100% !important;
   }
 }
+
+
+/* =========================================================
+   v43 — 1180px 穩定卡片布局
+   <=720px：單欄
+   >720px：固定雙欄 Masonry
+   不再在 1180px 容器內切成三欄。
+   ========================================================= */
+@media (min-width:721px){
+  .grid.masonry-active{
+    display:block !important;
+    position:relative !important;
+  }
+
+  .grid.masonry-active > .service{
+    position:absolute !important;
+    min-width:0 !important;
+    max-width:none !important;
+  }
+}
+
+@media (max-width:720px){
+  .grid,
+  .grid.masonry-active{
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) !important;
+    position:static !important;
+    height:auto !important;
+  }
+
+  .grid > .service,
+  .grid.masonry-active > .service{
+    position:static !important;
+    width:100% !important;
+    max-width:100% !important;
+    left:auto !important;
+    top:auto !important;
+  }
+}
+
+
+/* =========================================================
+   v44 — 1180px 上限 + 全顯示器自適應
+   寬螢幕只增加左右留白，不再增加卡片欄數。
+   ========================================================= */
+.shell{
+  width:min(1180px,calc(100% - clamp(20px,4vw,64px))) !important;
+  max-width:1180px !important;
+  margin-left:auto !important;
+  margin-right:auto !important;
+  box-sizing:border-box !important;
+}
+
+#services{
+  width:100% !important;
+  min-width:0 !important;
+  box-sizing:border-box !important;
+}
+
+.service{
+  min-width:0 !important;
+  box-sizing:border-box !important;
+}
+
+@media (max-width:720px){
+  .shell{
+    width:100% !important;
+    max-width:100% !important;
+    padding-left:clamp(10px,3vw,18px) !important;
+    padding-right:clamp(10px,3vw,18px) !important;
+  }
+
+  #services,
+  #services.masonry-active{
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) !important;
+    position:static !important;
+    height:auto !important;
+  }
+
+  #services > .service,
+  #services.masonry-active > .service{
+    position:static !important;
+    width:100% !important;
+    max-width:100% !important;
+    left:auto !important;
+    top:auto !important;
+  }
+}
+
+@media (min-width:721px){
+  #services.masonry-active{
+    display:block !important;
+    position:relative !important;
+  }
+
+  #services.masonry-active > .service{
+    position:absolute !important;
+    min-width:0 !important;
+    max-width:none !important;
+  }
+}

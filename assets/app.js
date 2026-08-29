@@ -10,7 +10,7 @@
   var state = { services: [], filter: "all", search: "", activeOnly: false };
 
   var REFRESH_INTERVAL = 5 * 60 * 1000;
-  var CACHE_KEY = "cloudstatus-cache-v42";
+  var CACHE_KEY = "cloudstatus-cache-v44";
   var CACHE_MAX_AGE = 15 * 60 * 1000;
   var FALLBACK_CONCURRENCY = 4;
   var FOREGROUND_REFRESH_THRESHOLD = 2 * 60 * 1000;
@@ -1067,8 +1067,10 @@
 
     var cards=Array.prototype.slice.call(grid.querySelectorAll(".service"));
 
-    // 只有單欄手機不做 Masonry；只要進入雙欄就全部自動補位。
-    if(window.innerWidth<=720 || !cards.length){
+    // 依實際內容容器寬度判斷，不依手機/桌面名稱。
+    // 容器 <= 720px：單欄；> 720px：雙欄 Masonry。
+    var availableWidth=grid.clientWidth || window.innerWidth;
+    if(availableWidth<=720 || !cards.length){
       grid.classList.remove("masonry-active");
       grid.style.height="";
       cards.forEach(function(card){
@@ -1093,13 +1095,10 @@
     requestAnimationFrame(function(){
       var gridWidth=grid.clientWidth;
 
-      // 根據實際可用寬度自動計算欄數，而不是依裝置名稱判斷。
-      // 721px 起至少雙欄；寬螢幕自動增加至 3 / 4 欄。
-      var minCard=360;
-      var columns=Math.max(2,Math.floor((gridWidth+gap)/(minCard+gap)));
-      columns=Math.min(columns,4);
-
-      var colWidth=(gridWidth-gap*(columns-1))/columns;
+      // 1180px 整體寬度下固定兩欄最穩定。
+      // <=720px 已在前面走單欄；>720px 一律雙欄 Masonry。
+      var columns=2;
+      var colWidth=(gridWidth-gap)/columns;
       var heights=new Array(columns).fill(0);
 
       cards.forEach(function(card){
