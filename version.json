@@ -1,6 +1,6 @@
 {
   "name": "CloudStatus Pure Pages",
-  "version": "31.0.0",
+  "version": "32.0.0",
   "updated": "2026-08-27",
   "current_state_and_history_independent": true,
   "status_inference": false,
@@ -71,5 +71,7 @@
   "tablet_breakpoint": "721-1100px",
   "desktop_masonry": ">1100px non-touch",
   "masonry_from_columns": 2,
-  "layout_mode": "single-column-mobile / staircase-masonry-2plus"
+  "layout_mode": "single-column-mobile / staircase-masonry-2plus",
+  "dmit_security_response_source": true,
+  "dmit_security_response_url": "https://dmit-abuse-team-temp-security-response.dmit.com/"
 }

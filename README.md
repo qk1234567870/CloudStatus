@@ -288,3 +288,24 @@ v29 改成真正 Masonry：每張新卡片直接放到當下高度較短的那�
 - 每張新卡片都放到目前高度較短的一欄。
 - 平板雙欄、手機橫向進入雙欄、桌面雙欄都會自動補空位。
 - 不再因為同一列另一張卡片較高而留下大片空白。
+
+
+## v32：加入 DMIT Security Response 事件來源
+
+新增官方來源：
+
+- https://dmit-abuse-team-temp-security-response.dmit.com/
+- 顯示名稱：官方 Security Response
+- 分類：官方公告 / Security Response
+- 會納入 DMIT 最近 3 筆事件
+
+解析規則：
+- 只接受帶有明確日期/時間的事件記錄。
+- 不把頁面標題、欄位名、說明文字當事件。
+- 只有來源明確出現 Investigating / Resolved / Completed 等狀態時才顯示狀態。
+- 沒有明確 status 時保持無狀態，不自行推斷。
+
+DMIT 來源順序：
+1. 官方 Server Status
+2. 官方 Security Response
+3. 官方 Telegram 公告
