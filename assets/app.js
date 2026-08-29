@@ -2,6 +2,10 @@
   "use strict";
 
   var SERVICES = window.CLOUDSTATUS_SERVICES || [];
+  var EXPECTED_SERVICE_COUNT = 16;
+  if (SERVICES.length !== EXPECTED_SERVICE_COUNT) {
+    console.warn("CloudStatus service modules loaded:", SERVICES.length, "/", EXPECTED_SERVICE_COUNT);
+  }
   var state = { services: [], filter: "all", search: "", activeOnly: false };
 
   var REFRESH_INTERVAL = 5 * 60 * 1000;
@@ -619,84 +623,54 @@
 
   function parseDMITSecurity(text, service, source) {
     var ls=lines(text), events=[];
-    var seen={};
+    var t=String(text||"");
 
-    // 此頁以事件/檢查記錄為主。只接受「明確帶日期/時間」的記錄，
-    // 避免把頁面標題、說明文字、欄位名稱當成事件。
-    var noise=/^(DMIT Server Behavior Check|Server Behavior Check|Home|Status|Time|Date|Description|Details|Result|Action|IP|Node|Region|Location|Refresh|Loading)$/i;
-    var explicit=/\b(Investigating|Identified|Monitoring|Resolved|Completed|Closed|Maintenance|Active|Open)\b/i;
+    // 這個頁面是單篇 DMIT Proactive Security / network incident advisory，
+    // 頁面本身不一定提供日期，因此不能再要求「必須有日期」才承認事件。
+    var headingPatterns=[
+      /DMIT network incident advisory/i,
+      /PROACTIVE SECURITY NOTICE/i,
+      /DMIT Proactive Security identified potentially risky applications/i
+    ];
 
-    function dateFromLine(s){
-      return findAnyDate(s);
-    }
-
-    for(var i=0;i<ls.length;i++){
+    var title=null;
+    for(var i=0;i<ls.length && !title;i++){
       var line=cleanText(ls[i]);
-      if(!line || noise.test(line) || looksNoise(line)) continue;
-
-      var date=dateFromLine(line);
-      var title=null, block=null;
-
-      if(date){
-        // 日期與事件在同一行：移除日期部分後保留事件文字。
-        title=line
-          .replace(/\b\d{4}-\d{2}-\d{2}[T\s]\d{1,2}:\d{2}(?::\d{2})?(?:Z|[+-]\d{2}:?\d{2})?\b/g,"")
-          .replace(/\b\d{4}\/\d{1,2}\/\d{1,2}\s+\d{1,2}:\d{2}\b/g,"")
-          .replace(/\b(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{1,2},?\s+\d{4}(?:\s+(?:at\s+)?)?\d{1,2}:\d{2}\s*(?:AM|PM)?(?:\s+[A-Z]{2,5})?\b/gi,"")
-          .replace(/^[\s|:–—-]+|[\s|:–—-]+$/g,"")
-          .trim();
-
-        // 若同一行只剩日期，取附近最接近的非噪音文字作標題。
-        if(!title || title.length<4){
-          for(var p=i-1;p>=Math.max(0,i-3);p--){
-            var prev=cleanText(ls[p]);
-            if(prev && !noise.test(prev) && !looksNoise(prev) && !dateFromLine(prev)){
-              title=prev; break;
-            }
-          }
-          if(!title || title.length<4){
-            for(var n=i+1;n<=Math.min(ls.length-1,i+3);n++){
-              var next=cleanText(ls[n]);
-              if(next && !noise.test(next) && !looksNoise(next) && !dateFromLine(next)){
-                title=next; break;
-              }
-            }
-          }
-        }
-
-        block=ls.slice(Math.max(0,i-2),Math.min(ls.length,i+4)).join(" ");
-      } else {
-        // 有些表格會是「事件標題」下一行才放日期。
-        var near=ls.slice(i+1,Math.min(ls.length,i+3)).join(" ");
-        date=dateFromLine(near);
-        if(date && line.length>=4){
-          title=line;
-          block=ls.slice(i,Math.min(ls.length,i+4)).join(" ");
-        }
+      if(/DMIT network incident advisory/i.test(line)){
+        title=line;
       }
-
-      if(!date || !title || title.length<4 || noise.test(title) || looksNoise(title)) continue;
-      if(/^(copyright|privacy|terms|powered by|server behavior check)$/i.test(title)) continue;
-
-      var key=(title+"|"+date).toLowerCase();
-      if(seen[key]) continue;
-      seen[key]=true;
-
-      var sm=(block||"").match(explicit);
-      var rawStatus=sm?sm[1]:null;
-
-      events.push({
-        title:title,
-        status:rawStatus?explicitStatus(rawStatus):null,
-        statusRaw:rawStatus,
-        start:date,
-        end:null,
-        url:source.url,
-        sourceLabel:source.label
-      });
     }
 
-    return {events:sortRecent(events),health:null,healthText:null};
+    // 若 Reader 把主標題拆掉，使用頁面明確的安全公告標題。
+    if(!title && headingPatterns.some(function(re){return re.test(t);})){
+      title="DMIT network incident advisory";
+    }
+
+    if(!title){
+      return {events:[],health:null,healthText:null};
+    }
+
+    // 日期有就顯示，沒有就保持空白；不捏造時間。
+    var start=findAnyDate(t);
+
+    // 只有來源真的寫出結構化/明確狀態詞時才套狀態。
+    // identified 在正文中描述「identified risky applications」不是事件生命週期狀態，
+    // 因此這裡刻意不把 identified 自動當成 status。
+    var rawStatus=null;
+    var explicitLifecycle=t.match(/\b(Investigating|Monitoring|Resolved|Completed|Closed)\b/i);
+    if(explicitLifecycle) rawStatus=explicitLifecycle[1];
+
+    events.push({
+      title:title,
+      status:rawStatus?explicitStatus(rawStatus):null,
+      statusRaw:rawStatus,
+      start:start,
+      end:null,
+      url:source.url,
+      sourceLabel:source.label
+    });
+
+    return {events:events,health:null,healthText:null};
   }
 
   function parseDMIT(text, service, source) {
