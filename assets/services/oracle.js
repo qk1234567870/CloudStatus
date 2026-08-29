@@ -17,6 +17,14 @@
       "kind": "official-history",
       "priority": 40
     },
+     {
+      "type": "rss",
+      "url": "https://ocistatus.oraclecloud.com/api/v2/incident-summary.rss",
+      "label": "官方 RSS",
+      "tier": 45,
+      "kind": "official-history",
+      "priority": 45
+    },
     {
       "type": "reader",
       "url": "https://ocistatus.oraclecloud.com/",
