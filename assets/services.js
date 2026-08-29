@@ -251,6 +251,14 @@ window.CLOUDSTATUS_SERVICES = [
       },
       {
         "type": "reader",
+        "url": "https://dmit-abuse-team-temp-security-response.dmit.com/",
+        "label": "官方 Security Response",
+        "tier": 60,
+        "kind": "official-announcement",
+        "priority": 60
+      },
+      {
+        "type": "reader",
         "url": "https://t.me/s/DMIT_INC",
         "label": "官方 Telegram 公告",
         "tier": 60,

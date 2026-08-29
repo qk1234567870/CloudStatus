@@ -617,6 +617,88 @@
     return {events:sortRecent(events),health:normal?"normal":null,healthText:normal?"所有系統正常":null};
   }
 
+  function parseDMITSecurity(text, service, source) {
+    var ls=lines(text), events=[];
+    var seen={};
+
+    // 此頁以事件/檢查記錄為主。只接受「明確帶日期/時間」的記錄，
+    // 避免把頁面標題、說明文字、欄位名稱當成事件。
+    var noise=/^(DMIT Server Behavior Check|Server Behavior Check|Home|Status|Time|Date|Description|Details|Result|Action|IP|Node|Region|Location|Refresh|Loading)$/i;
+    var explicit=/\b(Investigating|Identified|Monitoring|Resolved|Completed|Closed|Maintenance|Active|Open)\b/i;
+
+    function dateFromLine(s){
+      return findAnyDate(s);
+    }
+
+    for(var i=0;i<ls.length;i++){
+      var line=cleanText(ls[i]);
+      if(!line || noise.test(line) || looksNoise(line)) continue;
+
+      var date=dateFromLine(line);
+      var title=null, block=null;
+
+      if(date){
+        // 日期與事件在同一行：移除日期部分後保留事件文字。
+        title=line
+          .replace(/\b\d{4}-\d{2}-\d{2}[T\s]\d{1,2}:\d{2}(?::\d{2})?(?:Z|[+-]\d{2}:?\d{2})?\b/g,"")
+          .replace(/\b\d{4}\/\d{1,2}\/\d{1,2}\s+\d{1,2}:\d{2}\b/g,"")
+          .replace(/\b(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{1,2},?\s+\d{4}(?:\s+(?:at\s+)?)?\d{1,2}:\d{2}\s*(?:AM|PM)?(?:\s+[A-Z]{2,5})?\b/gi,"")
+          .replace(/^[\s|:–—-]+|[\s|:–—-]+$/g,"")
+          .trim();
+
+        // 若同一行只剩日期，取附近最接近的非噪音文字作標題。
+        if(!title || title.length<4){
+          for(var p=i-1;p>=Math.max(0,i-3);p--){
+            var prev=cleanText(ls[p]);
+            if(prev && !noise.test(prev) && !looksNoise(prev) && !dateFromLine(prev)){
+              title=prev; break;
+            }
+          }
+          if(!title || title.length<4){
+            for(var n=i+1;n<=Math.min(ls.length-1,i+3);n++){
+              var next=cleanText(ls[n]);
+              if(next && !noise.test(next) && !looksNoise(next) && !dateFromLine(next)){
+                title=next; break;
+              }
+            }
+          }
+        }
+
+        block=ls.slice(Math.max(0,i-2),Math.min(ls.length,i+4)).join(" ");
+      } else {
+        // 有些表格會是「事件標題」下一行才放日期。
+        var near=ls.slice(i+1,Math.min(ls.length,i+3)).join(" ");
+        date=dateFromLine(near);
+        if(date && line.length>=4){
+          title=line;
+          block=ls.slice(i,Math.min(ls.length,i+4)).join(" ");
+        }
+      }
+
+      if(!date || !title || title.length<4 || noise.test(title) || looksNoise(title)) continue;
+      if(/^(copyright|privacy|terms|powered by|server behavior check)$/i.test(title)) continue;
+
+      var key=(title+"|"+date).toLowerCase();
+      if(seen[key]) continue;
+      seen[key]=true;
+
+      var sm=(block||"").match(explicit);
+      var rawStatus=sm?sm[1]:null;
+
+      events.push({
+        title:title,
+        status:rawStatus?explicitStatus(rawStatus):null,
+        statusRaw:rawStatus,
+        start:date,
+        end:null,
+        url:source.url,
+        sourceLabel:source.label
+      });
+    }
+
+    return {events:sortRecent(events),health:null,healthText:null};
+  }
+
   function parseDMIT(text, service, source) {
     var ls=lines(text), events=[];
 
@@ -670,7 +752,11 @@
       case "apple-backup": return parseAppleBackup(text,service,source);
       case "oracle": return parseOracle(text,service,source);
       case "bandwagon": return parseBandwagon(text,service,source);
-      case "dmit": return parseDMIT(text,service,source);
+      case "dmit":
+        if (source.url && source.url.indexOf("dmit-abuse-team-temp-security-response.dmit.com") !== -1) {
+          return parseDMITSecurity(text,service,source);
+        }
+        return parseDMIT(text,service,source);
       case "equinix":
       case "digital-realty":
       case "ntt-gdc":
