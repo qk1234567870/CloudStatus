@@ -16,6 +16,19 @@
       throw new Error("Duplicate CloudStatus service id: " + service.id);
     }
     ids[service.id] = true;
+
+    // Source URL may be omitted when it is the same as service.page.
+    // This keeps service modules DRY while preserving a concrete URL at runtime.
+    if (Array.isArray(service.sources)) {
+      service.sources = service.sources.map(function (source) {
+        if (!source) return source;
+        if (source.url) return source;
+        var inherited = Object.assign({}, source);
+        inherited.url = service.page || null;
+        return inherited;
+      });
+    }
+
     list.push(service);
   }
 

@@ -11,7 +11,6 @@
   "sources": [
     {
       "type": "reader",
-      "url": "https://status.digitalrealty.com/",
       "label": "官方 System Status",
       "kind": "official-status",
       "priority": 50,

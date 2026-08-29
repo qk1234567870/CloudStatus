@@ -11,7 +11,6 @@
   "sources": [
     {
       "type": "reader",
-      "url": "https://www.arelion.com/",
       "label": "官方頁",
       "tier": 50,
       "kind": "official-status",

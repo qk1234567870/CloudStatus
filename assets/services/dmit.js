@@ -12,7 +12,6 @@
   "sources": [
     {
       "type": "reader",
-      "url": "https://www.dmit.io/serverstatus.php",
       "label": "官方 Server Status",
       "tier": 50,
       "kind": "official-status",

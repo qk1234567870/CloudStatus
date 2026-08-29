@@ -11,7 +11,6 @@
   "sources": [
     {
       "type": "reader",
-      "url": "https://ecogent.cogentco.com/network-status",
       "label": "官方 Network Status",
       "kind": "official-status",
       "priority": 50,

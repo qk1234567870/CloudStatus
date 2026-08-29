@@ -11,7 +11,6 @@
   "sources": [
     {
       "type": "reader",
-      "url": "https://bwhstatus.com/",
       "label": "官方狀態頁",
       "tier": 50,
       "kind": "official-status",

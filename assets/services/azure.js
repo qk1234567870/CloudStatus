@@ -11,7 +11,6 @@
   "sources": [
     {
       "type": "reader",
-      "url": "https://azure.status.microsoft/status",
       "label": "官方 Status",
       "tier": 50,
       "kind": "official-status",

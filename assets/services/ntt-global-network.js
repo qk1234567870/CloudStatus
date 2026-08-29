@@ -11,7 +11,6 @@
   "sources": [
     {
       "type": "reader",
-      "url": "https://www.nttdata.com/global/en/services/connectivity/global-ip-network",
       "label": "官方頁",
       "tier": 50,
       "kind": "official-status",

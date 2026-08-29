@@ -19,7 +19,6 @@
     },
     {
       "type": "reader",
-      "url": "https://ocistatus.oraclecloud.com/",
       "label": "官方 Status",
       "tier": 50,
       "kind": "official-status",

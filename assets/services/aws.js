@@ -19,7 +19,6 @@
     },
     {
       "type": "reader",
-      "url": "https://health.aws.amazon.com/health/status",
       "label": "官方 Health Dashboard",
       "tier": 50,
       "kind": "official-status",

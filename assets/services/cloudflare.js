@@ -19,7 +19,6 @@
     },
     {
       "type": "reader",
-      "url": "https://www.cloudflarestatus.com",
       "label": "官方頁 Reader",
       "tier": 50,
       "kind": "official-status",

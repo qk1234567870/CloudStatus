@@ -10,7 +10,7 @@
   var state = { services: [], filter: "all", search: "", activeOnly: false };
 
   var REFRESH_INTERVAL = 5 * 60 * 1000;
-  var CACHE_KEY = "cloudstatus-cache-v45";
+  var CACHE_KEY = "cloudstatus-cache-v46";
   var CACHE_MAX_AGE = 15 * 60 * 1000;
   var FALLBACK_CONCURRENCY = 4;
   var FOREGROUND_REFRESH_THRESHOLD = 2 * 60 * 1000;
@@ -791,6 +791,12 @@
   }
 
   async function runSource(source,service) {
+    // A source without its own URL inherits the service's official page.
+    // Registry normally resolves this already; keep this fallback for safety.
+    if (source && !source.url && service && service.page) {
+      source=Object.assign({},source,{url:service.page});
+    }
+
     var moduleParser=SERVICE_PARSERS[service.id];
     if (moduleParser && typeof moduleParser.runSource === "function") {
       var custom=await moduleParser.runSource(source,service,{

@@ -35,7 +35,6 @@
     },
     {
       "type": "reader",
-      "url": "https://equinixproductstatus.statuspage.io/",
       "label": "官方 Status",
       "kind": "official-status",
       "priority": 50,

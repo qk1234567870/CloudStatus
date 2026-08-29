@@ -19,7 +19,6 @@
     },
     {
       "type": "reader",
-      "url": "https://status.cloud.google.com",
       "label": "官方狀態頁",
       "tier": 50,
       "kind": "official-status",

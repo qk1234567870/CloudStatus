@@ -2,6 +2,15 @@
 
 CloudStatus 版本更新記錄。
 
+## v46.0.0
+
+- 新增全服務通用的 `source.url -> service.page` 自動繼承機制。
+- 當某個資料來源與服務官方 `page` 完全相同時，服務模組不再重複寫 `url`。
+- 已同步整理 Oracle Cloud、Cloudflare、GitHub、OpenAI、Google Cloud、AWS、Azure、DMIT、BandwagonHost、Equinix、Digital Realty、NTT GDC、Arelion、NTT Global Network、Cogent。
+- 若來源有獨立 API / RSS / incidents / history 網址，仍保留自己的 `url`。
+- 執行層另外保留一次防禦式 fallback，避免缺少 `url` 時抓取失敗。
+- 所有資源同步更新至 `v46.0.0`。
+
 ## v45.0.0
 
 - 修正 DMIT Security Response 的資料分類。
