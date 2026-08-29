@@ -1,6 +1,6 @@
 {
   "name": "CloudStatus Pure Pages",
-  "version": "37.0.0",
+  "version": "38.0.0",
   "updated": "2026-08-27",
   "current_state_and_history_independent": true,
   "status_inference": false,
@@ -84,5 +84,6 @@
   "global_event_status_optional": true,
   "event_time_includes_year": true,
   "readme_changelog_separated": true,
-  "changelog_file": "CHANGELOG.md"
+  "changelog_file": "CHANGELOG.md",
+  "last_read_time_includes_year": true
 }

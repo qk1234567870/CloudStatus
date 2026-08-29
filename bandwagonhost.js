@@ -1,0 +1,22 @@
+/* CloudStatus service module: BandwagonHost */
+(function () {
+  "use strict";
+  window.CloudStatusServices.register({
+  "id": "bandwagonhost",
+  "name": "BandwagonHost",
+  "desc": "VPS 與網路基礎設施",
+  "category": "hosting",
+  "page": "https://bwhstatus.com/",
+  "parser": "bandwagon",
+  "sources": [
+    {
+      "type": "reader",
+      "url": "https://bwhstatus.com/",
+      "label": "官方狀態頁",
+      "tier": 50,
+      "kind": "official-status",
+      "priority": 50
+    }
+  ]
+});
+})();
