@@ -28,7 +28,7 @@ body{
 button,input{font:inherit}
 a{-webkit-tap-highlight-color:transparent}
 .shell{
-  width:min(1180px,100%);
+  width:min(1600px,calc(100% - clamp(20px,4vw,64px)));
   margin:0 auto;
   padding:max(15px,env(safe-area-inset-top)) 12px max(30px,env(safe-area-inset-bottom))
 }
@@ -827,5 +827,74 @@ button { font-size: 14px; }
     max-width:100% !important;
     left:auto !important;
     top:auto !important;
+  }
+}
+
+
+/* =========================================================
+   v41 — 全端全設備真正自適應
+   手機單欄；可用寬度足夠時自動進入多欄 Masonry。
+   ========================================================= */
+.grid{
+  width:100% !important;
+  min-width:0 !important;
+}
+
+@media (max-width:720px){
+  .shell{
+    width:100% !important;
+    padding-left:clamp(10px,3vw,18px) !important;
+    padding-right:clamp(10px,3vw,18px) !important;
+  }
+
+  .grid,
+  .grid.masonry-active{
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) !important;
+    position:static !important;
+    height:auto !important;
+  }
+
+  .grid > .service,
+  .grid.masonry-active > .service{
+    position:static !important;
+    width:100% !important;
+    max-width:100% !important;
+    left:auto !important;
+    top:auto !important;
+    transform:none !important;
+  }
+}
+
+@media (min-width:721px){
+  .shell{
+    width:min(1600px,calc(100% - clamp(24px,4vw,72px))) !important;
+  }
+
+  .grid.masonry-active{
+    display:block !important;
+    position:relative !important;
+    height:auto;
+  }
+
+  .grid.masonry-active > .service{
+    position:absolute !important;
+    margin:0 !important;
+    min-width:0 !important;
+    max-width:none !important;
+    transition:none !important;
+  }
+}
+
+@media (max-width:430px){
+  .toolbar,
+  .actions,
+  .filters,
+  .service,
+  .event,
+  .event-title,
+  .event-time{
+    min-width:0 !important;
+    max-width:100% !important;
   }
 }

@@ -10,7 +10,7 @@
   var state = { services: [], filter: "all", search: "", activeOnly: false };
 
   var REFRESH_INTERVAL = 5 * 60 * 1000;
-  var CACHE_KEY = "cloudstatus-cache-v26";
+  var CACHE_KEY = "cloudstatus-cache-v41";
   var CACHE_MAX_AGE = 15 * 60 * 1000;
   var FALLBACK_CONCURRENCY = 4;
   var FOREGROUND_REFRESH_THRESHOLD = 2 * 60 * 1000;
@@ -1082,7 +1082,6 @@
     }
 
     var gap=14;
-    var columns=2;
     grid.classList.add("masonry-active");
 
     cards.forEach(function(card){
@@ -1093,6 +1092,13 @@
 
     requestAnimationFrame(function(){
       var gridWidth=grid.clientWidth;
+
+      // 根據實際可用寬度自動計算欄數，而不是依裝置名稱判斷。
+      // 721px 起至少雙欄；寬螢幕自動增加至 3 / 4 欄。
+      var minCard=360;
+      var columns=Math.max(2,Math.floor((gridWidth+gap)/(minCard+gap)));
+      columns=Math.min(columns,4);
+
       var colWidth=(gridWidth-gap*(columns-1))/columns;
       var heights=new Array(columns).fill(0);
 
@@ -1201,6 +1207,19 @@
 
   function shouldForegroundRefresh() {
     return !lastRefresh || Date.now()-lastRefresh>=FOREGROUND_REFRESH_THRESHOLD;
+  }
+
+  var masonryResizeObserver=null;
+
+  function startResponsiveLayoutObserver() {
+    var grid=$("#services");
+    if(!grid || typeof ResizeObserver==="undefined") return;
+    if(masonryResizeObserver) masonryResizeObserver.disconnect();
+
+    masonryResizeObserver=new ResizeObserver(function(){
+      layoutDesktopMasonry();
+    });
+    masonryResizeObserver.observe(grid);
   }
 
   function startAutoRefresh() {

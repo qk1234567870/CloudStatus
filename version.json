@@ -1,6 +1,6 @@
 {
   "name": "CloudStatus Pure Pages",
-  "version": "38.0.0",
+  "version": "41.0.0",
   "updated": "2026-08-27",
   "current_state_and_history_independent": true,
   "status_inference": false,
@@ -66,7 +66,7 @@
   "ui_language": "zh-TW",
   "time_zone": "Asia/Taipei",
   "desktop_card_autofill": "true-masonry-shortest-column",
-  "responsive_layout": true,
+  "responsive_layout": "all-devices",
   "mobile_breakpoint": "<=720px",
   "tablet_breakpoint": "721-1100px",
   "desktop_masonry": ">1100px non-touch",
@@ -85,5 +85,12 @@
   "event_time_includes_year": true,
   "readme_changelog_separated": true,
   "changelog_file": "CHANGELOG.md",
-  "last_read_time_includes_year": true
+  "last_read_time_includes_year": true,
+  "asset_cache_busting": true,
+  "html_no_cache_meta": true,
+  "cache_key": "cloudstatus-cache-v41",
+  "page_max_width": "1360px",
+  "synchronized_asset_version": "41.0.0",
+  "masonry_columns": "dynamic-1-to-4",
+  "max_shell_width": "1600px"
 }
