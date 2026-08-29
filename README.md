@@ -309,3 +309,46 @@ DMIT 來源順序：
 1. 官方 Server Status
 2. 官方 Security Response
 3. 官方 Telegram 公告
+
+
+## v33：DMIT Security Advisory 修正
+
+- 修正 Security Response 頁面沒有日期時被整筆丟棄的問題。
+- 明確識別 `DMIT network incident advisory` 為事件。
+- 頁面沒有日期就不顯示時間，不捏造日期。
+- `identified potentially risky applications` 是正文描述，不把 identified 誤判為事件狀態。
+- Security Response 優先於 Telegram 公告補入 DMIT 最近事件。
+
+
+## v34：服務模組化
+
+服務設定已由單一 `assets/services.js` 拆成獨立模組。
+
+結構：
+
+```text
+assets/
+├─ services.js              # 只負責服務註冊
+└─ services/
+   ├─ cloudflare.js
+   ├─ aws.js
+   ├─ azure.js
+   ├─ google-cloud.js
+   ├─ github.js
+   ├─ openai.js
+   ├─ apple.js
+   ├─ oracle.js
+   ├─ bandwagonhost.js
+   ├─ dmit.js
+   ├─ equinix.js
+   ├─ digital-realty.js
+   ├─ ntt-gdc.js
+   ├─ arelion.js
+   ├─ ntt-global-network.js
+   └─ cogent.js
+```
+
+每個服務自己的名稱、分類、官方頁、parser 名稱與來源優先級都放在自己的檔案。
+新增或修改服務時，不再需要編輯一個巨大的服務清單。
+
+此版本仍是純靜態 GitHub Pages，不需要 build、Node.js 或 GitHub Actions。
