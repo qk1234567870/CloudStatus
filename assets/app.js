@@ -10,8 +10,11 @@
   var state = { services: [], filter: "all", search: "", activeOnly: false };
 
   var REFRESH_INTERVAL = 5 * 60 * 1000;
-  var CACHE_KEY = "cloudstatus-cache-v46";
+  var CACHE_KEY = "cloudstatus-cache-v47";
   var CACHE_MAX_AGE = 15 * 60 * 1000;
+  var STALE_CACHE_MAX_AGE = 24 * 60 * 60 * 1000;
+  var FETCH_TIMEOUT = 6500;
+  var READER_TIMEOUT = 7500;
   var FALLBACK_CONCURRENCY = 4;
   var FOREGROUND_REFRESH_THRESHOLD = 2 * 60 * 1000;
   var lastRefresh = 0;
@@ -185,14 +188,24 @@
     return await r.json();
   }
 
-  async function fetchText(url) {
-    var r = await fetch(url,{cache:"no-store"});
-    if (!r.ok) throw new Error("HTTP " + r.status);
-    return await r.text();
+  async function fetchText(url, timeoutMs) {
+    timeoutMs=timeoutMs || FETCH_TIMEOUT;
+    var controller = typeof AbortController!=="undefined" ? new AbortController() : null;
+    var timer = controller ? setTimeout(function(){ controller.abort(); }, timeoutMs) : null;
+
+    try {
+      var options={cache:"no-store"};
+      if(controller) options.signal=controller.signal;
+      var r = await fetch(url,options);
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return await r.text();
+    } finally {
+      if(timer) clearTimeout(timer);
+    }
   }
 
   async function fetchReader(url) {
-    return await fetchText("https://r.jina.ai/" + url);
+    return await fetchText("https://r.jina.ai/" + url, READER_TIMEOUT);
   }
 
   function lines(text) {
@@ -845,11 +858,11 @@
   };
 
   function sourcePriority(source) {
-    if (source && source.kind && SOURCE_PRIORITY[source.kind] != null) {
-      return SOURCE_PRIORITY[source.kind];
-    }
     if (source && typeof source.priority === "number") {
       return source.priority;
+    }
+    if (source && source.kind && SOURCE_PRIORITY[source.kind] != null) {
+      return SOURCE_PRIORITY[source.kind];
     }
     if (source && typeof source.tier === "number") {
       return source.tier;
@@ -979,7 +992,9 @@
 
       var cache=JSON.parse(raw);
       if(!cache || !Array.isArray(cache.services) || !cache.timestamp) return false;
-      if(Date.now()-cache.timestamp>CACHE_MAX_AGE) return false;
+
+      var age=Date.now()-cache.timestamp;
+      if(age>STALE_CACHE_MAX_AGE) return false;
 
       state.services=cache.services;
       lastRefresh=cache.timestamp;
@@ -989,7 +1004,7 @@
         year:"numeric",month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit",hour12:false
       }).format(new Date(cache.timestamp));
 
-      $("#updated").textContent="快取於 "+now+" · 正在背景更新";
+      $("#updated").textContent=(age<=CACHE_MAX_AGE?"快取於 ":"舊快取於 ")+now+" · 正在背景更新";
       return true;
     }catch(e){
       return false;
@@ -1017,8 +1032,9 @@
   }
 
   function renderSummary() {
-    var auto=state.services.filter(function(s){return !s.fallback;}).length;
-    var fallback=state.services.length-auto;
+    var loaded=state.services.filter(function(s){return !s.loading;});
+    var auto=loaded.filter(function(s){return !s.fallback;}).length;
+    var fallback=loaded.filter(function(s){return s.fallback;}).length;
     $("#summary").innerHTML =
       '<div class="metric"><strong>'+state.services.length+'</strong><span>服務</span></div>'+
       '<div class="metric"><strong>'+auto+'</strong><span>自動取得</span></div>'+
@@ -1040,22 +1056,26 @@
   function renderService(service) {
     var body="";
 
+    if (service.loading) {
+      body += '<div class="message">載入中…</div>';
+    }
+
     // 「目前狀態」只來自來源本身明確提供的 current health。
     // 歷史事件不反推目前服務狀態。
-    if (service.health==="normal") {
+    if (!service.loading && service.health==="normal") {
       body += '<div class="current-state good"><span class="state-dot"></span><strong>[目前正常]</strong> '+escapeHtml(service.healthText||"官方來源顯示目前正常")+'</div>';
-    } else if (service.health==="incident" && service.healthText) {
+    } else if (!service.loading && service.health==="incident" && service.healthText) {
       body += '<div class="current-state warn"><span class="state-dot"></span><strong>[目前異常]</strong> '+escapeHtml(service.healthText)+'</div>';
     }
 
-    if (service.events.length) {
+    if (!service.loading && service.events.length) {
       body += '<div class="section-label">最近 '+service.events.length+' 筆事件</div>';
       body += service.events.slice(0,3).map(function(e){return renderEvent(e,service);}).join("");
-    } else if (service.health) {
+    } else if (!service.loading && service.health) {
       body += '<div class="history-empty">近期沒有可顯示的可靠事件</div>';
-    } else if (service.fallback) {
+    } else if (!service.loading && service.fallback) {
       body += '<a class="message link" href="'+escapeHtml(service.page)+'" target="_blank" rel="noopener">[官方狀態頁] 自動來源未取得可靠事件資料，查看官方即時狀態 →</a>';
-    } else {
+    } else if (!service.loading) {
       body += '<div class="message">目前沒有可顯示的可靠事件資料</div>';
     }
 
@@ -1152,18 +1172,29 @@
     try{
       var partials=new Array(SERVICES.length);
 
-      // 第一階段：每個服務只抓最高優先級來源，全部並行。
+      // 沒有快取時先立即畫出所有服務卡片，不等待第一個網路請求。
+      if(!state.services.length){
+        state.services=SERVICES.map(function(service){
+          return {
+            id:service.id,name:service.name,desc:service.desc,category:service.category,page:service.page,
+            events:[],health:null,healthText:null,sourceLabel:"載入中",fallback:false,failures:[],loading:true
+          };
+        });
+        render();
+      }
+
+      // 第一階段仍全部並行，但任何一個服務完成就立即更新自己的卡片，
+      // 不再等待 16 個主要來源全部結束才第一次顯示資料。
       await Promise.all(SERVICES.map(async function(service,index){
-        partials[index]=await loadPrimarySource(service);
+        var partial=await loadPrimarySource(service);
+        partials[index]=partial;
+
+        var visible=Object.assign({},partial,{loading:false});
+        delete visible._remainingSources;
+        state.services[index]=visible;
+        render();
       }));
 
-      // 第一階段完成立刻顯示。
-      state.services=partials.map(function(x){
-        var copy=Object.assign({},x);
-        delete copy._remainingSources;
-        return copy;
-      });
-      render();
       $("#updated").textContent="主要來源已載入 · 正在補充備援資料…";
 
       // 第二階段：只處理仍不足的服務，而且限制併發，避免一次開太多 Reader 連線。
@@ -1179,6 +1210,7 @@
 
       await runWithConcurrency(needs,FALLBACK_CONCURRENCY,async function(item){
         var result=await completeService(item.service,item.partial);
+        result.loading=false;
         state.services[item.index]=result;
         render();
       });
