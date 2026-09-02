@@ -1027,3 +1027,15 @@ button { font-size: 14px; }
   display:block;
   width:100%;
 }
+
+/* v57: 灰色副標題強制佔據完整第二行，不與藍色標題或來源徽章同列 */
+.service-desc-second-row{
+  display:block !important;
+  flex:0 0 100% !important;
+  width:100% !important;
+  max-width:100% !important;
+  box-sizing:border-box !important;
+  order:99 !important;
+  margin-top:4px !important;
+  white-space:normal !important;
+}

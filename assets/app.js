@@ -10,7 +10,7 @@
   var state = { services: [], filter: "all", search: "", activeOnly: false };
 
   var REFRESH_INTERVAL = 5 * 60 * 1000;
-  var CACHE_KEY = "cloudstatus-cache-v56";
+  var CACHE_KEY = "cloudstatus-cache-v57";
   var CACHE_MAX_AGE = 15 * 60 * 1000;
   var STALE_CACHE_MAX_AGE = 24 * 60 * 60 * 1000;
   var FETCH_TIMEOUT = 6500;
@@ -1143,10 +1143,10 @@
     return '<article class="service">'+
       '<div class="service-head">'+
         '<a class="service-name" href="'+escapeHtml(service.page)+'" target="_blank" rel="noopener">🔹 '+escapeHtml(service.name)+'</a>'+
-        '<span class="service-desc">'+
+        '<span class="service-desc service-desc-second-row">'+
           (service.nameZh && service.desc
-            ? '<span class="service-desc-line">('+escapeHtml(service.desc)+') '+escapeHtml(service.nameZh)+'</span>'
-            : '<span class="service-desc-line">'+escapeHtml(service.nameZh||service.desc)+'</span>'
+            ? '('+escapeHtml(service.desc)+') '+escapeHtml(service.nameZh)
+            : escapeHtml(service.nameZh||service.desc)
           )+
         '</span>'+
         (service.category==="crossborder" && service.carrierLabel
