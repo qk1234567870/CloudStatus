@@ -10,7 +10,7 @@
   var state = { services: [], filter: "all", search: "", activeOnly: false };
 
   var REFRESH_INTERVAL = 5 * 60 * 1000;
-  var CACHE_KEY = "cloudstatus-cache-v49";
+  var CACHE_KEY = "cloudstatus-cache-v51";
   var CACHE_MAX_AGE = 15 * 60 * 1000;
   var STALE_CACHE_MAX_AGE = 24 * 60 * 60 * 1000;
   var FETCH_TIMEOUT = 6500;
@@ -753,29 +753,29 @@
     return {events:sortRecent(events),health:null,healthText:null};
   }
 
-  function parseBGPUpstream(text, service, source) {
+  function parseCloudflareRadarBGP(text, service, source) {
     var t=String(text||"");
-    var active=/Network status\s+Active\b/i.test(t);
-    var hasUpstreams=/##\s*Upstreams\b/i.test(t) || /\bUpstreams\b[\s\S]{0,500}\bAS\d{2,6}\b/i.test(t);
-    var inactive=/Network status\s+(?:Inactive|Reserved|Unallocated)\b/i.test(t);
+    var compact=cleanText(t);
 
-    if(inactive){
-      return {
-        events:[],
-        health:"incident",
-        healthText:"BGP 上游網路未處於 Active 狀態"
-      };
-    }
+    // Radar public routing page exposes AS-level connectivity / upstream providers.
+    // We only report an upstream connection when the page contains the requested ASN
+    // and an explicit upstream/connectivity section with provider/path data.
+    var asn=String(service.asn||"").replace(/^AS/i,"");
+    var hasAsn=asn && new RegExp("\\bAS\\s*"+asn+"\\b","i").test(t);
+    var hasConnectivity=/AS-level connectivity|Connectivity/i.test(t);
+    var hasUpstreams=/Upstream providers?|Upstreams?/i.test(t);
+    var hasProviderData=/\bAS\d{2,6}\b[\s\S]{0,180}(?:%|provider|upstream|network)/i.test(t) ||
+                        /(?:provider|upstream)[\s\S]{0,180}\bAS\d{2,6}\b/i.test(t);
 
-    if(active && hasUpstreams){
+    if(hasAsn && hasConnectivity && hasUpstreams && hasProviderData){
       return {
         events:[],
         health:"normal",
-        healthText:"BGP 上游連線正常"
+        healthText:"Cloudflare Radar 顯示 BGP 上游連線正常"
       };
     }
 
-    // 資料不足時保持未知，不把抓取成功等同於線路正常。
+    // Radar 頁面沒有足夠資料時保持未知；不把 HTTP 成功當成連線正常。
     return {events:[],health:null,healthText:null};
   }
 
@@ -825,7 +825,7 @@
       case "ntt-global":
       case "cogent": return normalizeResult(parseInfrastructure(text,service,source),service,source);
       case "aws": return normalizeResult(parseInfrastructure(text,service,source),service,source);
-      case "bgp-upstream": return normalizeResult(parseBGPUpstream(text,service,source),service,source);
+      case "cloudflare-radar-bgp": return normalizeResult(parseCloudflareRadarBGP(text,service,source),service,source);
       default: return normalizeResult(parseInfrastructure(text,service,source),service,source);
     }
   }
@@ -1081,6 +1081,9 @@
   }
 
   function renderService(service) {
+    if(service.category==="crossborder" && service.carrierLabel && service.routeClassLabel && service.desc.indexOf(service.carrierLabel+" · "+service.routeClassLabel)!==0){
+      service.desc=service.carrierLabel+" · "+service.routeClassLabel+" · "+service.desc;
+    }
     var body="";
 
     if (service.loading) {
@@ -1101,11 +1104,11 @@
       body += '<div class="section-label">最近 '+service.events.length+' 筆事件</div>';
       body += service.events.slice(0,3).map(function(e){return renderEvent(e,service);}).join("");
     } else if (!service.loading && service.health && service.category==="crossborder") {
-      body += '<div class="history-empty">狀態依公開 BGP 上游資料判定</div>';
+      body += '<div class="history-empty">狀態依 Cloudflare Radar 公開 BGP 資料判定</div>';
     } else if (!service.loading && service.health) {
       body += '<div class="history-empty">近期沒有可顯示的可靠事件</div>';
     } else if (!service.loading && service.category==="crossborder" && service.fallback) {
-      body += '<a class="message link" href="'+escapeHtml(service.page)+'" target="_blank" rel="noopener">[BGP 上游] 暫時無法取得可靠連線狀態，不推斷目前狀態 →</a>';
+      body += '<a class="message link" href="'+escapeHtml(service.page)+'" target="_blank" rel="noopener">[Cloudflare Radar] 暫時無法取得可靠上游狀態，不推斷目前狀態 →</a>';
     } else if (!service.loading && service.fallback) {
       body += '<a class="message link" href="'+escapeHtml(service.page)+'" target="_blank" rel="noopener">[官方狀態頁] 自動來源未取得可靠事件資料，查看官方即時狀態 →</a>';
     } else if (!service.loading) {

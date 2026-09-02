@@ -1000,3 +1000,11 @@ button { font-size: 14px; }
     max-width:none !important;
   }
 }
+
+.route-meta{
+  margin-top:5px;
+  font-size:12px;
+  line-height:1.35;
+  opacity:.68;
+  letter-spacing:.01em;
+}
