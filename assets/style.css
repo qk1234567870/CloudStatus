@@ -1279,3 +1279,11 @@ html,body{
     max-width:100% !important;
   }
 }
+
+/* v60：三個統計卡片文字統一置中 */
+.summary > *{
+  text-align:center !important;
+}
+.summary > * > *{
+  text-align:center !important;
+}
