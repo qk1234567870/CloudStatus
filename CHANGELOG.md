@@ -2,6 +2,19 @@
 
 CloudStatus 版本更新記錄。
 
+## v49.0.0
+
+- 跨境線路改為抓取公開 BGP 上游連線資料，不由 CloudStatus 自行 Ping。
+- CN2 GIA / CN2 GT 使用 China Telecom AS4809 上游狀態。
+- China Telecom 163 使用 AS4134。
+- China Unicom 精品網使用 AS9929；國際網使用 AS10099；169 使用 AS4837。
+- CMI 使用 China Mobile International AS58453。
+- 公開資料源使用 bgp.tools 的近即時 BGP 網路頁面。
+- 僅在來源明確顯示 Network status = Active 且存在 Upstreams 時顯示「上游正常」；資料不足保持未知，不把頁面可開啟直接推斷為正常。
+- 跨境卡片明確標示「上游正常 / 上游異常」，避免冒充具體路由品質或端到端連通性。
+- v47 快速載入、1180px、自適應與雙欄 Masonry 保持不變。
+- 所有資源同步更新至 `v49.0.0`。
+
 ## v48.0.0
 
 - 新增「跨境線路」分類。

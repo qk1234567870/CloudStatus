@@ -1,6 +1,6 @@
 {
   "name": "CloudStatus Pure Pages",
-  "version": "48.0.0",
+  "version": "49.0.0",
   "updated": "2026-08-27",
   "current_state_and_history_independent": true,
   "status_inference": false,
@@ -88,9 +88,9 @@
   "last_read_time_includes_year": true,
   "asset_cache_busting": true,
   "html_no_cache_meta": true,
-  "cache_key": "cloudstatus-cache-v48",
+  "cache_key": "cloudstatus-cache-v49",
   "page_max_width": "1360px",
-  "synchronized_asset_version": "48.0.0",
+  "synchronized_asset_version": "49.0.0",
   "masonry_columns": "dynamic-1-to-4",
   "max_shell_width": "1180px",
   "layout_columns": "1-mobile-2-tablet-desktop",
@@ -105,5 +105,6 @@
   "reader_timeout_ms": 7500,
   "stale_cache_max_age_hours": 24,
   "service_count": 23,
-  "crossborder_routes": 7
+  "crossborder_routes": 7,
+  "crossborder_status": "public-bgp-upstream"
 }
