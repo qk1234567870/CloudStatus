@@ -10,7 +10,7 @@
   var state = { services: [], filter: "all", search: "", activeOnly: false };
 
   var REFRESH_INTERVAL = 5 * 60 * 1000;
-  var CACHE_KEY = "cloudstatus-cache-v58";
+  var CACHE_KEY = "cloudstatus-cache-v59";
   var CACHE_MAX_AGE = 15 * 60 * 1000;
   var STALE_CACHE_MAX_AGE = 24 * 60 * 60 * 1000;
   var FETCH_TIMEOUT = 6500;
@@ -1173,6 +1173,7 @@
         card.style.top="";
         card.style.width="";
         card.style.maxWidth="";
+    card.style.boxSizing="";
         card.style.gridRowEnd="";
       });
       return;
@@ -1188,12 +1189,12 @@
     });
 
     requestAnimationFrame(function(){
-      var gridWidth=grid.clientWidth;
+      var gridWidth=Math.floor(grid.getBoundingClientRect().width || grid.clientWidth || availableWidth);
 
       // 1180px 整體寬度下固定兩欄最穩定。
       // <=720px 已在前面走單欄；>720px 一律雙欄 Masonry。
       var columns=2;
-      var colWidth=(gridWidth-gap)/columns;
+      var colWidth=Math.floor((gridWidth-gap)/columns);
       var heights=new Array(columns).fill(0);
 
       cards.forEach(function(card){
@@ -1207,6 +1208,8 @@
         var y=heights[col];
 
         card.style.width=colWidth+"px";
+    card.style.maxWidth=colWidth+"px";
+    card.style.boxSizing="border-box";
         card.style.maxWidth=colWidth+"px";
         card.style.left=x+"px";
         card.style.top=y+"px";
