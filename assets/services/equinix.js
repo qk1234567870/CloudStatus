@@ -12,7 +12,7 @@
   "sources": [
     {
       "type": "statuspage",
-      "url": "https://equinixproductstatus.statuspage.io",
+      "url": "https://equinixproductstatus.statuspage.io/api/v2/incidents.json",
       "label": "官方 API",
       "kind": "official-api",
       "priority": 10,
