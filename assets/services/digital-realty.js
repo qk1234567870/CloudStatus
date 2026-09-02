@@ -3,7 +3,7 @@
   "use strict";
   window.CloudStatusServices.register({
   "id": "digital-realty",
-  "name": "Digital Realty",
+  "name": "Digital Realty（數據中心）",
   "desc": "全球大型數據中心與互聯基礎設施",
   "category": "datacenter",
   "page": "https://status.digitalrealty.com/",

@@ -3,7 +3,7 @@
   "use strict";
   window.CloudStatusServices.register({
     "id": "as4134",
-    "name": "China Telecom 163",
+    "name": "China Telecom 163（中國電信 163 骨幹網）",
     "desc": "China Telecom · AS4134",
     "category": "crossborder",
     "carrier": "telecom",

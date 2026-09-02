@@ -3,7 +3,7 @@
   "use strict";
   window.CloudStatusServices.register({
   "id": "google-cloud",
-  "name": "Google Cloud",
+  "name": "Google Cloud（Google 雲端）",
   "desc": "Google 雲端運算與數據分析平台",
   "category": "cloud",
   "page": "https://status.cloud.google.com",

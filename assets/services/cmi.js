@@ -3,7 +3,7 @@
   "use strict";
   window.CloudStatusServices.register({
     "id": "cmi",
-    "name": "CMI",
+    "name": "CMI（中國移動國際）",
     "desc": "China Mobile International · AS58453",
     "category": "crossborder",
     "carrier": "mobile",

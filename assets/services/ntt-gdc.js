@@ -3,7 +3,7 @@
   "use strict";
   window.CloudStatusServices.register({
   "id": "ntt-gdc",
-  "name": "NTT GDC",
+  "name": "NTT GDC（NTT 數據中心）",
   "desc": "全球數據中心與園區基礎設施",
   "category": "datacenter",
   "page": "https://services.global.ntt/",

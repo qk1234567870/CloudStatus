@@ -3,7 +3,7 @@
   "use strict";
   window.CloudStatusServices.register({
   "id": "arelion",
-  "name": "Arelion (Telia)",
+  "name": "Arelion（國際骨幹網）",
   "desc": "全球 Tier-1 國際 IP 骨幹網",
   "category": "backbone",
   "page": "https://www.arelion.com/",

@@ -3,7 +3,7 @@
   "use strict";
   window.CloudStatusServices.register({
     "id": "cn2-gt",
-    "name": "CN2 GT",
+    "name": "CN2 GT（中國電信 CN2）",
     "desc": "China Telecom · AS4809",
     "category": "crossborder",
     "carrier": "telecom",

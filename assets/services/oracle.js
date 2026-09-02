@@ -3,7 +3,7 @@
   "use strict";
   window.CloudStatusServices.register({
   "id": "oracle",
-  "name": "Oracle Cloud",
+  "name": "Oracle Cloud（甲骨文雲端）",
   "desc": "Oracle Cloud Infrastructure",
   "category": "cloud",
   "page": "https://ocistatus.oraclecloud.com/",

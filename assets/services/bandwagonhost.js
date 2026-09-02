@@ -3,7 +3,7 @@
   "use strict";
   window.CloudStatusServices.register({
   "id": "bandwagonhost",
-  "name": "BandwagonHost",
+  "name": "BandwagonHost（搬瓦工）",
   "desc": "VPS 與網路基礎設施",
   "category": "hosting",
   "page": "https://bwhstatus.com/",

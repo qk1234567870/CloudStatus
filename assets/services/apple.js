@@ -3,7 +3,7 @@
   "use strict";
   window.CloudStatusServices.register({
   "id": "apple",
-  "name": "Apple Services",
+  "name": "Apple Services（蘋果服務）",
   "desc": "Apple 系統與雲端服務",
   "category": "platform",
   "page": "https://www.apple.com/support/systemstatus/",

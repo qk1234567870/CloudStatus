@@ -3,7 +3,7 @@
   "use strict";
   window.CloudStatusServices.register({
   "id": "equinix",
-  "name": "Equinix",
+  "name": "Equinix（數據中心）",
   "desc": "全球大型數據中心與機房互聯平台",
   "category": "datacenter",
   "page": "https://equinixproductstatus.statuspage.io/",

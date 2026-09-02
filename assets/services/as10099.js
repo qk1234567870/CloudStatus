@@ -3,7 +3,7 @@
   "use strict";
   window.CloudStatusServices.register({
     "id": "as10099",
-    "name": "China Unicom AS10099",
+    "name": "China Unicom AS10099（中國聯通國際網）",
     "desc": "China Unicom Global · AS10099",
     "category": "crossborder",
     "carrier": "unicom",
