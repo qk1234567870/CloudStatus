@@ -3,14 +3,14 @@
 
   var SERVICES = window.CLOUDSTATUS_SERVICES || [];
   var SERVICE_PARSERS = window.CloudStatusServiceParsers || {};
-  var EXPECTED_SERVICE_COUNT = 16;
+  var EXPECTED_SERVICE_COUNT = 23;
   if (SERVICES.length !== EXPECTED_SERVICE_COUNT) {
     console.warn("CloudStatus service modules loaded:", SERVICES.length, "/", EXPECTED_SERVICE_COUNT);
   }
   var state = { services: [], filter: "all", search: "", activeOnly: false };
 
   var REFRESH_INTERVAL = 5 * 60 * 1000;
-  var CACHE_KEY = "cloudstatus-cache-v47";
+  var CACHE_KEY = "cloudstatus-cache-v48";
   var CACHE_MAX_AGE = 15 * 60 * 1000;
   var STALE_CACHE_MAX_AGE = 24 * 60 * 60 * 1000;
   var FETCH_TIMEOUT = 6500;
@@ -1073,6 +1073,8 @@
       body += service.events.slice(0,3).map(function(e){return renderEvent(e,service);}).join("");
     } else if (!service.loading && service.health) {
       body += '<div class="history-empty">近期沒有可顯示的可靠事件</div>';
+    } else if (!service.loading && service.category==="crossborder" && service.fallback) {
+      body += '<a class="message link" href="'+escapeHtml(service.page)+'" target="_blank" rel="noopener">[線路資料] 暫無可靠的線路級即時事件來源，不推斷目前狀態 →</a>';
     } else if (!service.loading && service.fallback) {
       body += '<a class="message link" href="'+escapeHtml(service.page)+'" target="_blank" rel="noopener">[官方狀態頁] 自動來源未取得可靠事件資料，查看官方即時狀態 →</a>';
     } else if (!service.loading) {
