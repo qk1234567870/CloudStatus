@@ -2,6 +2,31 @@
 
 CloudStatus 版本更新記錄。
 
+## v51.0.0
+
+- 跨境線路增加運營商與線路等級分類。
+- 中國電信：CN2 GIA、CN2 GT 歸入「精品網」；163 / AS4134 歸入「普通公網」。
+- 中國聯通：AS9929 歸入「精品網」；AS10099 歸入「國際網」；169 / AS4837 歸入「普通公網」。
+- 中國移動：CMI / AS58453 歸入「國際網」。
+- 每個跨境服務模組增加 carrier / routeClass 結構化欄位，方便後續做二級篩選與分組。
+- Cloudflare Radar 上游資料源及既有嚴格判定邏輯保持不變。
+- 所有資源同步更新至 `v51.0.0`。
+
+## v50.0.0
+
+- 跨境線路主要資料源由 bgp.tools 改為 Cloudflare Radar 公開 Routing / BGP 頁面。
+- CN2 GIA / CN2 GT → Radar AS4809。
+- China Telecom 163 → Radar AS4134。
+- China Unicom AS9929 → Radar AS9929。
+- China Unicom AS10099 → Radar AS10099。
+- China Unicom 169 → Radar AS4837。
+- CMI → Radar AS58453。
+- 純 GitHub Pages 不內嵌 Cloudflare API Token，因此使用公開 Radar 頁面經 Reader 取得資料。
+- 只有 Radar 頁面同時包含目標 ASN、Connectivity、Upstream providers 與實際 provider/path 資料時才顯示「上游正常」。
+- 資料不足維持未知，不把頁面成功載入直接當成正常。
+- v47 快速載入、1180px、自適應與雙欄 Masonry 保持不變。
+- 所有資源同步更新至 `v50.0.0`。
+
 ## v49.0.0
 
 - 跨境線路改為抓取公開 BGP 上游連線資料，不由 CloudStatus 自行 Ping。
