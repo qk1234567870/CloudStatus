@@ -1,16 +1,22 @@
-/* CloudStatus service module: China Unicom 169
- * Cross-border route reference card.
- * No live health/event source is declared until a reliable route-specific source exists.
- */
+/* CloudStatus service module: China Unicom 169 */
 (function () {
   "use strict";
   window.CloudStatusServices.register({
     "id": "as4837",
     "name": "China Unicom 169",
-    "desc": "AS4837",
+    "desc": "China Unicom · AS4837",
     "category": "crossborder",
-    "page": "https://www.chinaunicomglobal.com/",
-    "parser": "crossborder",
-    "sources": []
+    "page": "https://bgp.tools/as/4837",
+    "parser": "bgp-upstream",
+    "asn": "AS4837",
+    "sources": [
+      {
+        "type": "reader",
+        "label": "BGP 上游",
+        "tier": 80,
+        "kind": "trusted-third-party",
+        "priority": 80
+      }
+    ]
   });
 })();

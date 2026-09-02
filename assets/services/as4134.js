@@ -1,16 +1,22 @@
-/* CloudStatus service module: China Telecom 163
- * Cross-border route reference card.
- * No live health/event source is declared until a reliable route-specific source exists.
- */
+/* CloudStatus service module: China Telecom 163 */
 (function () {
   "use strict";
   window.CloudStatusServices.register({
     "id": "as4134",
     "name": "China Telecom 163",
-    "desc": "AS4134",
+    "desc": "China Telecom · AS4134",
     "category": "crossborder",
-    "page": "https://www.chinatelecomglobal.com/",
-    "parser": "crossborder",
-    "sources": []
+    "page": "https://bgp.tools/as/4134",
+    "parser": "bgp-upstream",
+    "asn": "AS4134",
+    "sources": [
+      {
+        "type": "reader",
+        "label": "BGP 上游",
+        "tier": 80,
+        "kind": "trusted-third-party",
+        "priority": 80
+      }
+    ]
   });
 })();
