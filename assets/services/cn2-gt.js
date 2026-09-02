@@ -6,13 +6,17 @@
     "name": "CN2 GT",
     "desc": "China Telecom · AS4809",
     "category": "crossborder",
-    "page": "https://bgp.tools/as/4809",
-    "parser": "bgp-upstream",
+    "carrier": "telecom",
+    "carrierLabel": "中國電信",
+    "routeClass": "premium",
+    "routeClassLabel": "精品網",
+    "page": "https://radar.cloudflare.com/routing/as4809",
+    "parser": "cloudflare-radar-bgp",
     "asn": "AS4809",
     "sources": [
       {
         "type": "reader",
-        "label": "BGP 上游",
+        "label": "Cloudflare Radar",
         "tier": 80,
         "kind": "trusted-third-party",
         "priority": 80

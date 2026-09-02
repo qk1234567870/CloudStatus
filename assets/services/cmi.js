@@ -6,13 +6,17 @@
     "name": "CMI",
     "desc": "China Mobile International · AS58453",
     "category": "crossborder",
-    "page": "https://bgp.tools/as/58453",
-    "parser": "bgp-upstream",
+    "carrier": "mobile",
+    "carrierLabel": "中國移動",
+    "routeClass": "international",
+    "routeClassLabel": "國際網",
+    "page": "https://radar.cloudflare.com/routing/as58453",
+    "parser": "cloudflare-radar-bgp",
     "asn": "AS58453",
     "sources": [
       {
         "type": "reader",
-        "label": "BGP 上游",
+        "label": "Cloudflare Radar",
         "tier": 80,
         "kind": "trusted-third-party",
         "priority": 80

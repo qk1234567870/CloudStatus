@@ -6,13 +6,17 @@
     "name": "China Telecom 163",
     "desc": "China Telecom · AS4134",
     "category": "crossborder",
-    "page": "https://bgp.tools/as/4134",
-    "parser": "bgp-upstream",
+    "carrier": "telecom",
+    "carrierLabel": "中國電信",
+    "routeClass": "public",
+    "routeClassLabel": "普通公網",
+    "page": "https://radar.cloudflare.com/routing/as4134",
+    "parser": "cloudflare-radar-bgp",
     "asn": "AS4134",
     "sources": [
       {
         "type": "reader",
-        "label": "BGP 上游",
+        "label": "Cloudflare Radar",
         "tier": 80,
         "kind": "trusted-third-party",
         "priority": 80

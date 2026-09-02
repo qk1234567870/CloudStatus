@@ -6,13 +6,17 @@
     "name": "China Unicom AS9929",
     "desc": "China Unicom · AS9929",
     "category": "crossborder",
-    "page": "https://bgp.tools/as/9929",
-    "parser": "bgp-upstream",
+    "carrier": "unicom",
+    "carrierLabel": "中國聯通",
+    "routeClass": "premium",
+    "routeClassLabel": "精品網",
+    "page": "https://radar.cloudflare.com/routing/as9929",
+    "parser": "cloudflare-radar-bgp",
     "asn": "AS9929",
     "sources": [
       {
         "type": "reader",
-        "label": "BGP 上游",
+        "label": "Cloudflare Radar",
         "tier": 80,
         "kind": "trusted-third-party",
         "priority": 80

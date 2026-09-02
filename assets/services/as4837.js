@@ -6,13 +6,17 @@
     "name": "China Unicom 169",
     "desc": "China Unicom · AS4837",
     "category": "crossborder",
-    "page": "https://bgp.tools/as/4837",
-    "parser": "bgp-upstream",
+    "carrier": "unicom",
+    "carrierLabel": "中國聯通",
+    "routeClass": "public",
+    "routeClassLabel": "普通公網",
+    "page": "https://radar.cloudflare.com/routing/as4837",
+    "parser": "cloudflare-radar-bgp",
     "asn": "AS4837",
     "sources": [
       {
         "type": "reader",
-        "label": "BGP 上游",
+        "label": "Cloudflare Radar",
         "tier": 80,
         "kind": "trusted-third-party",
         "priority": 80

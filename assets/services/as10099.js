@@ -6,13 +6,17 @@
     "name": "China Unicom AS10099",
     "desc": "China Unicom Global · AS10099",
     "category": "crossborder",
-    "page": "https://bgp.tools/as/10099",
-    "parser": "bgp-upstream",
+    "carrier": "unicom",
+    "carrierLabel": "中國聯通",
+    "routeClass": "international",
+    "routeClassLabel": "國際網",
+    "page": "https://radar.cloudflare.com/routing/as10099",
+    "parser": "cloudflare-radar-bgp",
     "asn": "AS10099",
     "sources": [
       {
         "type": "reader",
-        "label": "BGP 上游",
+        "label": "Cloudflare Radar",
         "tier": 80,
         "kind": "trusted-third-party",
         "priority": 80
