@@ -10,7 +10,7 @@
   var state = { services: [], filter: "all", search: "", activeOnly: false };
 
   var REFRESH_INTERVAL = 5 * 60 * 1000;
-  var CACHE_KEY = "cloudstatus-cache-v53";
+  var CACHE_KEY = "cloudstatus-cache-v56";
   var CACHE_MAX_AGE = 15 * 60 * 1000;
   var STALE_CACHE_MAX_AGE = 24 * 60 * 60 * 1000;
   var FETCH_TIMEOUT = 6500;
@@ -910,7 +910,7 @@
 
     if(!source){
       return {
-        id:service.id,name:service.name,desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,
+        id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,
         events:[],health:null,healthText:null,sourceLabel:"官方頁",fallback:true,failures:["No source"],
         _remainingSources:[]
       };
@@ -923,7 +923,7 @@
       var healthText=result.healthText||null;
 
       return {
-        id:service.id,name:service.name,desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,
+        id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,
         events:events,health:health,healthText:healthText,
         sourceLabel:(events.length||health)?source.label:"官方頁",
         fallback:!events.length&&!health,
@@ -932,7 +932,7 @@
       };
     }catch(e){
       return {
-        id:service.id,name:service.name,desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,
+        id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,
         events:[],health:null,healthText:null,sourceLabel:"官方頁",fallback:true,
         failures:[source.label+": "+String(e)],
         _remainingSources:sources.slice(1)
@@ -976,7 +976,7 @@
     }
 
     return {
-      id:service.id,name:service.name,desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,
+      id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,
       events:events.slice(0,3),health:health,healthText:healthText,
       sourceLabel:labels.length===1?labels[0]:(labels.length>1?"多來源":"官方頁"),
       fallback:!events.length&&!health,
@@ -1051,7 +1051,7 @@
       if (state.filter!=="all" && s.category!==state.filter) return false;
       if (state.activeOnly && !isActive(s)) return false;
       if (n) {
-        var h=[s.name,s.desc,s.carrierLabel,s.routeClassLabel].concat((s.events||[]).map(function(e){return e.title;})).join(" ").toLowerCase();
+        var h=[s.name,s.nameZh,s.desc,s.carrierLabel,s.routeClassLabel].concat((s.events||[]).map(function(e){return e.title;})).join(" ").toLowerCase();
         if (h.indexOf(n)===-1) return false;
       }
       return true;
@@ -1143,7 +1143,12 @@
     return '<article class="service">'+
       '<div class="service-head">'+
         '<a class="service-name" href="'+escapeHtml(service.page)+'" target="_blank" rel="noopener">🔹 '+escapeHtml(service.name)+'</a>'+
-        '<span class="service-desc">('+escapeHtml(service.desc)+')</span>'+
+        '<span class="service-desc">'+
+          (service.nameZh && service.desc
+            ? '<span class="service-desc-line">('+escapeHtml(service.desc)+') '+escapeHtml(service.nameZh)+'</span>'
+            : '<span class="service-desc-line">'+escapeHtml(service.nameZh||service.desc)+'</span>'
+          )+
+        '</span>'+
         (service.category==="crossborder" && service.carrierLabel
           ? '<span class="route-meta">'+escapeHtml(service.carrierLabel)+(service.routeClassLabel?' · '+escapeHtml(service.routeClassLabel):'')+'</span>'
           : '')+
@@ -1240,7 +1245,7 @@
       if(!state.services.length){
         state.services=SERVICES.map(function(service){
           return {
-            id:service.id,name:service.name,desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,
+            id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,
             events:[],health:null,healthText:null,sourceLabel:"載入中",fallback:false,failures:[],loading:true
           };
         });
