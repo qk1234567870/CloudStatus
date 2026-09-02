@@ -3,7 +3,8 @@
   "use strict";
   window.CloudStatusServices.register({
     "id": "cn2-gia",
-    "name": "CN2 GIA（中國電信精品網）",
+    "name": "CN2 GIA",
+    "nameZh": "中國電信精品網",
     "desc": "China Telecom · AS4809",
     "category": "crossborder",
     "carrier": "telecom",

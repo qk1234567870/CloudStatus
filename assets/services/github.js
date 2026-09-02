@@ -3,7 +3,8 @@
   "use strict";
   window.CloudStatusServices.register({
   "id": "github",
-  "name": "GitHub（程式碼託管）",
+  "name": "GitHub",
+    "nameZh": "程式碼託管",
   "desc": "全球最大的程式碼託管與開發者平台",
   "category": "developer",
   "page": "https://www.githubstatus.com",

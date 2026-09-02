@@ -3,7 +3,8 @@
   "use strict";
   window.CloudStatusServices.register({
   "id": "azure",
-  "name": "Microsoft Azure（微軟雲端）",
+  "name": "Microsoft Azure",
+    "nameZh": "微軟雲端",
   "desc": "Microsoft 企業級雲端平台",
   "category": "cloud",
   "page": "https://azure.status.microsoft/status",

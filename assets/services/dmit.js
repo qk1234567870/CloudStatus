@@ -4,7 +4,8 @@
 
   var service = {
   "id": "dmit",
-  "name": "DMIT（雲端主機）",
+  "name": "DMIT",
+    "nameZh": "雲端主機",
   "desc": "全球高階網路與雲端服務",
   "category": "hosting",
   "page": "https://www.dmit.io/serverstatus.php",

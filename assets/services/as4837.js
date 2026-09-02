@@ -3,7 +3,8 @@
   "use strict";
   window.CloudStatusServices.register({
     "id": "as4837",
-    "name": "China Unicom 169（中國聯通 169 骨幹網）",
+    "name": "China Unicom 169",
+    "nameZh": "中國聯通 169 骨幹網",
     "desc": "China Unicom · AS4837",
     "category": "crossborder",
     "carrier": "unicom",

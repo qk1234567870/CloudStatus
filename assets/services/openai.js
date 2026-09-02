@@ -3,7 +3,8 @@
   "use strict";
   window.CloudStatusServices.register({
   "id": "openai",
-  "name": "OpenAI（人工智慧）",
+  "name": "OpenAI",
+    "nameZh": "人工智慧",
   "desc": "ChatGPT 與大語言模型 API 服務商",
   "category": "ai",
   "page": "https://status.openai.com",

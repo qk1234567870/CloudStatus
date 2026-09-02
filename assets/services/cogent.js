@@ -3,7 +3,8 @@
   "use strict";
   window.CloudStatusServices.register({
   "id": "cogent",
-  "name": "Cogent（國際骨幹網）",
+  "name": "Cogent",
+    "nameZh": "國際骨幹網",
   "desc": "全球大型 IP Transit 與頻寬批發網路",
   "category": "backbone",
   "page": "https://ecogent.cogentco.com/network-status",

@@ -3,7 +3,8 @@
   "use strict";
   window.CloudStatusServices.register({
   "id": "aws",
-  "name": "AWS（亞馬遜雲端）",
+  "name": "AWS",
+    "nameZh": "亞馬遜雲端",
   "desc": "Amazon Web Services",
   "category": "cloud",
   "page": "https://health.aws.amazon.com/health/status",

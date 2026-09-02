@@ -3,7 +3,8 @@
   "use strict";
   window.CloudStatusServices.register({
   "id": "ntt-global-network",
-  "name": "NTT Global Network（NTT 全球骨幹網）",
+  "name": "NTT Global Network",
+    "nameZh": "NTT 全球骨幹網",
   "desc": "全球 Tier-1 IP 骨幹與跨洋網路",
   "category": "backbone",
   "page": "https://www.nttdata.com/global/en/services/connectivity/global-ip-network",

@@ -3,7 +3,8 @@
   "use strict";
   window.CloudStatusServices.register({
   "id": "cloudflare",
-  "name": "Cloudflare（雲端網路）",
+  "name": "Cloudflare",
+    "nameZh": "雲端網路",
   "desc": "全球最大 CDN、DNS 與網路安全平台",
   "category": "cloud",
   "page": "https://www.cloudflarestatus.com",
