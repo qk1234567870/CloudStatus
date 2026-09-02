@@ -53,3 +53,12 @@
 ## 更新記錄
 
 版本更新內容已獨立至 [`CHANGELOG.md`](./CHANGELOG.md)，README 不再混入逐版更新日誌。
+
+
+## 程式架構
+
+- `assets/config.js`：全域執行參數
+- `assets/services.js`：服務註冊、manifest 與模組載入器
+- `assets/services/*.js`：各服務來源設定
+- `assets/app.js`：抓取、解析、事件合併、快取與 UI
+- `assets/style.css`：全端響應式樣式

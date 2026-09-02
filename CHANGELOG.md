@@ -2,6 +2,33 @@
 
 CloudStatus 版本更新記錄。
 
+## v62.0.0
+
+- 完整重構載入架構，不改變既有 UI、事件判定、跨境分類與全端自適配行為。
+- 新增 `assets/config.js`：版本、快取、刷新週期、Timeout、併發數與 Masonry 參數集中管理。
+- `services.js` 重構為「Registry + Manifest + Loader」：23 個服務模組由單一 manifest 管理。
+- `index.html` 不再硬寫 23 個 `<script>`；只保留 `config.js`、`services.js`、`app.js` 三個入口。
+- 23 個服務模組改為平行載入，全部完成後再依 manifest 固定排序，避免網路完成順序影響卡片排列。
+- `app.js` 改為等待 `CloudStatusServices.ready` 後才啟動，杜絕服務模組尚未完成就開始抓資料的競態。
+- 全域 runtime 參數不再散落於 `app.js`；快取 key 與資源版本統一為 v62。
+- v61「目前事件 / 最近事件」分離與 unresolved + history 邏輯完整保留。
+- v60 統計置中、v59 桌面滿寬雙欄、手機/橫屏/桌面自適配全部保留。
+- Generic ZIP 仍不包含 `CNAME`。
+
+## v61.0.0
+
+- 全服務事件邏輯稽核：修正「目前仍在進行的事件可能被最近 3 筆已解決事件擠掉」的共通問題。
+- `目前事件` 與 `最近事件` 正式分開顯示；目前事件不再受「最近 3 筆」限制。
+- Cloudflare / GitHub / OpenAI / Equinix 等 Statuspage 類來源會同時讀取 `incidents/unresolved.json` 與 `incidents.json`，先取得未解決事件，再補最近歷史。
+- Statuspage 只有在 unresolved API 明確回傳 0 筆時才顯示「目前沒有未解決事件」；API 失敗時不猜正常。
+- 明確的 `Investigating / Identified / Monitoring / Active / In Progress / Maintenance` 等來源狀態會列入「目前事件」。
+- `Resolved / Completed / Closed / Postmortem` 列入最近歷史。
+- Apple、Azure、Oracle、BandwagonHost 等既有解析器同步受益：只要來源明確提供未結束狀態，就不會再被歷史事件排序截掉。
+- 修正 Equinix `statuspage` 來源誤指向網站根目錄，改為官方 `/api/v2/incidents.json`。
+- 狀態仍不從事件正文推斷；只有來源明確提供的生命週期狀態才會建立目前異常。
+- v60 統計置中與 v59 全端自適配/桌面雙欄布局保持不變。
+- 所有資源同步更新至 `v61.0.0`。
+
 ## v60.0.0
 
 - 三個統計卡片的數字與說明文字全部水平置中。
