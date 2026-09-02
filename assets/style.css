@@ -1001,10 +1001,14 @@ button { font-size: 14px; }
   }
 }
 
+
+
 .route-meta{
+  display:block;
+  width:100%;
   margin-top:5px;
   font-size:12px;
   line-height:1.35;
-  opacity:.68;
-  letter-spacing:.01em;
+  color:var(--muted,#8d929b);
+  opacity:.82;
 }
