@@ -10,7 +10,7 @@
   var state = { services: [], filter: "all", search: "", activeOnly: false };
 
   var REFRESH_INTERVAL = 5 * 60 * 1000;
-  var CACHE_KEY = "cloudstatus-cache-v48";
+  var CACHE_KEY = "cloudstatus-cache-v49";
   var CACHE_MAX_AGE = 15 * 60 * 1000;
   var STALE_CACHE_MAX_AGE = 24 * 60 * 60 * 1000;
   var FETCH_TIMEOUT = 6500;
@@ -753,6 +753,32 @@
     return {events:sortRecent(events),health:null,healthText:null};
   }
 
+  function parseBGPUpstream(text, service, source) {
+    var t=String(text||"");
+    var active=/Network status\s+Active\b/i.test(t);
+    var hasUpstreams=/##\s*Upstreams\b/i.test(t) || /\bUpstreams\b[\s\S]{0,500}\bAS\d{2,6}\b/i.test(t);
+    var inactive=/Network status\s+(?:Inactive|Reserved|Unallocated)\b/i.test(t);
+
+    if(inactive){
+      return {
+        events:[],
+        health:"incident",
+        healthText:"BGP 上游網路未處於 Active 狀態"
+      };
+    }
+
+    if(active && hasUpstreams){
+      return {
+        events:[],
+        health:"normal",
+        healthText:"BGP 上游連線正常"
+      };
+    }
+
+    // 資料不足時保持未知，不把抓取成功等同於線路正常。
+    return {events:[],health:null,healthText:null};
+  }
+
   function parseInfrastructure(text, service, source) {
     var t=String(text||""), ls=lines(t), events=[];
     var normal=/All Systems Operational|All services operational|operating normally|No active incidents|No current incidents|No incidents reported|No network outages|outage[- ]free/i.test(t);
@@ -799,6 +825,7 @@
       case "ntt-global":
       case "cogent": return normalizeResult(parseInfrastructure(text,service,source),service,source);
       case "aws": return normalizeResult(parseInfrastructure(text,service,source),service,source);
+      case "bgp-upstream": return normalizeResult(parseBGPUpstream(text,service,source),service,source);
       default: return normalizeResult(parseInfrastructure(text,service,source),service,source);
     }
   }
@@ -1063,18 +1090,22 @@
     // 「目前狀態」只來自來源本身明確提供的 current health。
     // 歷史事件不反推目前服務狀態。
     if (!service.loading && service.health==="normal") {
-      body += '<div class="current-state good"><span class="state-dot"></span><strong>[目前正常]</strong> '+escapeHtml(service.healthText||"官方來源顯示目前正常")+'</div>';
+      var normalLabel=service.category==="crossborder"?"[上游正常]":"[目前正常]";
+      body += '<div class="current-state good"><span class="state-dot"></span><strong>'+normalLabel+'</strong> '+escapeHtml(service.healthText||"來源顯示目前正常")+'</div>';
     } else if (!service.loading && service.health==="incident" && service.healthText) {
-      body += '<div class="current-state warn"><span class="state-dot"></span><strong>[目前異常]</strong> '+escapeHtml(service.healthText)+'</div>';
+      var incidentLabel=service.category==="crossborder"?"[上游異常]":"[目前異常]";
+      body += '<div class="current-state warn"><span class="state-dot"></span><strong>'+incidentLabel+'</strong> '+escapeHtml(service.healthText)+'</div>';
     }
 
     if (!service.loading && service.events.length) {
       body += '<div class="section-label">最近 '+service.events.length+' 筆事件</div>';
       body += service.events.slice(0,3).map(function(e){return renderEvent(e,service);}).join("");
+    } else if (!service.loading && service.health && service.category==="crossborder") {
+      body += '<div class="history-empty">狀態依公開 BGP 上游資料判定</div>';
     } else if (!service.loading && service.health) {
       body += '<div class="history-empty">近期沒有可顯示的可靠事件</div>';
     } else if (!service.loading && service.category==="crossborder" && service.fallback) {
-      body += '<a class="message link" href="'+escapeHtml(service.page)+'" target="_blank" rel="noopener">[線路資料] 暫無可靠的線路級即時事件來源，不推斷目前狀態 →</a>';
+      body += '<a class="message link" href="'+escapeHtml(service.page)+'" target="_blank" rel="noopener">[BGP 上游] 暫時無法取得可靠連線狀態，不推斷目前狀態 →</a>';
     } else if (!service.loading && service.fallback) {
       body += '<a class="message link" href="'+escapeHtml(service.page)+'" target="_blank" rel="noopener">[官方狀態頁] 自動來源未取得可靠事件資料，查看官方即時狀態 →</a>';
     } else if (!service.loading) {
