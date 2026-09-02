@@ -1,22 +1,20 @@
 (function () {
   "use strict";
 
+  function startApp() {
+  var CONFIG = window.CloudStatusConfig || {};
   var SERVICES = window.CLOUDSTATUS_SERVICES || [];
   var SERVICE_PARSERS = window.CloudStatusServiceParsers || {};
-  var EXPECTED_SERVICE_COUNT = 23;
-  if (SERVICES.length !== EXPECTED_SERVICE_COUNT) {
-    console.warn("CloudStatus service modules loaded:", SERVICES.length, "/", EXPECTED_SERVICE_COUNT);
-  }
   var state = { services: [], filter: "all", search: "", activeOnly: false };
 
-  var REFRESH_INTERVAL = 5 * 60 * 1000;
-  var CACHE_KEY = "cloudstatus-cache-v60";
-  var CACHE_MAX_AGE = 15 * 60 * 1000;
-  var STALE_CACHE_MAX_AGE = 24 * 60 * 60 * 1000;
-  var FETCH_TIMEOUT = 6500;
-  var READER_TIMEOUT = 7500;
-  var FALLBACK_CONCURRENCY = 4;
-  var FOREGROUND_REFRESH_THRESHOLD = 2 * 60 * 1000;
+  var REFRESH_INTERVAL = CONFIG.refreshInterval || 5 * 60 * 1000;
+  var CACHE_KEY = CONFIG.cacheKey || "cloudstatus-cache-v62";
+  var CACHE_MAX_AGE = CONFIG.cacheMaxAge || 15 * 60 * 1000;
+  var STALE_CACHE_MAX_AGE = CONFIG.staleCacheMaxAge || 24 * 60 * 60 * 1000;
+  var FETCH_TIMEOUT = CONFIG.fetchTimeout || 6500;
+  var READER_TIMEOUT = CONFIG.readerTimeout || 7500;
+  var FALLBACK_CONCURRENCY = CONFIG.fallbackConcurrency || 4;
+  var FOREGROUND_REFRESH_THRESHOLD = CONFIG.foregroundRefreshThreshold || 2 * 60 * 1000;
   var lastRefresh = 0;
   var refreshInFlight = false;
 
@@ -65,6 +63,22 @@
       degraded:"degraded", outage:"outage", active:"active", closed:"closed"
     };
     return map[s] || null;
+  }
+
+  var CLOSED_EVENT_STATUSES = {
+    resolved:true,
+    postmortem:true,
+    completed:true,
+    closed:true
+  };
+
+  function isActiveEvent(event) {
+    if (!event || !event.status) return false;
+    return !CLOSED_EVENT_STATUSES[event.status];
+  }
+
+  function activeEventCount(events) {
+    return (events||[]).filter(isActiveEvent).length;
   }
 
   function timeValue(v) {
@@ -152,10 +166,23 @@
       return normalizeEvent(e,service,source);
     }).filter(Boolean);
 
+    events=sortRecent(events);
+
+    var health=result.health || null;
+    var healthText=result.healthText || null;
+    var activeCount=activeEventCount(events);
+
+    // Only explicit source-provided lifecycle statuses may establish
+    // an active incident here. Never infer current state from prose/history.
+    if(activeCount>0){
+      health="incident";
+      if(!healthText) healthText=activeCount+" 個未解決事件";
+    }
+
     return {
-      events:sortRecent(events),
-      health:result.health || null,
-      healthText:result.healthText || null
+      events:events,
+      health:health,
+      healthText:healthText
     };
   }
 
@@ -179,7 +206,7 @@
   function sortRecent(events) {
     return dedupe(events).sort(function(a,b){
       return timeValue(b.start || b.end) - timeValue(a.start || a.end);
-    }).slice(0,3);
+    }).slice(0,20);
   }
 
   async function fetchJson(url) {
@@ -253,21 +280,40 @@
   }
 
   function statuspageAdapter(data, service, source) {
-    var incidents = Array.isArray(data.incidents) ? data.incidents : [];
+    var incidents = Array.isArray(data && data.incidents) ? data.incidents : [];
     var events = incidents.map(function(inc){
       return {
         title: cleanText(inc.name),
         status: explicitStatus(inc.status),
         statusRaw: inc.status || null,
         impact: inc.impact || null,
-        start: inc.created_at || null,
+        start: inc.started_at || inc.created_at || null,
         end: inc.resolved_at || null,
         url: inc.shortlink || inc.url || service.page,
         sourceLabel: source.label
       };
     });
-    var active = events.some(function(e){ return e.status && e.status !== "resolved" && e.status !== "postmortem" && e.status !== "completed" && e.status !== "closed"; });
-    return { events: sortRecent(events), health: active ? "incident" : "normal", healthText: active ? null : "目前沒有未解決事件" };
+
+    var activeCount=activeEventCount(events);
+    var unresolvedChecked=!!(data && data._unresolvedChecked);
+    var unresolvedCount=(data && typeof data._unresolvedCount==="number")
+      ? data._unresolvedCount
+      : activeCount;
+
+    var health=null, healthText=null;
+    if(unresolvedCount>0 || activeCount>0){
+      health="incident";
+      healthText=Math.max(unresolvedCount,activeCount)+" 個未解決事件";
+    }else if(unresolvedChecked){
+      health="normal";
+      healthText="目前沒有未解決事件";
+    }
+
+    return {
+      events: sortRecent(events),
+      health: health,
+      healthText: healthText
+    };
   }
 
   function gcpAdapter(data, service, source) {
@@ -848,7 +894,52 @@
       if (custom) return normalizeResult(custom,service,source);
     }
 
-    if (source.type==="statuspage") return normalizeResult(statuspageAdapter(await fetchJson(source.url),service,source),service,source);
+    if (source.type==="statuspage") {
+      var historyUrl=source.url;
+      if(!/\/api\/v2\/incidents\.json(?:\?|$)/i.test(historyUrl)){
+        historyUrl=String(historyUrl||"").replace(/\/$/,"")+"/api/v2/incidents.json";
+      }
+
+      var unresolvedUrl=source.unresolvedUrl ||
+        historyUrl.replace(/\/incidents\.json(?:\?.*)?$/i,"/incidents/unresolved.json");
+
+      var settled=await Promise.allSettled([
+        fetchJson(unresolvedUrl),
+        fetchJson(historyUrl)
+      ]);
+
+      var unresolvedData=settled[0].status==="fulfilled" ? settled[0].value : null;
+      var historyData=settled[1].status==="fulfilled" ? settled[1].value : null;
+
+      if(!unresolvedData && !historyData){
+        throw new Error("Status API unavailable");
+      }
+
+      var combined=[], seenIncident={};
+
+      function addIncidents(data){
+        var arr=data && Array.isArray(data.incidents) ? data.incidents : [];
+        arr.forEach(function(inc){
+          if(!inc) return;
+          var key=inc.id || (cleanText(inc.name)+"|"+String(inc.created_at||inc.started_at||""));
+          if(seenIncident[key]) return;
+          seenIncident[key]=true;
+          combined.push(inc);
+        });
+      }
+
+      // Add unresolved first so the current incident record wins on duplicates.
+      addIncidents(unresolvedData);
+      addIncidents(historyData);
+
+      return normalizeResult(statuspageAdapter({
+        incidents:combined,
+        _unresolvedChecked:!!unresolvedData,
+        _unresolvedCount:unresolvedData && Array.isArray(unresolvedData.incidents)
+          ? unresolvedData.incidents.length
+          : null
+      },service,source),service,source);
+    }
     if (source.type==="apple-json") return normalizeResult(appleStructuredAdapter(await fetchAppleJson(source.url),service,source),service,source);
     if (source.type==="gcp") return normalizeResult(gcpAdapter(await fetchJson(source.url),service,source),service,source);
     if (source.type==="rss") return normalizeResult(rssAdapter(await fetchText(source.url),service,source),service,source);
@@ -918,7 +1009,7 @@
 
     try{
       var result=await runSource(source,service);
-      var events=(result.events||[]).slice(0,3);
+      var events=(result.events||[]).slice(0,20);
       var health=result.health||null;
       var healthText=result.healthText||null;
 
@@ -953,7 +1044,7 @@
       var source=sources[i];
 
       // 已取得完整官方資料時，不再啟動第三方來源。
-      if(isThirdPartySource(source) && health && events.length>=3) break;
+      if(isThirdPartySource(source) && health && events.length>=3 && activeEventCount(events)>0) break;
 
       try{
         var result=await runSource(source,service);
@@ -969,7 +1060,7 @@
           if(labels.indexOf(source.label)<0) labels.push(source.label);
         }
 
-        if(events.length>=3 && health) break;
+        if(events.length>=3 && health && (health==="normal" || activeEventCount(events)>0)) break;
       }catch(e){
         failures.push(source.label+": "+String(e));
       }
@@ -977,7 +1068,7 @@
 
     return {
       id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,
-      events:events.slice(0,3),health:health,healthText:healthText,
+      events:events.slice(0,20),health:health,healthText:healthText,
       sourceLabel:labels.length===1?labels[0]:(labels.length>1?"多來源":"官方頁"),
       fallback:!events.length&&!health,
       failures:failures
@@ -1125,18 +1216,30 @@
       body += '<div class="current-state warn"><span class="state-dot"></span><strong>'+incidentLabel+'</strong> '+escapeHtml(service.healthText)+'</div>';
     }
 
-    if (!service.loading && service.events.length) {
-      body += '<div class="section-label">最近 '+service.events.length+' 筆事件</div>';
-      body += service.events.slice(0,3).map(function(e){return renderEvent(e,service);}).join("");
-    } else if (!service.loading && service.health && service.category==="crossborder") {
+    var activeEvents=!service.loading
+      ? (service.events||[]).filter(isActiveEvent)
+      : [];
+    var recentEvents=!service.loading
+      ? (service.events||[]).filter(function(e){return !isActiveEvent(e);}).slice(0,3)
+      : [];
+
+    if (!service.loading && activeEvents.length) {
+      body += '<div class="section-label active-section-label">目前 '+activeEvents.length+' 個事件</div>';
+      body += activeEvents.map(function(e){return renderEvent(e,service);}).join("");
+    }
+
+    if (!service.loading && recentEvents.length) {
+      body += '<div class="section-label">最近 '+recentEvents.length+' 筆事件</div>';
+      body += recentEvents.map(function(e){return renderEvent(e,service);}).join("");
+    } else if (!service.loading && !activeEvents.length && service.health && service.category==="crossborder") {
       body += '<div class="history-empty">狀態依 Cloudflare Radar 公開 BGP 資料判定</div>';
-    } else if (!service.loading && service.health) {
+    } else if (!service.loading && !activeEvents.length && service.health) {
       body += '<div class="history-empty">近期沒有可顯示的可靠事件</div>';
-    } else if (!service.loading && service.category==="crossborder" && service.fallback) {
+    } else if (!service.loading && !activeEvents.length && service.category==="crossborder" && service.fallback) {
       body += '<a class="message link" href="'+escapeHtml(service.page)+'" target="_blank" rel="noopener">[Cloudflare Radar] 暫時無法取得可靠上游狀態，不推斷目前狀態 →</a>';
-    } else if (!service.loading && service.fallback) {
+    } else if (!service.loading && !activeEvents.length && service.fallback) {
       body += '<a class="message link" href="'+escapeHtml(service.page)+'" target="_blank" rel="noopener">[官方狀態頁] 自動來源未取得可靠事件資料，查看官方即時狀態 →</a>';
-    } else if (!service.loading) {
+    } else if (!service.loading && !activeEvents.length) {
       body += '<div class="message">目前沒有可顯示的可靠事件資料</div>';
     }
 
@@ -1179,7 +1282,7 @@
       return;
     }
 
-    var gap=14;
+    var gap=CONFIG.masonryGap||14;
     grid.classList.add("masonry-active");
 
     cards.forEach(function(card){
@@ -1362,4 +1465,19 @@
   loadCache();
   refresh({force:true});
   startAutoRefresh();
+  }
+
+  var ready = window.CloudStatusServices && window.CloudStatusServices.ready
+    ? window.CloudStatusServices.ready
+    : Promise.resolve();
+
+  ready.then(startApp).catch(function (error) {
+    console.error(error);
+    var updated = document.querySelector("#updated");
+    var services = document.querySelector("#services");
+    if (updated) updated.textContent = "模組載入失敗";
+    if (services) {
+      services.innerHTML = '<div class="empty">服務模組載入失敗，請重新整理頁面。</div>';
+    }
+  });
 })();

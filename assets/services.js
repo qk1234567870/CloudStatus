@@ -1,12 +1,53 @@
-/* CloudStatus service registry
- * Individual service definitions live in ./services/*.js
- * Keep this file small: it only owns registration and ordering.
- */
+/* CloudStatus service registry + loader */
 (function () {
   "use strict";
 
+  var config = window.CloudStatusConfig || {};
+  var version = config.version || "62.0.0";
+
+  var manifest = [
+  "cloudflare",
+  "aws",
+  "azure",
+  "google-cloud",
+  "github",
+  "openai",
+  "apple",
+  "oracle",
+  "bandwagonhost",
+  "dmit",
+  "equinix",
+  "digital-realty",
+  "ntt-gdc",
+  "arelion",
+  "ntt-global-network",
+  "cogent",
+  "cn2-gia",
+  "cn2-gt",
+  "as9929",
+  "as10099",
+  "cmi",
+  "as4134",
+  "as4837"
+];
   var list = [];
   var ids = Object.create(null);
+  var parsers = Object.create(null);
+
+  function normalizeSources(service) {
+    if (!Array.isArray(service.sources)) return service;
+
+    service.sources = service.sources.map(function (source) {
+      if (!source) return source;
+      if (source.url) return source;
+
+      var inherited = Object.assign({}, source);
+      inherited.url = service.page || null;
+      return inherited;
+    });
+
+    return service;
+  }
 
   function registerService(service) {
     if (!service || !service.id) {
@@ -15,24 +56,10 @@
     if (ids[service.id]) {
       throw new Error("Duplicate CloudStatus service id: " + service.id);
     }
+
     ids[service.id] = true;
-
-    // Source URL may be omitted when it is the same as service.page.
-    // This keeps service modules DRY while preserving a concrete URL at runtime.
-    if (Array.isArray(service.sources)) {
-      service.sources = service.sources.map(function (source) {
-        if (!source) return source;
-        if (source.url) return source;
-        var inherited = Object.assign({}, source);
-        inherited.url = service.page || null;
-        return inherited;
-      });
-    }
-
-    list.push(service);
+    list.push(normalizeSources(service));
   }
-
-  var parsers = Object.create(null);
 
   function registerParser(id, parser) {
     if (!id || !parser) {
@@ -41,15 +68,54 @@
     parsers[id] = parser;
   }
 
+  function loadScript(id) {
+    return new Promise(function (resolve, reject) {
+      var script = document.createElement("script");
+      script.src = "./assets/services/" + encodeURIComponent(id) + ".js?v=" + encodeURIComponent(version);
+      script.async = true;
+      script.onload = resolve;
+      script.onerror = function () {
+        reject(new Error("Failed to load service module: " + id));
+      };
+      document.head.appendChild(script);
+    });
+  }
+
+  function finalizeOrder() {
+    var order = Object.create(null);
+    manifest.forEach(function (id, index) { order[id] = index; });
+
+    list.sort(function (a, b) {
+      var ai = order[a.id];
+      var bi = order[b.id];
+      return (ai == null ? 999 : ai) - (bi == null ? 999 : bi);
+    });
+
+    if (config.expectedServiceCount && list.length !== config.expectedServiceCount) {
+      console.warn(
+        "CloudStatus service modules loaded:",
+        list.length,
+        "/",
+        config.expectedServiceCount
+      );
+    }
+
+    return list;
+  }
+
   window.CloudStatusServices = {
     register: registerService,
     registerParser: registerParser,
     list: list,
-    parsers: parsers
+    parsers: parsers,
+    manifest: manifest.slice()
   };
 
   window.CloudStatusServiceParsers = parsers;
-
-  // app.js continues to consume the same public array.
   window.CLOUDSTATUS_SERVICES = list;
+
+  // Modules download in parallel, then registry order is normalized once.
+  window.CloudStatusServices.ready = Promise.all(
+    manifest.map(loadScript)
+  ).then(finalizeOrder);
 })();

@@ -1287,3 +1287,8 @@ html,body{
 .summary > * > *{
   text-align:center !important;
 }
+
+/* v61：目前事件與歷史事件分區 */
+.active-section-label{
+  color:#f0b36a;
+}
