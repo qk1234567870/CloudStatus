@@ -8,7 +8,7 @@
   var state = { services: [], filter: "all", search: "", activeOnly: false };
 
   var REFRESH_INTERVAL = CONFIG.refreshInterval || 5 * 60 * 1000;
-  var CACHE_KEY = CONFIG.cacheKey || "cloudstatus-cache-v68";
+  var CACHE_KEY = CONFIG.cacheKey || "cloudstatus-cache-v69";
   var CACHE_MAX_AGE = CONFIG.cacheMaxAge || 15 * 60 * 1000;
   var STALE_CACHE_MAX_AGE = CONFIG.staleCacheMaxAge || 24 * 60 * 60 * 1000;
   var FETCH_TIMEOUT = CONFIG.fetchTimeout || 6500;
@@ -1268,14 +1268,8 @@
     // 依實際內容容器寬度判斷，不依手機/桌面名稱。
     // 容器 < 600px：單欄；>= 600px：雙欄 Masonry。
     var availableWidth=grid.clientWidth || window.innerWidth;
-    var portrait=window.matchMedia && window.matchMedia("(orientation: portrait)").matches;
-    var landscape=window.matchMedia && window.matchMedia("(orientation: landscape)").matches;
-
-    // Orientation-adaptive RWD:
-    // portrait: keep one column on narrow/mobile widths
-    // landscape: allow two columns earlier
-    // large screens: two-column Masonry
-    var masonryMinWidth=portrait
+    var isPortrait=window.innerHeight>window.innerWidth;
+    var masonryMinWidth=isPortrait
       ? (CONFIG.portraitMasonryMinWidth || 760)
       : (CONFIG.landscapeMasonryMinWidth || 560);
 
@@ -1467,10 +1461,25 @@
   $("#reload").addEventListener("click",function(){refresh({force:true});});
 
   var masonryResizeTimer=null;
-  window.addEventListener("resize",function(){
+  function scheduleResponsiveRelayout(){
     clearTimeout(masonryResizeTimer);
-    masonryResizeTimer=setTimeout(layoutDesktopMasonry,120);
+    masonryResizeTimer=setTimeout(function(){
+      layoutDesktopMasonry();
+      requestAnimationFrame(layoutDesktopMasonry);
+    },100);
+  }
+
+  window.addEventListener("resize",scheduleResponsiveRelayout);
+  window.addEventListener("orientationchange",function(){
+    setTimeout(scheduleResponsiveRelayout,80);
+    setTimeout(scheduleResponsiveRelayout,320);
   });
+
+  if(window.visualViewport){
+    window.visualViewport.addEventListener("resize",scheduleResponsiveRelayout);
+  }
+
+  startResponsiveLayoutObserver();
 
   loadCache();
   refresh({force:true});
