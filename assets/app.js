@@ -3,11 +3,11 @@
 
   function startApp() {
   var CONFIG = Object.freeze({
-    version: "73.0.0",
+    version: "74.0.0",
     expectedServiceCount: 23,
 
     refreshInterval: 5 * 60 * 1000,
-    cacheKey: "cloudstatus-cache-v73",
+    cacheKey: "cloudstatus-cache-v74",
     cacheMaxAge: 15 * 60 * 1000,
     staleCacheMaxAge: 24 * 60 * 60 * 1000,
     foregroundRefreshThreshold: 2 * 60 * 1000,
@@ -17,7 +17,7 @@
     fallbackConcurrency: 4,
 
     desktopMasonryMinWidth: 760,
-    desktopMaxWidth: 1100,
+    desktopMaxWidth: 1180,
     masonryGap: 14
     });
   var SERVICES = window.CLOUDSTATUS_SERVICES || [];
@@ -25,7 +25,7 @@
   var state = { services: [], filter: "all", search: "", activeOnly: false };
 
   var REFRESH_INTERVAL = CONFIG.refreshInterval || 5 * 60 * 1000;
-  var CACHE_KEY = CONFIG.cacheKey || "cloudstatus-cache-v73";
+  var CACHE_KEY = CONFIG.cacheKey || "cloudstatus-cache-v74";
   var CACHE_MAX_AGE = CONFIG.cacheMaxAge || 15 * 60 * 1000;
   var STALE_CACHE_MAX_AGE = CONFIG.staleCacheMaxAge || 24 * 60 * 60 * 1000;
   var FETCH_TIMEOUT = CONFIG.fetchTimeout || 6500;
