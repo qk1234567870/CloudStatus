@@ -111,6 +111,6 @@
   "architecture": "service-modules + flat-single-card-template + app",
   "service_loader": "parallel-manifest",
   "card_template": "assets/card-template.js",
-  "card_responsive": "full-inner-responsive",
-  "card_layout": "approved-single-column-status-tag-layout"
+  "card_responsive": "container-query-full-adaptive",
+  "source_badge": "footer-only"
 }
