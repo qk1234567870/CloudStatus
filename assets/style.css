@@ -1292,3 +1292,190 @@ html,body{
 .active-section-label{
   color:#f0b36a;
 }
+
+
+/* v63：手機橫屏維持手機版單欄，避免因寬度超過 720px 啟用桌面 Masonry */
+@media (orientation:landscape) and (pointer:coarse) and (max-height:600px){
+  .shell{
+    width:100% !important;
+    max-width:100% !important;
+    padding-left:14px !important;
+    padding-right:14px !important;
+  }
+
+  #services,
+  #services.masonry-active{
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) !important;
+    position:static !important;
+    width:100% !important;
+    height:auto !important;
+    gap:14px !important;
+  }
+
+  #services > .service,
+  #services.masonry-active > .service{
+    position:static !important;
+    left:auto !important;
+    top:auto !important;
+    width:100% !important;
+    max-width:100% !important;
+    box-sizing:border-box !important;
+  }
+
+  .summary{
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+  }
+
+  .filters{
+    flex-wrap:nowrap !important;
+    overflow-x:auto !important;
+  }
+}
+
+/* =========================================================
+   v64 手機橫屏：雙欄，但不是桌面 Masonry
+   直屏 = 單欄
+   橫屏手機 = 雙欄 Grid
+   桌面 = 雙欄 Masonry
+   ========================================================= */
+@media (orientation:landscape) and (pointer:coarse) and (max-height:600px){
+  .shell{
+    width:100% !important;
+    max-width:100% !important;
+    padding-left:14px !important;
+    padding-right:14px !important;
+  }
+
+  #services,
+  #services.masonry-active{
+    display:grid !important;
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    align-items:start !important;
+    gap:14px !important;
+    position:static !important;
+    width:100% !important;
+    height:auto !important;
+  }
+
+  #services > .service,
+  #services.masonry-active > .service{
+    position:static !important;
+    left:auto !important;
+    top:auto !important;
+    width:100% !important;
+    max-width:100% !important;
+    min-width:0 !important;
+    box-sizing:border-box !important;
+  }
+
+  .summary{
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+  }
+
+  .filters{
+    flex-wrap:nowrap !important;
+    overflow-x:auto !important;
+  }
+
+  .service-head{
+    grid-template-columns:minmax(0,1fr) auto !important;
+  }
+
+  .service-name,
+  .source-badge,
+  .service-desc,
+  .service-desc-second-row{
+    min-width:0 !important;
+  }
+}
+
+/* 非常窄的橫屏才退回單欄，避免卡片內容被擠壞 */
+@media (orientation:landscape) and (pointer:coarse) and (max-width:680px){
+  #services,
+  #services.masonry-active{
+    grid-template-columns:minmax(0,1fr) !important;
+  }
+}
+
+/* =========================================================
+   v65 純容器寬度 RWD
+   不判斷手機 / 平板 / 桌面，不使用 orientation / pointer
+   ========================================================= */
+
+/* 主容器永遠依可用寬度縮放，最大 1180px */
+.shell{
+  width:min(1180px,calc(100% - clamp(20px,4vw,64px))) !important;
+  max-width:1180px !important;
+  margin-left:auto !important;
+  margin-right:auto !important;
+  padding-left:0 !important;
+  padding-right:0 !important;
+  box-sizing:border-box !important;
+}
+
+/* 窄容器：單欄 */
+@media (max-width:759px){
+  #services,
+  #services.masonry-active{
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) !important;
+    position:static !important;
+    width:100% !important;
+    height:auto !important;
+    gap:14px !important;
+  }
+
+  #services > .service,
+  #services.masonry-active > .service{
+    position:static !important;
+    left:auto !important;
+    top:auto !important;
+    width:100% !important;
+    max-width:100% !important;
+    box-sizing:border-box !important;
+  }
+}
+
+/* 寬容器：JS 啟用兩欄 Masonry */
+@media (min-width:760px){
+  #services.masonry-active{
+    display:block !important;
+    position:relative !important;
+    width:100% !important;
+  }
+
+  #services.masonry-active > .service{
+    position:absolute !important;
+    min-width:0 !important;
+    box-sizing:border-box !important;
+  }
+}
+
+/* 分類列永遠可橫向滾動，不依裝置類型 */
+.filters{
+  display:flex !important;
+  flex-wrap:nowrap !important;
+  overflow-x:auto !important;
+  overflow-y:hidden !important;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+}
+.filters::-webkit-scrollbar{display:none}
+
+/* 統計卡固定三等分，只依容器寬度壓縮 */
+.summary{
+  grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+}
+
+/* 所有卡片與文字防溢出 */
+.service,
+.service-head,
+.service-name,
+.source-badge,
+.service-desc,
+.service-desc-second-row,
+.event-title,
+.event-time{
+  min-width:0 !important;
+}
