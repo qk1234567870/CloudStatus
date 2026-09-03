@@ -8,7 +8,7 @@
   var state = { services: [], filter: "all", search: "", activeOnly: false };
 
   var REFRESH_INTERVAL = CONFIG.refreshInterval || 5 * 60 * 1000;
-  var CACHE_KEY = CONFIG.cacheKey || "cloudstatus-cache-v66";
+  var CACHE_KEY = CONFIG.cacheKey || "cloudstatus-cache-v68";
   var CACHE_MAX_AGE = CONFIG.cacheMaxAge || 15 * 60 * 1000;
   var STALE_CACHE_MAX_AGE = CONFIG.staleCacheMaxAge || 24 * 60 * 60 * 1000;
   var FETCH_TIMEOUT = CONFIG.fetchTimeout || 6500;
@@ -1266,13 +1266,19 @@
     var cards=Array.prototype.slice.call(grid.querySelectorAll(".service"));
 
     // 依實際內容容器寬度判斷，不依手機/桌面名稱。
-    // 容器 <= 720px：單欄；> 720px：雙欄 Masonry。
+    // 容器 < 600px：單欄；>= 600px：雙欄 Masonry。
     var availableWidth=grid.clientWidth || window.innerWidth;
-    var masonryMinWidth=CONFIG.desktopMasonryMinWidth || 600;
+    var portrait=window.matchMedia && window.matchMedia("(orientation: portrait)").matches;
+    var landscape=window.matchMedia && window.matchMedia("(orientation: landscape)").matches;
 
-    // Pure container-width RWD:
-    // narrow container -> normal one-column flow
-    // wide container   -> two-column Masonry
+    // Orientation-adaptive RWD:
+    // portrait: keep one column on narrow/mobile widths
+    // landscape: allow two columns earlier
+    // large screens: two-column Masonry
+    var masonryMinWidth=portrait
+      ? (CONFIG.portraitMasonryMinWidth || 760)
+      : (CONFIG.landscapeMasonryMinWidth || 560);
+
     if(availableWidth<masonryMinWidth || !cards.length){
       grid.classList.remove("masonry-active");
       grid.style.height="";
@@ -1300,7 +1306,7 @@
       var gridWidth=Math.floor(grid.getBoundingClientRect().width || grid.clientWidth || availableWidth);
 
       // 1180px 整體寬度下固定兩欄最穩定。
-      // <=720px 已在前面走單欄；>720px 一律雙欄 Masonry。
+      // <600px 已在前面走單欄；>=600px 一律雙欄 Masonry。
       var columns=2;
       var colWidth=Math.floor((gridWidth-gap)/columns);
       var heights=new Array(columns).fill(0);
@@ -1316,9 +1322,8 @@
         var y=heights[col];
 
         card.style.width=colWidth+"px";
-    card.style.maxWidth=colWidth+"px";
-    card.style.boxSizing="border-box";
         card.style.maxWidth=colWidth+"px";
+        card.style.boxSizing="border-box";
         card.style.left=x+"px";
         card.style.top=y+"px";
 

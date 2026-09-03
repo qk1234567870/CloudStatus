@@ -1523,3 +1523,130 @@ html,body{
     box-sizing:border-box !important;
   }
 }
+
+
+/* =========================================================
+   v67 Masonry 重疊修正
+   600–759px 時，舊版單欄規則曾留下 width:100%!important，
+   導致 JS 雖排成兩欄，卡片本體仍佔滿整列而互相覆蓋。
+   以下為最終權威規則。
+   ========================================================= */
+
+/* < 600px：真正單欄 */
+@media (max-width:599px){
+  #services,
+  #services.masonry-active{
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) !important;
+    position:static !important;
+    width:100% !important;
+    height:auto !important;
+    gap:14px !important;
+  }
+
+  #services > .service,
+  #services.masonry-active > .service{
+    position:static !important;
+    left:auto !important;
+    top:auto !important;
+    width:100% !important;
+    max-width:100% !important;
+    box-sizing:border-box !important;
+  }
+}
+
+/* >= 600px：固定雙欄 Masonry */
+@media (min-width:600px){
+  #services.masonry-active{
+    display:block !important;
+    grid-template-columns:none !important;
+    position:relative !important;
+    width:100% !important;
+    gap:0 !important;
+  }
+
+  #services.masonry-active > .service{
+    position:absolute !important;
+    width:calc((100% - 14px) / 2) !important;
+    max-width:calc((100% - 14px) / 2) !important;
+    min-width:0 !important;
+    box-sizing:border-box !important;
+  }
+}
+
+
+/* =========================================================
+   v68 直屏 / 橫屏自適應
+   直屏：窄畫面維持單欄
+   橫屏：可用寬度足夠即雙欄
+   桌面寬畫面：雙欄 Masonry
+   ========================================================= */
+
+/* 直屏：<760px 單欄 */
+@media (orientation:portrait) and (max-width:759px){
+  #services,
+  #services.masonry-active{
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) !important;
+    position:static !important;
+    width:100% !important;
+    height:auto !important;
+    gap:14px !important;
+  }
+
+  #services > .service,
+  #services.masonry-active > .service{
+    position:static !important;
+    left:auto !important;
+    top:auto !important;
+    width:100% !important;
+    max-width:100% !important;
+  }
+}
+
+/* 橫屏：>=560px 雙欄 */
+@media (orientation:landscape) and (min-width:560px){
+  #services.masonry-active{
+    display:block !important;
+    position:relative !important;
+    width:100% !important;
+  }
+
+  #services.masonry-active > .service{
+    position:absolute !important;
+    width:calc((100% - 14px) / 2) !important;
+    max-width:calc((100% - 14px) / 2) !important;
+    min-width:0 !important;
+    box-sizing:border-box !important;
+  }
+}
+
+/* 橫屏極窄：仍單欄 */
+@media (orientation:landscape) and (max-width:559px){
+  #services,
+  #services.masonry-active{
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) !important;
+    position:static !important;
+    width:100% !important;
+    height:auto !important;
+    gap:14px !important;
+  }
+
+  #services > .service,
+  #services.masonry-active > .service{
+    position:static !important;
+    left:auto !important;
+    top:auto !important;
+    width:100% !important;
+    max-width:100% !important;
+  }
+}
+
+/* 寬直屏（平板等）：>=760px 雙欄 */
+@media (orientation:portrait) and (min-width:760px){
+  #services.masonry-active > .service{
+    width:calc((100% - 14px) / 2) !important;
+    max-width:calc((100% - 14px) / 2) !important;
+  }
+}
