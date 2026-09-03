@@ -1041,9 +1041,10 @@ button { font-size: 14px; }
 }
 
 /* =========================================================
-   v71 統一自適應版面
-   不偵測手機 / 平板 / 方向。
-   只按實際可用寬度排版。
+   v72 統一自適應 + 全雙欄階梯
+   < 560px：單欄正常文流
+   >=560px：雙欄 Masonry 階梯補位
+   不偵測手機 / 平板 / 橫直屏。
    ========================================================= */
 
 html{
@@ -1078,7 +1079,6 @@ body{
   box-sizing:border-box;
 }
 
-/* 分類列 */
 .filters{
   display:flex;
   flex-wrap:nowrap;
@@ -1092,7 +1092,6 @@ body{
 .filters::-webkit-scrollbar{display:none}
 .chip{flex:0 0 auto}
 
-/* 搜尋列 */
 .search-row{
   display:flex;
   align-items:center;
@@ -1103,13 +1102,11 @@ body{
   flex:1 1 auto;
 }
 
-/* 統計列 */
 .summary{
   display:grid;
   grid-template-columns:repeat(3,minmax(0,1fr));
 }
 
-/* 卡片共同規則 */
 .service{
   min-width:0;
   width:100%;
@@ -1171,7 +1168,7 @@ body{
   max-width:100%;
 }
 
-/* < 560px：單欄 */
+/* 單欄基線 */
 #services,
 #services.masonry-active{
   display:grid;
@@ -1192,40 +1189,22 @@ body{
   max-width:100% !important;
 }
 
-/* >= 560px：雙欄 Grid。手機橫屏、平板、窄桌面都走正常文流。 */
+/* 所有雙欄都使用 Masonry 階梯補位 */
 @media (min-width:560px){
-  #services,
-  #services.masonry-active{
-    display:grid !important;
-    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
-    align-items:start;
-    position:static !important;
-    height:auto !important;
-    gap:14px;
-  }
-
-  #services > .service,
-  #services.masonry-active > .service{
-    position:static !important;
-    left:auto !important;
-    top:auto !important;
-    width:100% !important;
-    max-width:100% !important;
-  }
-}
-
-/* >= 1180px：只有完整桌面內容寬度才由 JS 啟用 Masonry。 */
-@media (min-width:1180px){
   #services.masonry-active{
     display:block !important;
     position:relative !important;
-    width:100%;
+    width:100% !important;
+    height:var(--masonry-height,auto);
+    gap:0 !important;
   }
 
   #services.masonry-active > .service{
     position:absolute !important;
     width:calc((100% - 14px)/2) !important;
     max-width:calc((100% - 14px)/2) !important;
+    min-width:0 !important;
+    box-sizing:border-box !important;
   }
 }
 

@@ -8,7 +8,7 @@
   var state = { services: [], filter: "all", search: "", activeOnly: false };
 
   var REFRESH_INTERVAL = CONFIG.refreshInterval || 5 * 60 * 1000;
-  var CACHE_KEY = CONFIG.cacheKey || "cloudstatus-cache-v71";
+  var CACHE_KEY = CONFIG.cacheKey || "cloudstatus-cache-v72";
   var CACHE_MAX_AGE = CONFIG.cacheMaxAge || 15 * 60 * 1000;
   var STALE_CACHE_MAX_AGE = CONFIG.staleCacheMaxAge || 24 * 60 * 60 * 1000;
   var FETCH_TIMEOUT = CONFIG.fetchTimeout || 6500;
@@ -1269,12 +1269,11 @@
     // 容器 < 600px：單欄；>= 600px：雙欄 Masonry。
     var availableWidth=grid.clientWidth || window.innerWidth;
 
-    // v71:
-    // < 560px  : one-column normal flow
-    // 560-1179 : two-column CSS Grid (handled by CSS)
-    // >= 1180  : two-column Masonry
+    // v72:
+    // < 560px : one-column normal flow
+    // >=560px : every two-column layout uses Masonry staircase packing
     // JS never decides phone/tablet/orientation.
-    var useMasonry=availableWidth >= (CONFIG.desktopMasonryMinWidth || 1180);
+    var useMasonry=availableWidth >= (CONFIG.gridTwoColumnMinWidth || 560);
 
     if(!useMasonry || !cards.length){
       grid.classList.remove("masonry-active");
