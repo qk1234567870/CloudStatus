@@ -2,27 +2,66 @@
   "use strict";
 
   function startApp() {
-  var CONFIG = window.CloudStatusConfig || {};
+  var CONFIG = Object.freeze({
+    version: "63.0.0",
+    expectedServiceCount: 23,
+
+    refreshInterval: 5 * 60 * 1000,
+    cacheKey: "cloudstatus-cache-v63",
+    cacheMaxAge: 15 * 60 * 1000,
+    staleCacheMaxAge: 24 * 60 * 60 * 1000,
+    foregroundRefreshThreshold: 2 * 60 * 1000,
+
+    fetchTimeout: 6500,
+    readerTimeout: 7500,
+    fallbackConcurrency: 4,
+
+    desktopMasonryMinWidth: 760,
+    desktopMaxWidth: 1180,
+    masonryGap: 14
+    });
   var SERVICES = window.CLOUDSTATUS_SERVICES || [];
   var SERVICE_PARSERS = window.CloudStatusServiceParsers || {};
   var state = { services: [], filter: "all", search: "", activeOnly: false };
 
-  var REFRESH_INTERVAL = CONFIG.refresh.interval;
-  var CACHE_KEY = CONFIG.cache.key;
-  var CACHE_MAX_AGE = CONFIG.cache.maxAge;
-  var STALE_CACHE_MAX_AGE = CONFIG.cache.staleMaxAge;
-  var FETCH_TIMEOUT = CONFIG.network.fetchTimeout;
-  var READER_TIMEOUT = CONFIG.network.readerTimeout;
-  var FALLBACK_CONCURRENCY = CONFIG.network.fallbackConcurrency;
-  var FOREGROUND_REFRESH_THRESHOLD = CONFIG.refresh.foregroundThreshold;
-  var RECENT_EVENT_LIMIT = CONFIG.events.recentLimit;
-  var EVENT_MERGE_LIMIT = CONFIG.events.mergeLimit;
+  var REFRESH_INTERVAL = CONFIG.refreshInterval || 5 * 60 * 1000;
+  var CACHE_KEY = CONFIG.cacheKey || "cloudstatus-cache-v62";
+  var CACHE_MAX_AGE = CONFIG.cacheMaxAge || 15 * 60 * 1000;
+  var STALE_CACHE_MAX_AGE = CONFIG.staleCacheMaxAge || 24 * 60 * 60 * 1000;
+  var FETCH_TIMEOUT = CONFIG.fetchTimeout || 6500;
+  var READER_TIMEOUT = CONFIG.readerTimeout || 7500;
+  var FALLBACK_CONCURRENCY = CONFIG.fallbackConcurrency || 4;
+  var FOREGROUND_REFRESH_THRESHOLD = CONFIG.foregroundRefreshThreshold || 2 * 60 * 1000;
   var lastRefresh = 0;
   var refreshInFlight = false;
 
-  var STATUS_LABELS = CONFIG.events.statusLabels;
+  var STATUS_LABELS = {
+    investigating: "調查中",
+    identified: "已確認",
+    monitoring: "監控中",
+    resolved: "已解決",
+    postmortem: "事後分析",
+    maintenance: "維護",
+    scheduled: "已排程",
+    in_progress: "進行中",
+    completed: "已完成",
+    degraded: "效能下降",
+    outage: "服務中斷",
+    active: "啟用",
+    closed: "已關閉"
+  };
 
-  var NOISE = CONFIG.events.noisePatterns;
+  var NOISE = [
+    /^#+\s*/i, /^recent incidents?$/i, /^past incidents?$/i, /^incident history$/i,
+    /^view all$/i, /^view history$/i, /^subscribe$/i, /^rss(?: feed)?$/i, /^atom$/i,
+    /^webhook$/i, /^documentation$/i, /^privacy(?: policy)?$/i, /^terms/i,
+    /^powered by/i, /^contact us$/i, /^send feedback$/i,
+    /^get (?:email|text message|sms) notifications?/i,
+    /^receive (?:email|text message|sms) notifications?/i,
+    /^\[[^\]]*\]\([^)]+\)$/i,
+    /網址來源\s*:/i,
+    /url source\s*:/i
+  ];
 
   function $(q) { return document.querySelector(q); }
   function cleanText(v) { return String(v == null ? "" : v).replace(/\s+/g, " ").trim(); }
@@ -43,7 +82,12 @@
     return map[s] || null;
   }
 
-  var CLOSED_EVENT_STATUSES = CONFIG.events.closedStatuses;
+  var CLOSED_EVENT_STATUSES = {
+    resolved:true,
+    postmortem:true,
+    completed:true,
+    closed:true
+  };
 
   function isActiveEvent(event) {
     if (!event || !event.status) return false;
@@ -179,7 +223,7 @@
   function sortRecent(events) {
     return dedupe(events).sort(function(a,b){
       return timeValue(b.start || b.end) - timeValue(a.start || a.end);
-    }).slice(0,EVENT_MERGE_LIMIT);
+    }).slice(0,20);
   }
 
   async function fetchJson(url) {
@@ -936,7 +980,17 @@
     return sortRecent(out);
   }
 
-  var SOURCE_PRIORITY = CONFIG.sources.priority;
+  var SOURCE_PRIORITY = {
+    "official-api": 10,
+    "official-json": 20,
+    "official-rss": 30,
+    "official-history": 40,
+    "official-status": 50,
+    "official-announcement": 60,
+    "official-backup": 70,
+    "trusted-third-party": 80,
+    "other-backup": 90
+  };
 
   function sourcePriority(source) {
     if (source && typeof source.priority === "number") {
@@ -972,7 +1026,7 @@
 
     try{
       var result=await runSource(source,service);
-      var events=(result.events||[]).slice(0,EVENT_MERGE_LIMIT);
+      var events=(result.events||[]).slice(0,20);
       var health=result.health||null;
       var healthText=result.healthText||null;
 
@@ -1007,7 +1061,7 @@
       var source=sources[i];
 
       // 已取得完整官方資料時，不再啟動第三方來源。
-      if(isThirdPartySource(source) && health && events.length>=RECENT_EVENT_LIMIT && activeEventCount(events)>0) break;
+      if(isThirdPartySource(source) && health && events.length>=3 && activeEventCount(events)>0) break;
 
       try{
         var result=await runSource(source,service);
@@ -1023,7 +1077,7 @@
           if(labels.indexOf(source.label)<0) labels.push(source.label);
         }
 
-        if(events.length>=RECENT_EVENT_LIMIT && health && (health==="normal" || activeEventCount(events)>0)) break;
+        if(events.length>=3 && health && (health==="normal" || activeEventCount(events)>0)) break;
       }catch(e){
         failures.push(source.label+": "+String(e));
       }
@@ -1031,7 +1085,7 @@
 
     return {
       id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,
-      events:events.slice(0,EVENT_MERGE_LIMIT),health:health,healthText:healthText,
+      events:events.slice(0,20),health:health,healthText:healthText,
       sourceLabel:labels.length===1?labels[0]:(labels.length>1?"多來源":"官方頁"),
       fallback:!events.length&&!health,
       failures:failures
@@ -1183,27 +1237,27 @@
       ? (service.events||[]).filter(isActiveEvent)
       : [];
     var recentEvents=!service.loading
-      ? (service.events||[]).filter(function(e){return !isActiveEvent(e);}).slice(0,RECENT_EVENT_LIMIT)
+      ? (service.events||[]).filter(function(e){return !isActiveEvent(e);}).slice(0,3)
       : [];
 
     if (!service.loading && activeEvents.length) {
-      body += '<div class="section-label active-section-label">'+CONFIG.ui.labels.currentEvents+' '+activeEvents.length+' '+CONFIG.ui.labels.eventUnit+'</div>';
+      body += '<div class="section-label active-section-label">目前 '+activeEvents.length+' 個事件</div>';
       body += activeEvents.map(function(e){return renderEvent(e,service);}).join("");
     }
 
     if (!service.loading && recentEvents.length) {
-      body += '<div class="section-label">'+CONFIG.ui.labels.recentEvents+' '+recentEvents.length+' '+CONFIG.ui.labels.eventRecordUnit+'</div>';
+      body += '<div class="section-label">最近 '+recentEvents.length+' 筆事件</div>';
       body += recentEvents.map(function(e){return renderEvent(e,service);}).join("");
     } else if (!service.loading && !activeEvents.length && service.health && service.category==="crossborder") {
       body += '<div class="history-empty">狀態依 Cloudflare Radar 公開 BGP 資料判定</div>';
     } else if (!service.loading && !activeEvents.length && service.health) {
-      body += '<div class="history-empty">'+CONFIG.ui.labels.noRecentReliableEvents+'</div>';
+      body += '<div class="history-empty">近期沒有可顯示的可靠事件</div>';
     } else if (!service.loading && !activeEvents.length && service.category==="crossborder" && service.fallback) {
       body += '<a class="message link" href="'+escapeHtml(service.page)+'" target="_blank" rel="noopener">[Cloudflare Radar] 暫時無法取得可靠上游狀態，不推斷目前狀態 →</a>';
     } else if (!service.loading && !activeEvents.length && service.fallback) {
       body += '<a class="message link" href="'+escapeHtml(service.page)+'" target="_blank" rel="noopener">[官方狀態頁] 自動來源未取得可靠事件資料，查看官方即時狀態 →</a>';
     } else if (!service.loading && !activeEvents.length) {
-      body += '<div class="message">'+CONFIG.ui.labels.noReliableEvents+'</div>';
+      body += '<div class="message">目前沒有可顯示的可靠事件資料</div>';
     }
 
     return '<article class="service">'+
@@ -1245,7 +1299,7 @@
       return;
     }
 
-    var gap=CONFIG.layout.masonryGap;
+    var gap=CONFIG.masonryGap||14;
     grid.classList.add("masonry-active");
 
     cards.forEach(function(card){
@@ -1438,9 +1492,9 @@
     console.error(error);
     var updated = document.querySelector("#updated");
     var services = document.querySelector("#services");
-    if (updated) updated.textContent = CONFIG.ui.labels.moduleLoadFailed;
+    if (updated) updated.textContent = "模組載入失敗";
     if (services) {
-      services.innerHTML = '<div class="empty">'+CONFIG.ui.labels.moduleLoadFailedMessage+'</div>';
+      services.innerHTML = '<div class="empty">服務模組載入失敗，請重新整理頁面。</div>';
     }
   });
 })();

@@ -13,9 +13,6 @@
   --red:#ff453a;
   --border:rgba(255,255,255,.075);
   --hairline:rgba(255,255,255,.045);
-  --shell-max-width:1180px;
-  --mobile-breakpoint:760px;
-  --masonry-gap:14px;
 }
 *{box-sizing:border-box}
 html{background:var(--bg);color-scheme:dark;-webkit-text-size-adjust:100%}
@@ -31,7 +28,7 @@ body{
 button,input{font:inherit}
 a{-webkit-tap-highlight-color:transparent}
 .shell{
-  width:min(var(--shell-max-width),calc(100% - clamp(20px,4vw,64px)));
+  width:min(1180px,calc(100% - clamp(20px,4vw,64px)));
   margin:0 auto;
   padding:max(15px,env(safe-area-inset-top)) 12px max(30px,env(safe-area-inset-bottom))
 }
