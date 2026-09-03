@@ -3,9 +3,7 @@
   "use strict";
 
   var version = "63.0.0";
-  var expectedServiceCount = 23;
-
-  var manifest = [
+var manifest = [
   "cloudflare",
   "aws",
   "azure",
@@ -91,15 +89,6 @@
       return (ai == null ? 999 : ai) - (bi == null ? 999 : bi);
     });
 
-    if (list.length !== expectedServiceCount) {
-      console.warn(
-        "CloudStatus service modules loaded:",
-        list.length,
-        "/",
-        expectedServiceCount
-      );
-    }
-
     return list;
   }
 
@@ -108,7 +97,10 @@
     registerParser: registerParser,
     list: list,
     parsers: parsers,
-    manifest: manifest.slice()
+    manifest: manifest.slice(),
+    get count() {
+      return list.length;
+    }
   };
 
   window.CloudStatusServiceParsers = parsers;

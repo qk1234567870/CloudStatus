@@ -3,11 +3,10 @@
 
   function startApp() {
   var CONFIG = Object.freeze({
-    version: "63.0.0",
-    expectedServiceCount: 23,
+    version: "64.0.0",
 
     refreshInterval: 5 * 60 * 1000,
-    cacheKey: "cloudstatus-cache-v63",
+    cacheKey: "cloudstatus-cache-v64",
     cacheMaxAge: 15 * 60 * 1000,
     staleCacheMaxAge: 24 * 60 * 60 * 1000,
     foregroundRefreshThreshold: 2 * 60 * 1000,
@@ -16,7 +15,7 @@
     readerTimeout: 7500,
     fallbackConcurrency: 4,
 
-    desktopMasonryMinWidth: 480,
+    desktopMasonryMinWidth: 760,
     desktopMaxWidth: 1180,
     masonryGap: 14
     });
@@ -1216,7 +1215,13 @@
       '</a>';
   }
 
-  function renderService(service) {
+  // 唯一通用服務卡片模板。
+  // 所有服務只提供資料；UI 一律經由此模板產生。
+  function renderServiceCards(services) {
+    return (services || []).map(renderCardTemplate).join("");
+  }
+
+  function renderCardTemplate(service) {
     var body="";
 
     if (service.loading) {
