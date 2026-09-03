@@ -8,7 +8,7 @@
   var state = { services: [], filter: "all", search: "", activeOnly: false };
 
   var REFRESH_INTERVAL = CONFIG.refreshInterval || 5 * 60 * 1000;
-  var CACHE_KEY = CONFIG.cacheKey || "cloudstatus-cache-v69";
+  var CACHE_KEY = CONFIG.cacheKey || "cloudstatus-cache-v70";
   var CACHE_MAX_AGE = CONFIG.cacheMaxAge || 15 * 60 * 1000;
   var STALE_CACHE_MAX_AGE = CONFIG.staleCacheMaxAge || 24 * 60 * 60 * 1000;
   var FETCH_TIMEOUT = CONFIG.fetchTimeout || 6500;
@@ -1269,11 +1269,14 @@
     // 容器 < 600px：單欄；>= 600px：雙欄 Masonry。
     var availableWidth=grid.clientWidth || window.innerWidth;
     var isPortrait=window.innerHeight>window.innerWidth;
-    var masonryMinWidth=isPortrait
-      ? (CONFIG.portraitMasonryMinWidth || 760)
-      : (CONFIG.landscapeMasonryMinWidth || 560);
 
-    if(availableWidth<masonryMinWidth || !cards.length){
+    // Mobile/landscape uses normal CSS Grid so cards stay in document flow.
+    // Masonry is reserved for large portrait/desktop layouts only.
+    var useMasonry=isPortrait
+      ? availableWidth >= (CONFIG.portraitMasonryMinWidth || 760)
+      : availableWidth >= (CONFIG.desktopMasonryMinWidth || 1180);
+
+    if(!useMasonry || !cards.length){
       grid.classList.remove("masonry-active");
       grid.style.height="";
       cards.forEach(function(card){

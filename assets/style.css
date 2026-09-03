@@ -1041,8 +1041,10 @@ button { font-size: 14px; }
 }
 
 /* =========================================================
-   v69 統一響應式版面
-   移除 v58–v68 疊加規則，避免旋轉後 CSS 互相覆蓋。
+   v70 響應式版面
+   手機直屏：單欄正常文流
+   手機橫屏：雙欄 CSS Grid 正常文流
+   桌面：雙欄 Masonry
    ========================================================= */
 
 html,body{
@@ -1075,135 +1077,122 @@ html,body{
 .filters::-webkit-scrollbar{display:none}
 .chip{flex:0 0 auto}
 
-.summary{
-  grid-template-columns:repeat(3,minmax(0,1fr));
-}
+.summary{grid-template-columns:repeat(3,minmax(0,1fr))}
 
-.service,
-.service-head,
-.service-name,
-.source-badge,
-.service-desc,
-.service-desc-second-row,
-.event-title,
-.event-time{
+.service,.service-head,.service-name,.source-badge,
+.service-desc,.service-desc-second-row,.event-title,.event-time{
   min-width:0;
 }
 
 .service{
+  width:100%;
   max-width:100%;
+  box-sizing:border-box;
   overflow:hidden;
 }
 
-.service-name{overflow-wrap:anywhere}
-.source-badge{white-space:nowrap}
+.service-head{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  grid-template-areas:
+    "name source"
+    "subtitle subtitle";
+  column-gap:12px;
+  align-items:start;
+}
 
-.service-desc-second-row{
-  display:block;
-  flex:0 0 100%;
+.service-name{
+  grid-area:name;
+  overflow-wrap:anywhere;
+}
+
+.source-badge{
+  grid-area:source;
+  white-space:nowrap;
+  max-width:100%;
+}
+
+.service-desc{
+  grid-area:subtitle;
   width:100%;
   max-width:100%;
-  order:99;
-  margin-top:4px;
   white-space:normal;
   overflow-wrap:anywhere;
 }
 
-/* 預設：單欄正常文流，頁面高度自然延伸，可完整上下捲動 */
-#services{
+.service-desc-second-row{
+  display:block;
+  width:100%;
+  max-width:100%;
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+
+/* 預設直屏 / 窄畫面：單欄，所有卡片保留在正常文流 */
+#services,
+#services.masonry-active{
   display:grid;
   grid-template-columns:minmax(0,1fr);
   position:static;
   width:100%;
-  height:auto;
+  height:auto !important;
   gap:14px;
 }
 
-#services > .service{
-  position:static;
-  left:auto;
-  top:auto;
-  width:100%;
-  max-width:100%;
-  box-sizing:border-box;
-}
-
-/* JS 確認可容納雙欄後才啟用 Masonry */
-#services.masonry-active{
-  display:block;
-  position:relative;
-  width:100%;
-  gap:0;
-}
-
+#services > .service,
 #services.masonry-active > .service{
-  position:absolute;
-  width:calc((100% - 14px)/2);
-  max-width:calc((100% - 14px)/2);
-  min-width:0;
-  box-sizing:border-box;
+  position:static;
+  left:auto !important;
+  top:auto !important;
+  width:100% !important;
+  max-width:100% !important;
 }
 
-/* 手機/窄直屏 */
+/* 橫屏：直接雙欄 Grid，不使用 absolute/Masonry */
+@media (orientation:landscape) and (min-width:560px){
+  #services,
+  #services.masonry-active{
+    display:grid !important;
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    align-items:start;
+    position:static !important;
+    width:100%;
+    height:auto !important;
+    gap:14px;
+  }
+
+  #services > .service,
+  #services.masonry-active > .service{
+    position:static !important;
+    left:auto !important;
+    top:auto !important;
+    width:100% !important;
+    max-width:100% !important;
+    min-width:0 !important;
+  }
+}
+
+/* 真正桌面寬度：JS 啟用雙欄 Masonry */
+@media (min-width:1180px){
+  #services.masonry-active{
+    display:block !important;
+    position:relative !important;
+    width:100%;
+  }
+
+  #services.masonry-active > .service{
+    position:absolute !important;
+    width:calc((100% - 14px)/2) !important;
+    max-width:calc((100% - 14px)/2) !important;
+  }
+}
+
+/* 窄直屏 */
 @media (orientation:portrait) and (max-width:759px){
   .shell{
     width:100%;
     max-width:100%;
     padding-left:clamp(10px,3vw,18px);
     padding-right:clamp(10px,3vw,18px);
-  }
-
-  #services,
-  #services.masonry-active{
-    display:grid;
-    grid-template-columns:minmax(0,1fr);
-    position:static;
-    width:100%;
-    height:auto !important;
-    gap:14px;
-  }
-
-  #services > .service,
-  #services.masonry-active > .service{
-    position:static;
-    left:auto !important;
-    top:auto !important;
-    width:100% !important;
-    max-width:100% !important;
-  }
-}
-
-/* 橫屏 >=560px：雙欄。JS 負責高度與階梯位置 */
-@media (orientation:landscape) and (min-width:560px){
-  #services.masonry-active{
-    display:block;
-    position:relative;
-  }
-
-  #services.masonry-active > .service{
-    position:absolute;
-    width:calc((100% - 14px)/2) !important;
-    max-width:calc((100% - 14px)/2) !important;
-  }
-}
-
-/* 極窄橫屏仍單欄 */
-@media (orientation:landscape) and (max-width:559px){
-  #services,
-  #services.masonry-active{
-    display:grid;
-    grid-template-columns:minmax(0,1fr);
-    position:static;
-    height:auto !important;
-    gap:14px;
-  }
-
-  #services > .service,
-  #services.masonry-active > .service{
-    position:static;
-    left:auto !important;
-    top:auto !important;
-    width:100% !important;
-    max-width:100% !important;
   }
 }
