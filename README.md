@@ -68,6 +68,6 @@
 
 CloudStatus 不判斷裝置類型。版面只根據 `#services` 的實際可用寬度：
 
-- 小於 760px：單欄
-- 760px 以上：雙欄 Masonry
+- 小於 600px：單欄
+- 600px 以上：雙欄 Masonry
 - 最大內容寬度：1180px
