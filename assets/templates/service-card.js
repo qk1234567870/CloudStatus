@@ -1,114 +1,108 @@
-/* CloudStatus template: service card */
+/* CloudStatus Service Card Template */
 (function () {
   "use strict";
 
   window.CloudStatusTemplates = window.CloudStatusTemplates || {};
 
-  function healthBlock(service, view) {
+  function renderCountLabel(text, count, active) {
+    return '<div class="section-head '+(active?'active':'')+'">'+
+      '<span class="section-label">'+text+'</span>'+
+      '<span class="section-count">'+count+'</span>'+
+    '</div>';
+  }
+
+  window.CloudStatusTemplates.serviceCard = function (service, ctx) {
+    var esc = ctx.escapeHtml;
+    var eventItem = window.CloudStatusTemplates.eventItem;
+    var activeEvents = !service.loading
+      ? (service.events || []).filter(ctx.isActiveEvent)
+      : [];
+    var recentEvents = !service.loading
+      ? (service.events || []).filter(function (event) {
+          return !ctx.isActiveEvent(event);
+        }).slice(0,3)
+      : [];
+
+    var body = "";
+
     if (service.loading) {
-      return '<div class="card-loading">載入中…</div>';
+      body += '<div class="message">載入中…</div>';
     }
 
-    if (service.health==="normal") {
-      return ''+
-        '<div class="health-row">'+
-          '<span class="health-badge good"><span class="health-icon">✓</span>'+
-            (service.category==="crossborder"?'上游正常':'正常')+
-          '</span>'+
-          (service.healthText?'<span class="health-text">'+view.escapeHtml(service.healthText)+'</span>':'')+
-        '</div>';
+    if (!service.loading && service.health === "normal") {
+      var normalLabel = service.category === "crossborder" ? "上游正常" : "正常";
+      body += '<div class="health-row good">'+
+        '<span class="health-badge"><span class="health-icon">✓</span>'+esc(normalLabel)+'</span>'+
+        (service.healthText ? '<span class="health-text">'+esc(service.healthText)+'</span>' : '')+
+      '</div>';
+    } else if (!service.loading && service.health === "incident") {
+      var incidentLabel = service.category === "crossborder" ? "上游異常" : "異常";
+      body += '<div class="health-row warn">'+
+        '<span class="health-badge"><span class="health-icon">!</span>'+esc(incidentLabel)+'</span>'+
+        (service.healthText ? '<span class="health-text">'+esc(service.healthText)+'</span>' : '')+
+      '</div>';
     }
 
-    if (service.health==="incident") {
-      return ''+
-        '<div class="health-row">'+
-          '<span class="health-badge warn"><span class="health-icon">!</span>'+
-            (service.category==="crossborder"?'上游異常':'目前異常')+
-          '</span>'+
-          (service.healthText?'<span class="health-text">'+view.escapeHtml(service.healthText)+'</span>':'')+
-        '</div>';
+    if (!service.loading && activeEvents.length) {
+      body += renderCountLabel("目前事件", activeEvents.length, true);
+      body += '<div class="event-list active-events">'+
+        activeEvents.map(function (event) {
+          return eventItem(event, service, ctx);
+        }).join("")+
+      '</div>';
     }
 
-    return '';
-  }
-
-  function section(title, events, service, view, type) {
-    if (!events.length) return "";
-    return ''+
-      '<section class="card-section '+type+'-section">'+
-        '<div class="section-head">'+
-          '<strong>'+view.escapeHtml(title)+'</strong>'+
-          '<span class="section-count">'+events.length+'</span>'+
-        '</div>'+
-        '<div class="event-list">'+
-          events.map(function (event) {
-            return window.CloudStatusTemplates.eventItem(event,service,view);
-          }).join("")+
-        '</div>'+
-      '</section>';
-  }
-
-  function emptyBlock(service, activeEvents, recentEvents, view) {
-    if (service.loading || activeEvents.length || recentEvents.length) return "";
-
-    if (service.category==="crossborder" && service.health) {
-      return '<div class="card-empty">狀態依 Cloudflare Radar 公開 BGP 資料判定</div>';
+    if (!service.loading && recentEvents.length) {
+      body += renderCountLabel("最近 "+recentEvents.length+" 筆事件", recentEvents.length, false);
+      body += '<div class="event-list recent-events">'+
+        recentEvents.map(function (event) {
+          return eventItem(event, service, ctx);
+        }).join("")+
+      '</div>';
+    } else if (!service.loading && !activeEvents.length && service.health && service.category === "crossborder") {
+      body += '<div class="history-empty">狀態依 Cloudflare Radar 公開 BGP 資料判定</div>';
+    } else if (!service.loading && !activeEvents.length && service.health) {
+      body += '<div class="history-empty">近期沒有可顯示的可靠事件</div>';
+    } else if (!service.loading && !activeEvents.length && service.category === "crossborder" && service.fallback) {
+      body += '<a class="message link" href="'+esc(service.page)+'" target="_blank" rel="noopener">[Cloudflare Radar] 暫時無法取得可靠上游狀態，不推斷目前狀態 →</a>';
+    } else if (!service.loading && !activeEvents.length && service.fallback) {
+      body += '<a class="message link" href="'+esc(service.page)+'" target="_blank" rel="noopener">[官方狀態頁] 自動來源未取得可靠事件資料，查看官方即時狀態 →</a>';
+    } else if (!service.loading && !activeEvents.length) {
+      body += '<div class="message">目前沒有可顯示的可靠事件資料</div>';
     }
 
-    if (service.health) {
-      return '<div class="card-empty">近期沒有可顯示的可靠事件</div>';
-    }
-
-    if (service.category==="crossborder" && service.fallback) {
-      return '<a class="card-fallback" href="'+view.escapeHtml(service.page)+
-        '" target="_blank" rel="noopener">Cloudflare Radar 暫時無法取得可靠上游狀態 →</a>';
-    }
-
-    if (service.fallback) {
-      return '<a class="card-fallback" href="'+view.escapeHtml(service.page)+
-        '" target="_blank" rel="noopener">自動來源未取得可靠事件資料，查看官方狀態頁 →</a>';
-    }
-
-    return '<div class="card-empty">目前沒有可顯示的可靠事件資料</div>';
-  }
-
-  window.CloudStatusTemplates.serviceCard = function (service, view) {
-    var esc=view.escapeHtml;
-    var activeEvents=(service.events||[]).filter(view.isActiveEvent);
-    var recentEvents=(service.events||[]).filter(function (event) {
-      return !view.isActiveEvent(event);
-    }).slice(0,3);
-
-    var subtitle="";
+    var subtitle = "";
     if (service.nameZh && service.desc) {
-      subtitle='('+esc(service.desc)+') '+esc(service.nameZh);
+      subtitle = '('+esc(service.desc)+') '+esc(service.nameZh);
     } else {
-      subtitle=esc(service.nameZh||service.desc||"");
+      subtitle = esc(service.nameZh || service.desc || "");
     }
 
-    var updated=view.formatCardTime(service.updatedAt);
+    var routeMeta = service.category === "crossborder" && service.carrierLabel
+      ? '<span class="route-meta">'+esc(service.carrierLabel)+(service.routeClassLabel?' · '+esc(service.routeClassLabel):'')+'</span>'
+      : '';
+
+    var updated = service.loading ? "" : ctx.formatReadTime(service.updatedAt || ctx.lastRefresh);
+    var source = esc(service.sourceLabel || "官方頁");
 
     return ''+
-      '<article class="service service-card" data-service-id="'+esc(service.id)+'">'+
-        '<header class="card-header">'+
-          '<div class="card-title-row">'+
-            '<a class="service-name" href="'+esc(service.page)+'" target="_blank" rel="noopener">'+
-              '<span class="service-diamond">◆</span>'+esc(service.name)+
-            '</a>'+
-            '<span class="source-badge">'+esc(service.sourceLabel||"")+'</span>'+
-          '</div>'+
-          (subtitle?'<div class="service-desc">'+subtitle+'</div>':'')+
+      '<article class="service service-card" data-service-id="'+esc(service.id || "")+'">'+
+        '<header class="service-head">'+
+          '<a class="service-name" href="'+esc(service.page)+'" target="_blank" rel="noopener">'+
+            '<span class="service-diamond">◆</span>'+
+            '<span>'+esc(service.name)+'</span>'+
+          '</a>'+
+          '<span class="source-badge">'+source+'</span>'+
+          '<span class="service-desc service-desc-second-row">'+subtitle+'</span>'+
+          routeMeta+
         '</header>'+
-        '<div class="card-content">'+
-          healthBlock(service,view)+
-          section('目前事件',activeEvents,service,view,'active')+
-          section('最近 '+recentEvents.length+' 筆事件',recentEvents,service,view,'recent')+
-          emptyBlock(service,activeEvents,recentEvents,view)+
-        '</div>'+
-        '<footer class="card-footer">'+
-          '<span>資料來源：'+esc(service.sourceLabel||"—")+'</span>'+
-          '<span>'+(updated?'更新時間：'+esc(updated):'')+'</span>'+
-        '</footer>'+
+        '<div class="events">'+body+'</div>'+
+        (!service.loading
+          ? '<footer class="card-footer">'+
+              '<span>資料來源：'+source+'</span>'+
+              (updated?'<span>更新時間：'+esc(updated)+'</span>':'')+
+            '</footer>'
+          : '')+
       '</article>';
   };
 })();
