@@ -1,178 +1,1495 @@
 :root{
-  --bg:#0d1117;
-  --panel:#111821;
-  --panel-soft:#0f151d;
-  --text:#e5e7eb;
-  --muted:#8b95a5;
-  --muted-2:#667085;
-  --blue:#1687ff;
-  --green:#46d369;
-  --orange:#f5a623;
-  --red:#ff5c57;
-  --yellow:#e9c84a;
-  --border:rgba(148,163,184,.20);
-  --hairline:rgba(148,163,184,.13);
-  --badge:#1f4c8e;
+  --bg:#111214;
+  --card:#1b1c1f;
+  --card-2:#17181b;
+  --text:#d8d8dc;
+  --muted:#8f9098;
+  --time:#686a73;
+  --white:#fff;
+  --blue:#0a84ff;
+  --green:#30d158;
+  --yellow:#ffd60a;
+  --orange:#ff9f0a;
+  --red:#ff453a;
+  --border:rgba(255,255,255,.075);
+  --hairline:rgba(255,255,255,.045);
 }
 *{box-sizing:border-box}
 html{background:var(--bg);color-scheme:dark;-webkit-text-size-adjust:100%}
 body{
-  margin:0;min-height:100vh;color:var(--text);
+  margin:0;
+  min-height:100vh;
   background:
-    radial-gradient(circle at 15% -10%,rgba(22,135,255,.11),transparent 30rem),
-    linear-gradient(180deg,#0d1117 0%,#0c1118 100%);
+    radial-gradient(circle at 14% -8%,rgba(10,132,255,.11),transparent 30rem),
+    var(--bg);
+  color:var(--text);
   font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang TC","Microsoft JhengHei",sans-serif
 }
 button,input{font:inherit}
 a{-webkit-tap-highlight-color:transparent}
 .shell{
-  width:min(1180px,calc(100vw - 48px));
-  max-width:1180px;margin:0 auto;
-  padding:max(18px,env(safe-area-inset-top)) 0 max(32px,env(safe-area-inset-bottom))
+  width:min(1180px,calc(100% - clamp(20px,4vw,64px)));
+  margin:0 auto;
+  padding:max(15px,env(safe-area-inset-top)) 12px max(30px,env(safe-area-inset-bottom))
 }
-.topbar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:12px}
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:12px;margin-bottom:10px
+}
 .heading{min-width:0}
-h1{margin:0;color:#fff;font-size:clamp(23px,3.2vw,31px);line-height:1.15;letter-spacing:-.025em}
-#updated{margin:6px 0 0;color:var(--muted);font-size:12px}
-.icon-btn{
-  flex:0 0 auto;width:42px;height:42px;border:1px solid var(--border);border-radius:12px;
-  background:var(--panel);color:#fff;font-size:22px
+h1{
+  margin:0;color:var(--white);
+  font-size:clamp(21px,5vw,30px);
+  line-height:1.14;letter-spacing:-.025em
 }
-.icon-btn:disabled{opacity:.45}
+#updated{margin:5px 0 0;color:var(--muted);font-size:11.5px}
+.icon-btn{
+  flex:0 0 auto;width:42px;height:42px;
+  border:1px solid var(--border);border-radius:13px;
+  background:var(--card);color:var(--white);font-size:22px
+}
+.icon-btn:disabled{opacity:.5}
 .toolbar{
-  position:sticky;top:0;z-index:10;padding:9px 0 11px;
-  background:linear-gradient(to bottom,rgba(13,17,23,.97) 82%,rgba(13,17,23,0));
+  position:sticky;top:0;z-index:10;
+  padding:9px 0 10px;
+  background:linear-gradient(to bottom,rgba(17,18,20,.98) 82%,rgba(17,18,20,0));
   backdrop-filter:blur(14px)
 }
-.filters{display:flex;overflow-x:auto;gap:7px;padding-bottom:8px;scrollbar-width:none}
+.filters{
+  display:flex;overflow-x:auto;gap:7px;
+  padding-bottom:8px;scrollbar-width:none
+}
 .filters::-webkit-scrollbar{display:none}
 .chip{
-  flex:0 0 auto;border:1px solid var(--border);background:var(--panel);color:var(--muted);
+  flex:0 0 auto;border:1px solid var(--border);
+  background:var(--card);color:var(--muted);
   border-radius:999px;padding:7px 11px;font-size:12px
 }
-.chip.active{background:var(--blue);border-color:var(--blue);color:#fff}
+.chip.active{background:var(--blue);border-color:var(--blue);color:var(--white)}
 .tools{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}
 #search{
-  width:100%;min-width:0;border:1px solid var(--border);border-radius:10px;
-  background:var(--panel);color:#fff;padding:9px 11px;outline:none;font-size:16px
+  width:100%;min-width:0;border:1px solid var(--border);
+  border-radius:11px;background:var(--card);color:var(--white);
+  padding:9px 11px;outline:none
 }
-#search:focus{border-color:rgba(22,135,255,.72)}
-.toggle{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:12px;white-space:nowrap}
-.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:4px 0 14px}
+#search:focus{border-color:rgba(10,132,255,.7)}
+.toggle{
+  display:flex;align-items:center;gap:5px;
+  color:var(--muted);font-size:12px;white-space:nowrap
+}
+.summary{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:7px;margin:3px 0 12px
+}
 .metric{
-  padding:11px;border:1px solid var(--border);background:var(--panel);
-  border-radius:12px;text-align:center
+  padding:10px;border:1px solid var(--border);
+  background:var(--card);border-radius:13px
 }
-.metric strong{display:block;color:#fff;font-size:19px;line-height:1.1}
+.metric strong{display:block;color:var(--white);font-size:18px;line-height:1.1}
 .metric span{display:block;margin-top:4px;color:var(--muted);font-size:10px}
-.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;width:100%}
-.service-card{
-  overflow:hidden;border:1px solid rgba(74,133,205,.48);
-  background:linear-gradient(180deg,rgba(17,24,33,.98),rgba(13,19,27,.98));
-  border-radius:10px;
-  box-shadow:0 8px 28px rgba(0,0,0,.16)
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.service{
+  overflow:hidden;border:1px solid var(--border);
+  background:var(--card);border-radius:14px
 }
-.card-header{padding:13px 14px 12px;border-bottom:1px solid var(--hairline)}
-.card-title-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px}
+.service-head{
+  display:flex;align-items:center;gap:7px;
+  min-height:45px;padding:9px 11px 8px;
+  border-bottom:1px solid var(--border)
+}
 .service-name{
-  min-width:0;color:var(--blue);font-size:18px;font-weight:750;text-decoration:none;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap
+  min-width:0;color:var(--blue);
+  font-size:13px;font-weight:700;text-decoration:none
 }
-.service-diamond{display:inline-block;margin-right:8px;color:var(--blue);font-size:.88em}
-.source-badge{justify-self:end;color:#a8b0bd;font-size:12px;white-space:nowrap}
 .service-desc{
-  margin-top:7px;color:#a6afbc;font-size:12.5px;line-height:1.45;
-  overflow-wrap:anywhere
+  min-width:0;overflow:hidden;color:var(--muted);
+  font-size:10px;white-space:nowrap;text-overflow:ellipsis
 }
-.card-content{min-width:0}
-.health-row{
-  display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:11px 14px;
-  border-bottom:1px solid var(--hairline)
+.source-badge{
+  margin-left:auto;flex:0 0 auto;
+  color:var(--muted);font-size:9px;
+  max-width:38%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap
 }
-.health-badge{
-  display:inline-flex;align-items:center;gap:5px;border-radius:6px;padding:4px 8px;
-  font-size:11px;font-weight:700;white-space:nowrap
+.current-state{
+  padding:9px 11px;
+  border-bottom:1px solid var(--hairline);
+  font-size:11px
 }
-.health-badge.good{background:rgba(49,168,79,.28);color:#79e08c}
-.health-badge.warn{background:rgba(245,166,35,.16);color:#ffc15a}
-.health-icon{
-  display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;
-  border:1px solid currentColor;border-radius:50%;font-size:9px;line-height:1
+.current-state.good{color:var(--green)}
+.current-state.warn{color:var(--orange)}
+.section-label{
+  padding:7px 11px 3px;
+  color:var(--time);font-size:9px;
+  letter-spacing:.02em
 }
-.health-text{color:var(--muted);font-size:11px}
-.card-loading,.card-empty,.card-fallback{
-  display:block;padding:13px 14px;color:var(--muted);font-size:12px;text-decoration:none
+.event{
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr) auto;
+  align-items:center;gap:6px;
+  min-height:36px;padding:7px 11px;
+  color:inherit;text-decoration:none
 }
-.card-fallback{color:#65aefc}
-.card-section+.card-section{border-top:1px solid var(--hairline)}
-.section-head{
-  display:flex;align-items:center;justify-content:space-between;gap:12px;
-  min-height:38px;padding:9px 14px;border-bottom:1px solid var(--hairline)
+.event+.event{border-top:1px solid var(--hairline)}
+.tag{
+  font-size:10px;font-weight:700;white-space:nowrap
 }
-.section-head strong{color:#f2f4f7;font-size:13px}
-.section-count{
-  display:inline-flex;align-items:center;justify-content:center;min-width:23px;height:22px;
-  padding:0 7px;border-radius:6px;background:var(--badge);color:#dbeafe;
-  font-size:11px;font-weight:700
-}
-.event-list{min-width:0}
-.event-item{
-  display:block;padding:10px 14px;color:inherit;text-decoration:none;min-width:0
-}
-.event-item+.event-item{border-top:1px solid var(--hairline)}
-.event-main{
-  display:flex;align-items:flex-start;gap:7px;min-width:0;line-height:1.35
-}
-.event-status{flex:0 0 auto;font-size:11.5px;font-weight:750;white-space:nowrap}
-.event-status.resolved,.event-status.postmortem,.event-status.completed,.event-status.closed{color:var(--green)}
-.event-status.maintenance,.event-status.scheduled{color:var(--yellow)}
-.event-status.monitoring,.event-status.identified,.event-status.degraded,.event-status.in_progress,.event-status.active{color:var(--orange)}
-.event-status.investigating,.event-status.outage{color:var(--red)}
+.tag.resolved,.tag.postmortem,.tag.completed,.tag.closed{color:var(--green)}
+.tag.maintenance,.tag.scheduled{color:var(--yellow)}
+.tag.monitoring,.tag.identified,.tag.degraded,.tag.in_progress,.tag.active{color:var(--orange)}
+.tag.investigating,.tag.outage{color:var(--red)}
 .event-title{
-  min-width:0;color:#e7eaf0;font-size:13px;overflow-wrap:anywhere
+  min-width:0;overflow:hidden;color:var(--text);
+  font-size:11px;white-space:nowrap;text-overflow:ellipsis
 }
 .event-time{
-  margin-top:4px;color:#7f8998;font-size:11px;text-align:right;
+  color:var(--time);font-size:9.5px;
   white-space:nowrap;font-variant-numeric:tabular-nums
 }
-.card-footer{
-  display:flex;align-items:center;justify-content:space-between;gap:12px;
-  padding:10px 14px;border-top:1px solid var(--hairline);
-  color:#737e8d;font-size:10.5px
+.message{
+  display:block;padding:11px;
+  color:var(--muted);font-size:11px;text-decoration:none
 }
-.card-footer span:last-child{text-align:right}
-.empty{grid-column:1/-1;padding:48px 16px;color:var(--muted);text-align:center}
-footer:not(.card-footer){margin-top:18px;color:#596474;font-size:10px;text-align:center}
-
-/* Masonry desktop */
-@media(min-width:760px){
-  #services.masonry-active{display:block;position:relative;width:100%}
-  #services.masonry-active>.service{position:absolute;box-sizing:border-box;min-width:0}
+.message.good{color:var(--green)}
+.message.warn{color:var(--orange)}
+.message.bad{color:var(--red)}
+.message.link{color:var(--blue)}
+.empty{
+  grid-column:1/-1;padding:48px 16px;
+  color:var(--muted);text-align:center
 }
-
-/* Mobile */
-@media(max-width:759px){
-  .shell{
-    width:100%;max-width:100%;
-    padding-left:clamp(10px,3vw,18px);padding-right:clamp(10px,3vw,18px)
-  }
-  #services,#services.masonry-active{
-    display:grid;grid-template-columns:minmax(0,1fr);position:static;height:auto;width:100%
-  }
-  #services>.service,#services.masonry-active>.service{
-    position:static;left:auto;top:auto;width:100%;max-width:100%
-  }
+footer{
+  margin-top:18px;color:var(--time);
+  font-size:10px;text-align:center
 }
+@media(max-width:760px){.grid{grid-template-columns:1fr}}
 @media(max-width:430px){
+  .shell{padding-left:10px;padding-right:10px}
   h1{font-size:24px}
   .toggle span{display:none}
-  .card-header{padding:12px}
-  .service-name{font-size:16px}
-  .source-badge{font-size:11px}
-  .service-desc{font-size:11.5px}
-  .section-head,.event-item,.health-row,.card-footer{padding-left:12px;padding-right:12px}
-  .card-footer{font-size:10px}
+  .service-desc{font-size:9.5px}
+  .source-badge{max-width:34%}
+  .event{grid-template-columns:auto minmax(0,1fr) auto}
+  .event-title{font-size:10.8px}
 }
-@media(orientation:landscape) and (max-height:600px){
-  .shell{width:min(1180px,calc(100% - 28px))}
+
+/* v12 — current state and incident history are intentionally independent */
+.current-state{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  background:rgba(255,255,255,.018);
+}
+.current-state .state-dot{
+  width:7px;height:7px;border-radius:50%;flex:0 0 auto;background:currentColor
+}
+.current-state strong{font-weight:700}
+.section-label{
+  border-bottom:1px solid var(--hairline);
+  padding-top:8px;
+  padding-bottom:6px;
+}
+.history-empty{
+  padding:9px 11px 11px;
+  color:var(--time);
+  font-size:10px;
+}
+
+
+/* v13 — 網頁端字體精修：提高可讀性，保留手機單行事件布局 */
+html { font-size: 17px; }
+
+.service-name { font-size: 16px; }
+.service-desc { font-size: 12px; }
+.source-badge { font-size: 12px; }
+
+.event,
+.current-state,
+.message,
+.history-empty { font-size: 14px; }
+
+.event .status,
+.event-status { font-size: 14px; }
+
+.event .title,
+.event-title { font-size: 14px; }
+
+.event .time,
+.event-time { font-size: 12px; }
+
+.section-label { font-size: 12px; }
+
+.search input,
+.search-input,
+input[type="search"] { font-size: 16px; }
+
+.filter,
+.filter-btn,
+button { font-size: 14px; }
+
+@media (max-width: 600px) {
+  html { font-size: 16px; }
+  .service-name { font-size: 15px; }
+  .service-desc, .source-badge { font-size: 11px; }
+  .event, .current-state, .message, .history-empty { font-size: 13.5px; }
+  .event .status, .event-status, .event .title, .event-title { font-size: 13.5px; }
+  .event .time, .event-time, .section-label { font-size: 11px; }
+}
+
+
+/* v16 — 時間欄防溢出：桌面與手機共用 */
+.event{
+  grid-template-columns:auto minmax(0,1fr) minmax(0,max-content);
+  width:100%;
+  min-width:0;
+}
+
+.event-title{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.event-time{
+  min-width:0;
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  justify-self:end;
+  text-align:right;
+}
+
+/* 桌面：給時間欄一個合理上限，避免長時間區間把卡片撐爆 */
+@media (min-width: 761px){
+  .event-time{
+    max-width:220px;
+  }
+}
+
+/* 手機：縮短時間欄並允許標題優先吃剩餘空間 */
+@media (max-width:760px){
+  .event{
+    grid-template-columns:auto minmax(0,1fr) minmax(82px,36%);
+    gap:6px;
+  }
+
+  .event-time{
+    width:100%;
+    max-width:100%;
+    font-size:11px;
+  }
+
+  .event-title{
+    font-size:13.5px;
+  }
+}
+
+/* 更窄手機：時間欄再壓縮，避免左右越界 */
+@media (max-width:430px){
+  .event{
+    grid-template-columns:auto minmax(0,1fr) minmax(74px,34%);
+    gap:5px;
+  }
+
+  .event-time{
+    font-size:10.5px;
+  }
+}
+
+
+/* v18 — event time boundary hardening */
+.event,
+.event-row,
+.incident,
+.incident-row {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.event > *,
+.event-row > *,
+.incident > *,
+.incident-row > * {
+  min-width: 0;
+}
+
+.event-time,
+.event .time,
+.event-row .time,
+.incident-time,
+.incident .time,
+.incident-row .time {
+  min-width: 0 !important;
+  max-width: min(42vw, 240px) !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  box-sizing: border-box !important;
+  justify-self: end !important;
+  text-align: right !important;
+}
+
+.service-card,
+.card,
+.events,
+.event-list {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+@media (max-width: 720px) {
+  .event-time,
+  .event .time,
+  .event-row .time,
+  .incident-time,
+  .incident .time,
+  .incident-row .time {
+    max-width: 34vw !important;
+  }
+}
+
+
+/* =========================================================
+   v20 — 自適應卡片系統
+   桌面：雙欄卡片
+   平板：單/雙欄自動
+   手機：單欄，事件資訊重新排版，不再硬擠三欄
+   ========================================================= */
+
+:root{
+  --card-min: 360px;
+}
+
+/* 卡片容器：自動決定列數，不再寫死桌面/手機兩套 */
+.grid{
+  display:grid !important;
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,var(--card-min)),1fr)) !important;
+  gap:12px !important;
+  align-items:start !important;
+}
+
+/* 卡片本身永遠不能撐破容器 */
+.service{
+  min-width:0 !important;
+  width:100% !important;
+  max-width:100% !important;
+  overflow:hidden !important;
+}
+
+/* Header 自適應 */
+.service-head{
+  display:grid !important;
+  grid-template-columns:auto minmax(0,1fr) auto !important;
+  align-items:center !important;
+  gap:8px !important;
+}
+
+.service-name{
+  white-space:nowrap !important;
+}
+
+.service-desc{
+  min-width:0 !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+  white-space:nowrap !important;
+}
+
+.source-badge{
+  min-width:0 !important;
+  max-width:160px !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+  white-space:nowrap !important;
+}
+
+/* 事件列：桌面保留狀態 / 標題 / 時間三欄 */
+.event{
+  display:grid !important;
+  grid-template-columns:auto minmax(0,1fr) auto !important;
+  align-items:center !important;
+  gap:8px !important;
+  width:100% !important;
+  min-width:0 !important;
+}
+
+.event-title{
+  min-width:0 !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+  white-space:nowrap !important;
+}
+
+.event-time{
+  justify-self:end !important;
+  text-align:right !important;
+  white-space:nowrap !important;
+  max-width:190px !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+}
+
+/* 平板：仍可雙欄，但卡片窄時自動壓縮 */
+@media (max-width:980px){
+  :root{ --card-min: 330px; }
+
+  .source-badge{
+    max-width:120px !important;
+  }
+
+  .event-time{
+    max-width:150px !important;
+  }
+}
+
+/* 手機：卡片切成真正的 mobile layout */
+@media (max-width:640px){
+  :root{ --card-min: 100%; }
+
+  .shell{
+    padding-left:10px !important;
+    padding-right:10px !important;
+  }
+
+  .grid{
+    grid-template-columns:1fr !important;
+    gap:10px !important;
+  }
+
+  .service{
+    border-radius:13px !important;
+  }
+
+  /* Header: 第一行服務名稱 + 來源，第二行描述 */
+  .service-head{
+    grid-template-columns:minmax(0,1fr) auto !important;
+    grid-template-areas:
+      "name source"
+      "desc desc" !important;
+    row-gap:3px !important;
+    padding:10px 12px !important;
+  }
+
+  .service-name{
+    grid-area:name !important;
+    min-width:0 !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+    white-space:nowrap !important;
+  }
+
+  .service-desc{
+    grid-area:desc !important;
+    font-size:11px !important;
+    white-space:normal !important;
+    line-height:1.35 !important;
+    overflow:visible !important;
+  }
+
+  .source-badge{
+    grid-area:source !important;
+    max-width:125px !important;
+    text-align:right !important;
+    font-size:10.5px !important;
+  }
+
+  /* 手機事件列：狀態 + 標題同一行，時間獨立第二行 */
+  .event{
+    grid-template-columns:auto minmax(0,1fr) !important;
+    grid-template-areas:
+      "tag title"
+      ". time" !important;
+    column-gap:7px !important;
+    row-gap:3px !important;
+    padding:9px 12px !important;
+    align-items:center !important;
+  }
+
+  .tag{
+    grid-area:tag !important;
+  }
+
+  .event-title{
+    grid-area:title !important;
+    font-size:13.5px !important;
+  }
+
+  .event-time{
+    grid-area:time !important;
+    justify-self:start !important;
+    text-align:left !important;
+    max-width:100% !important;
+    width:auto !important;
+    font-size:11px !important;
+    color:var(--time) !important;
+  }
+
+  /* 沒有狀態標籤的事件，標題與時間都佔滿整行 */
+  .event.no-status{
+    grid-template-columns:minmax(0,1fr) !important;
+    grid-template-areas:
+      "title"
+      "time" !important;
+  }
+
+  .current-state,
+  .message,
+  .history-empty{
+    padding-left:12px !important;
+    padding-right:12px !important;
+  }
+
+  .section-label{
+    padding-left:12px !important;
+    padding-right:12px !important;
+  }
+}
+
+/* 超窄手機 */
+@media (max-width:390px){
+  .service-head{
+    grid-template-columns:minmax(0,1fr) !important;
+    grid-template-areas:
+      "name"
+      "desc"
+      "source" !important;
+  }
+
+  .source-badge{
+    text-align:left !important;
+    max-width:100% !important;
+  }
+
+  .event-title{
+    white-space:normal !important;
+    display:-webkit-box !important;
+    -webkit-line-clamp:2 !important;
+    -webkit-box-orient:vertical !important;
+  }
+}
+
+
+/* =========================================================
+   v22 — 桌面端固定雙欄
+   >= 981px：固定 2 欄
+   641–980px：自動 1～2 欄
+   <= 640px：手機單欄
+   ========================================================= */
+
+@media (min-width:981px){
+  .grid{
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:14px !important;
+  }
+
+  .service{
+    min-width:0 !important;
+    width:100% !important;
+    max-width:none !important;
+  }
+
+  .service-head{
+    grid-template-columns:auto minmax(0,1fr) auto !important;
+  }
+
+  .event{
+    grid-template-columns:auto minmax(0,1fr) auto !important;
+  }
+
+  .event-title{
+    min-width:0 !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+    white-space:nowrap !important;
+  }
+
+  .event-time{
+    max-width:180px !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+    white-space:nowrap !important;
+  }
+}
+
+
+
+
+/* =========================================================
+   v24 — 所有裝置統一事件排版
+   第一行：狀態 + 事件標題
+   第二行：時間靠右
+   桌面雙欄與手機單欄完全一致
+   ========================================================= */
+.event{
+  grid-template-columns:auto minmax(0,1fr) !important;
+  grid-template-areas:
+    "tag title"
+    ". time" !important;
+  column-gap:7px !important;
+  row-gap:4px !important;
+  align-items:center !important;
+}
+
+.event .tag{
+  grid-area:tag !important;
+}
+
+.event-title{
+  grid-area:title !important;
+  min-width:0 !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+  white-space:nowrap !important;
+}
+
+.event-time{
+  grid-area:time !important;
+  justify-self:end !important;
+  text-align:right !important;
+  min-width:0 !important;
+  max-width:100% !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+  white-space:nowrap !important;
+}
+
+.event.no-status{
+  grid-template-columns:minmax(0,1fr) !important;
+  grid-template-areas:
+    "title"
+    "time" !important;
+}
+
+
+/* =========================================================
+   v28 — 桌面端卡片自動補位 / Masonry
+   >= 981px：維持固定雙欄，但短卡片下方不再留下大空白
+   ========================================================= */
+@media (min-width:981px){
+  .grid{
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    grid-auto-rows:8px !important;
+    grid-auto-flow:dense !important;
+    align-items:start !important;
+  }
+
+  .service{
+    align-self:start !important;
+  }
+}
+
+@media (max-width:980px){
+  .grid{
+    grid-auto-rows:auto !important;
+    grid-auto-flow:row !important;
+  }
+
+  .service{
+    grid-row:auto !important;
+  }
+}
+
+
+/* =========================================================
+   v29 — 真正桌面雙欄自動補位
+   JS 直接把下一張卡片放到目前較短的一欄。
+   不再依賴 CSS Grid dense/span 的近似計算。
+   ========================================================= */
+@media (min-width:981px){
+  .grid.masonry-active{
+    display:block !important;
+    position:relative !important;
+  }
+
+  .grid.masonry-active > .service{
+    position:absolute !important;
+    margin:0 !important;
+    width:calc((100% - 14px) / 2) !important;
+    max-width:calc((100% - 14px) / 2) !important;
+    transition:none !important;
+  }
+}
+
+@media (max-width:980px){
+  .grid.masonry-active{
+    display:grid !important;
+    position:static !important;
+    height:auto !important;
+  }
+
+  .grid.masonry-active > .service{
+    position:static !important;
+    width:100% !important;
+    max-width:100% !important;
+    transform:none !important;
+  }
+}
+
+
+/* =========================================================
+   v30 — 真正自適應
+   <= 720px：單欄
+   721–1100px：雙欄一般 Grid
+   > 1100px：雙欄 Masonry 自動補位
+   同時尊重觸控裝置，避免手機「桌面網站」誤套桌面 Masonry。
+   ========================================================= */
+@media (max-width:720px){
+  .grid,
+  .grid.masonry-active{
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    position:static !important;
+    height:auto !important;
+  }
+  .grid > .service,
+  .grid.masonry-active > .service{
+    position:static !important;
+    width:100% !important;
+    max-width:100% !important;
+    left:auto !important;
+    top:auto !important;
+  }
+}
+
+@media (min-width:721px) and (max-width:1100px){
+  .grid,
+  .grid.masonry-active{
+    display:grid !important;
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    position:static !important;
+    height:auto !important;
+  }
+  .grid > .service,
+  .grid.masonry-active > .service{
+    position:static !important;
+    width:100% !important;
+    max-width:100% !important;
+    left:auto !important;
+    top:auto !important;
+  }
+}
+
+/* 粗指標觸控裝置即使要求桌面網站，也不使用絕對定位 Masonry。 */
+@media (pointer:coarse) and (hover:none){
+  .grid.masonry-active{
+    display:grid !important;
+    position:static !important;
+    height:auto !important;
+  }
+  .grid.masonry-active > .service{
+    position:static !important;
+    width:100% !important;
+    max-width:100% !important;
+    left:auto !important;
+    top:auto !important;
+  }
+}
+
+
+/* =========================================================
+   v31 — 雙欄以上全部使用階梯式自動補位
+   <=720px：單欄正常流
+   >720px：雙欄 Masonry，下一張永遠補到目前較短的一欄
+   ========================================================= */
+@media (min-width:721px){
+  .grid.masonry-active{
+    display:block !important;
+    position:relative !important;
+    height:auto;
+  }
+
+  .grid.masonry-active > .service{
+    position:absolute !important;
+    margin:0 !important;
+    width:calc((100% - 14px) / 2) !important;
+    max-width:calc((100% - 14px) / 2) !important;
+    left:0;
+    top:0;
+  }
+}
+
+@media (max-width:720px){
+  .grid,
+  .grid.masonry-active{
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    position:static !important;
+    height:auto !important;
+  }
+
+  .grid > .service,
+  .grid.masonry-active > .service{
+    position:static !important;
+    width:100% !important;
+    max-width:100% !important;
+    left:auto !important;
+    top:auto !important;
+  }
+}
+
+
+/* =========================================================
+   v41 — 全端全設備真正自適應
+   手機單欄；可用寬度足夠時自動進入多欄 Masonry。
+   ========================================================= */
+.grid{
+  width:100% !important;
+  min-width:0 !important;
+}
+
+@media (max-width:720px){
+  .shell{
+    width:100% !important;
+    padding-left:clamp(10px,3vw,18px) !important;
+    padding-right:clamp(10px,3vw,18px) !important;
+  }
+
+  .grid,
+  .grid.masonry-active{
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) !important;
+    position:static !important;
+    height:auto !important;
+  }
+
+  .grid > .service,
+  .grid.masonry-active > .service{
+    position:static !important;
+    width:100% !important;
+    max-width:100% !important;
+    left:auto !important;
+    top:auto !important;
+    transform:none !important;
+  }
+}
+
+@media (min-width:721px){
+  .shell{
+    width:min(1180px,calc(100% - clamp(24px,4vw,72px))) !important;
+  }
+
+  .grid.masonry-active{
+    display:block !important;
+    position:relative !important;
+    height:auto;
+  }
+
+  .grid.masonry-active > .service{
+    position:absolute !important;
+    margin:0 !important;
+    min-width:0 !important;
+    max-width:none !important;
+    transition:none !important;
+  }
+}
+
+@media (max-width:430px){
+  .toolbar,
+  .actions,
+  .filters,
+  .service,
+  .event,
+  .event-title,
+  .event-time{
+    min-width:0 !important;
+    max-width:100% !important;
+  }
+}
+
+
+/* =========================================================
+   v43 — 1180px 穩定卡片布局
+   <=720px：單欄
+   >720px：固定雙欄 Masonry
+   不再在 1180px 容器內切成三欄。
+   ========================================================= */
+@media (min-width:721px){
+  .grid.masonry-active{
+    display:block !important;
+    position:relative !important;
+  }
+
+  .grid.masonry-active > .service{
+    position:absolute !important;
+    min-width:0 !important;
+    max-width:none !important;
+  }
+}
+
+@media (max-width:720px){
+  .grid,
+  .grid.masonry-active{
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) !important;
+    position:static !important;
+    height:auto !important;
+  }
+
+  .grid > .service,
+  .grid.masonry-active > .service{
+    position:static !important;
+    width:100% !important;
+    max-width:100% !important;
+    left:auto !important;
+    top:auto !important;
+  }
+}
+
+
+/* =========================================================
+   v44 — 1180px 上限 + 全顯示器自適應
+   寬螢幕只增加左右留白，不再增加卡片欄數。
+   ========================================================= */
+.shell{
+  width:min(1180px,calc(100% - clamp(20px,4vw,64px))) !important;
+  max-width:1180px !important;
+  margin-left:auto !important;
+  margin-right:auto !important;
+  box-sizing:border-box !important;
+}
+
+#services{
+  width:100% !important;
+  min-width:0 !important;
+  box-sizing:border-box !important;
+}
+
+.service{
+  min-width:0 !important;
+  box-sizing:border-box !important;
+}
+
+@media (max-width:720px){
+  .shell{
+    width:100% !important;
+    max-width:100% !important;
+    padding-left:clamp(10px,3vw,18px) !important;
+    padding-right:clamp(10px,3vw,18px) !important;
+  }
+
+  #services,
+  #services.masonry-active{
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) !important;
+    position:static !important;
+    height:auto !important;
+  }
+
+  #services > .service,
+  #services.masonry-active > .service{
+    position:static !important;
+    width:100% !important;
+    max-width:100% !important;
+    left:auto !important;
+    top:auto !important;
+  }
+}
+
+@media (min-width:721px){
+  #services.masonry-active{
+    display:block !important;
+    position:relative !important;
+  }
+
+  #services.masonry-active > .service{
+    position:absolute !important;
+    min-width:0 !important;
+    max-width:none !important;
+  }
+}
+
+
+
+.route-meta{
+  display:block;
+  width:100%;
+  margin-top:5px;
+  font-size:12px;
+  line-height:1.35;
+  color:var(--muted,#8d929b);
+  opacity:.82;
+}
+
+.service-name-zh{
+  display:block;
+  width:100%;
+  margin-top:4px;
+  font-size:13px;
+  line-height:1.35;
+  font-weight:500;
+  color:var(--muted,#8d929b);
+}
+
+.service-desc-line{
+  display:block;
+  width:100%;
+}
+
+/* v57: 灰色副標題強制佔據完整第二行，不與藍色標題或來源徽章同列 */
+.service-desc-second-row{
+  display:block !important;
+  flex:0 0 100% !important;
+  width:100% !important;
+  max-width:100% !important;
+  box-sizing:border-box !important;
+  order:99 !important;
+  margin-top:4px !important;
+  white-space:normal !important;
+}
+
+/* =========================================================
+   v58 全端自適配
+   手機直向：單欄
+   手機橫向 / 平板 / 桌面：依實際內容寬度自動切換，但最多雙欄
+   ========================================================= */
+
+html,body{
+  max-width:100%;
+  overflow-x:hidden;
+}
+.shell{
+  width:min(1180px,calc(100% - clamp(20px,4vw,64px))) !important;
+  max-width:1180px !important;
+  margin-inline:auto !important;
+  box-sizing:border-box !important;
+}
+.topbar,.filters,.search-row,.summary,#services{
+  min-width:0 !important;
+  max-width:100% !important;
+  box-sizing:border-box !important;
+}
+.filters{
+  display:flex !important;
+  flex-wrap:nowrap !important;
+  gap:8px !important;
+  overflow-x:auto !important;
+  overflow-y:hidden !important;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+}
+.filters::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto !important}
+
+.service{
+  min-width:0 !important;
+  max-width:100% !important;
+  overflow:hidden !important;
+}
+.service-head{
+  min-width:0 !important;
+}
+.service-name{
+  min-width:0 !important;
+  overflow-wrap:anywhere;
+}
+.source-badge{
+  flex:0 0 auto !important;
+  white-space:nowrap !important;
+}
+.service-desc-second-row{
+  display:block !important;
+  flex:0 0 100% !important;
+  width:100% !important;
+  max-width:100% !important;
+  order:99 !important;
+  margin-top:4px !important;
+  white-space:normal !important;
+  overflow-wrap:anywhere;
+}
+.event-title{
+  min-width:0 !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis;
+}
+.event-time{
+  max-width:100% !important;
+  overflow-wrap:anywhere;
+}
+
+/* 手機直向：完全單欄 */
+@media (max-width:720px) and (orientation:portrait){
+  .shell{
+    width:100% !important;
+    max-width:100% !important;
+    padding-left:clamp(10px,3vw,18px) !important;
+    padding-right:clamp(10px,3vw,18px) !important;
+  }
+  #services,#services.masonry-active{
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) !important;
+    gap:14px !important;
+    position:static !important;
+    height:auto !important;
+  }
+  #services > .service,#services.masonry-active > .service{
+    position:static !important;
+    width:100% !important;
+    max-width:100% !important;
+    left:auto !important;
+    top:auto !important;
+  }
+  .summary{
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+  }
+}
+
+/* 手機橫屏：空間不足仍單欄；足夠時自動雙欄 Masonry */
+@media (orientation:landscape) and (max-height:600px){
+  .shell{
+    width:min(1180px,calc(100% - 28px)) !important;
+  }
+  .topbar{
+    gap:12px !important;
+  }
+  .summary{
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+  }
+}
+
+/* 極窄螢幕 */
+@media (max-width:390px){
+  .shell{
+    padding-left:10px !important;
+    padding-right:10px !important;
+  }
+  .summary{
+    gap:8px !important;
+  }
+  .summary > *{
+    min-width:0 !important;
+  }
+}
+
+/* 桌面/大螢幕維持最大 1180px、最多雙欄 */
+@media (min-width:721px){
+  #services.masonry-active{
+    display:block !important;
+    position:relative !important;
+  }
+  #services.masonry-active > .service{
+    position:absolute !important;
+    min-width:0 !important;
+    max-width:none !important;
+  }
+}
+
+/* =========================================================
+   v59 桌面端寬度 / 卡片標題排版修正
+   ========================================================= */
+
+/* 主內容永遠真正置中並吃滿允許寬度 */
+.shell{
+  width:min(1180px,calc(100vw - 48px)) !important;
+  max-width:1180px !important;
+  margin-left:auto !important;
+  margin-right:auto !important;
+  padding-left:0 !important;
+  padding-right:0 !important;
+}
+
+#services{
+  width:100% !important;
+  max-width:100% !important;
+  margin:0 !important;
+}
+
+/* 第一行：藍色名稱在左、來源在右 */
+.service-head{
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) auto !important;
+  grid-template-areas:
+    "name source"
+    "subtitle subtitle" !important;
+  column-gap:12px !important;
+  row-gap:4px !important;
+  align-items:start !important;
+  width:100% !important;
+}
+
+.service-name{
+  grid-area:name !important;
+  min-width:0 !important;
+}
+
+.source-badge{
+  grid-area:source !important;
+  justify-self:end !important;
+  white-space:nowrap !important;
+}
+
+.service-desc,
+.service-desc-second-row{
+  grid-area:subtitle !important;
+  display:block !important;
+  width:100% !important;
+  max-width:100% !important;
+  margin:0 !important;
+  white-space:normal !important;
+  overflow-wrap:anywhere !important;
+}
+
+/* 清掉舊 flex/order 規則的影響 */
+.service-desc-second-row{
+  flex:none !important;
+  order:initial !important;
+}
+
+/* 桌面端固定雙欄，真正平分 1180px 容器 */
+@media (min-width:760px){
+  #services.masonry-active{
+    display:block !important;
+    position:relative !important;
+    width:100% !important;
+  }
+
+  #services.masonry-active > .service{
+    position:absolute !important;
+    box-sizing:border-box !important;
+    min-width:0 !important;
+  }
+}
+
+/* 手機直向仍維持單欄 */
+@media (max-width:759px){
+  .shell{
+    width:100% !important;
+    max-width:100% !important;
+    padding-left:clamp(10px,3vw,18px) !important;
+    padding-right:clamp(10px,3vw,18px) !important;
+  }
+
+  #services,
+  #services.masonry-active{
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) !important;
+    position:static !important;
+    height:auto !important;
+    width:100% !important;
+  }
+
+  #services > .service,
+  #services.masonry-active > .service{
+    position:static !important;
+    left:auto !important;
+    top:auto !important;
+    width:100% !important;
+    max-width:100% !important;
+  }
+}
+
+/* v60：三個統計卡片文字統一置中 */
+.summary > *{
+  text-align:center !important;
+}
+.summary > * > *{
+  text-align:center !important;
+}
+
+/* v61：目前事件與歷史事件分區 */
+.active-section-label{
+  color:#f0b36a;
+}
+
+
+/* ============================================================
+   v64 Card Template
+   統一卡片外觀：標題/來源、灰色副標、狀態、目前事件、
+   最近事件、來源與更新時間 Footer。
+   ============================================================ */
+.service-card{
+  overflow:hidden;
+}
+
+.service-card .service-head{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  grid-template-areas:
+    "name source"
+    "desc desc"
+    "route route";
+  column-gap:12px;
+  row-gap:5px;
+  align-items:start;
+  padding-bottom:12px;
+}
+
+.service-card .service-name{
+  grid-area:name;
+  display:flex;
+  min-width:0;
+  align-items:center;
+  gap:7px;
+  font-size:18px;
+  font-weight:700;
+  line-height:1.25;
+}
+
+.service-diamond{
+  flex:none;
+  color:var(--blue);
+  font-size:17px;
+  line-height:1;
+}
+
+.service-card .source-badge{
+  grid-area:source;
+  justify-self:end;
+  white-space:nowrap;
+}
+
+.service-card .service-desc-second-row{
+  grid-area:desc;
+  display:block;
+  width:100%;
+  color:var(--muted);
+  line-height:1.45;
+}
+
+.service-card .route-meta{
+  grid-area:route;
+}
+
+.health-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 0 12px;
+  flex-wrap:wrap;
+}
+
+.health-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  border-radius:6px;
+  padding:4px 8px;
+  font-size:12px;
+  font-weight:700;
+  line-height:1;
+}
+
+.health-row.good .health-badge{
+  background:rgba(54,174,94,.18);
+  color:var(--green);
+}
+
+.health-row.warn .health-badge{
+  background:rgba(242,168,69,.16);
+  color:var(--orange);
+}
+
+.health-icon{
+  width:14px;
+  height:14px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border:1px solid currentColor;
+  border-radius:50%;
+  font-size:10px;
+}
+
+.health-text{
+  color:var(--muted);
+  font-size:12px;
+}
+
+.section-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  min-height:36px;
+  margin:0;
+  padding:9px 0 7px;
+  border-top:1px solid var(--hairline);
+}
+
+.section-head .section-label{
+  margin:0;
+  padding:0;
+  border:0;
+  color:var(--text);
+  font-size:13px;
+  font-weight:700;
+}
+
+.section-count{
+  min-width:22px;
+  height:22px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:0 6px;
+  border-radius:6px;
+  background:rgba(60,130,246,.28);
+  color:#bcd5ff;
+  font-size:12px;
+  font-weight:700;
+}
+
+.section-head.active .section-count{
+  background:rgba(242,168,69,.16);
+  color:var(--orange);
+}
+
+.event-list{
+  border-top:1px solid var(--hairline);
+}
+
+.service-card .event{
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  gap:5px;
+  padding:11px 0;
+}
+
+.service-card .event+.event{
+  border-top:1px solid var(--hairline);
+}
+
+.event-main{
+  display:flex;
+  align-items:flex-start;
+  gap:6px;
+  min-width:0;
+}
+
+.service-card .event .tag{
+  flex:none;
+}
+
+.service-card .event-title{
+  min-width:0;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  line-height:1.38;
+}
+
+.service-card .event-time{
+  justify-self:end;
+  text-align:right;
+  color:var(--muted);
+  line-height:1.3;
+}
+
+.card-footer{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin:4px -14px -14px;
+  padding:10px 14px;
+  border-top:1px solid var(--hairline);
+  color:var(--muted);
+  font-size:11px;
+  line-height:1.3;
+}
+
+@media (max-width:520px){
+  .service-card .service-name{font-size:17px}
+  .card-footer{font-size:10px}
 }
