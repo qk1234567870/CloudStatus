@@ -3,11 +3,11 @@
   "use strict";
 
   window.CloudStatusConfig = Object.freeze({
-    version: "65.0.0",
+    version: "66.0.0",
     expectedServiceCount: 23,
 
     refreshInterval: 5 * 60 * 1000,
-    cacheKey: "cloudstatus-cache-v65",
+    cacheKey: "cloudstatus-cache-v66",
     cacheMaxAge: 15 * 60 * 1000,
     staleCacheMaxAge: 24 * 60 * 60 * 1000,
     foregroundRefreshThreshold: 2 * 60 * 1000,

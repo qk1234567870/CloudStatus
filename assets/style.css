@@ -1253,7 +1253,7 @@ html,body{
 }
 
 /* 手機直向仍維持單欄 */
-@media (max-width:599px){
+@media (max-width:759px){
   .shell{
     width:100% !important;
     max-width:100% !important;
@@ -1438,7 +1438,7 @@ html,body{
 }
 
 /* 寬容器：JS 啟用兩欄 Masonry */
-@media (min-width:600px){
+@media (min-width:760px){
   #services.masonry-active{
     display:block !important;
     position:relative !important;
@@ -1478,4 +1478,48 @@ html,body{
 .event-title,
 .event-time{
   min-width:0 !important;
+}
+
+/* =========================================================
+   v66 容器斷點修正
+   v65 的 760px 對部分手機橫屏可用內容寬度過高。
+   現在完全依 #services 可用空間：
+   < 600px = 單欄
+   >=600px = 雙欄 Masonry
+   ========================================================= */
+@media (min-width:600px) and (max-width:759px){
+  #services.masonry-active{
+    display:block !important;
+    position:relative !important;
+    width:100% !important;
+    height:var(--masonry-height,auto);
+  }
+
+  #services.masonry-active > .service{
+    position:absolute !important;
+    min-width:0 !important;
+    box-sizing:border-box !important;
+  }
+}
+
+@media (max-width:599px){
+  #services,
+  #services.masonry-active{
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) !important;
+    position:static !important;
+    width:100% !important;
+    height:auto !important;
+    gap:14px !important;
+  }
+
+  #services > .service,
+  #services.masonry-active > .service{
+    position:static !important;
+    left:auto !important;
+    top:auto !important;
+    width:100% !important;
+    max-width:100% !important;
+    box-sizing:border-box !important;
+  }
 }

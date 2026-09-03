@@ -8,7 +8,7 @@
   var state = { services: [], filter: "all", search: "", activeOnly: false };
 
   var REFRESH_INTERVAL = CONFIG.refreshInterval || 5 * 60 * 1000;
-  var CACHE_KEY = CONFIG.cacheKey || "cloudstatus-cache-v65";
+  var CACHE_KEY = CONFIG.cacheKey || "cloudstatus-cache-v66";
   var CACHE_MAX_AGE = CONFIG.cacheMaxAge || 15 * 60 * 1000;
   var STALE_CACHE_MAX_AGE = CONFIG.staleCacheMaxAge || 24 * 60 * 60 * 1000;
   var FETCH_TIMEOUT = CONFIG.fetchTimeout || 6500;
@@ -1268,7 +1268,7 @@
     // 依實際內容容器寬度判斷，不依手機/桌面名稱。
     // 容器 <= 720px：單欄；> 720px：雙欄 Masonry。
     var availableWidth=grid.clientWidth || window.innerWidth;
-    var masonryMinWidth=CONFIG.desktopMasonryMinWidth || 760;
+    var masonryMinWidth=CONFIG.desktopMasonryMinWidth || 600;
 
     // Pure container-width RWD:
     // narrow container -> normal one-column flow
