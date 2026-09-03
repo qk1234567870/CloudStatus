@@ -1729,150 +1729,131 @@ html,body{
 
 
 /* ============================================================
-   v68 Approved Card Layout
-   依最終卡片範例：
-   - 右上來源移除，僅 footer 顯示資料來源
-   - 狀態標籤固定獨立欄，不與標題重疊
-   - 標題自然換行
-   - 時間獨立靠右完整顯示
+   v68 Full Adaptive Card Layout
+   單一卡片模板：手機 / 橫屏 / 平板 / 桌面 / 2K / 4K 全自適應
    ============================================================ */
 
 .service-card{
+  container-type:inline-size;
   width:100%;
   min-width:0;
+  max-width:100%;
   overflow:hidden;
 }
 
+/* Header：移除右上來源後，名稱與副標都使用完整寬度 */
 .service-card .service-head{
-  display:grid;
-  grid-template-columns:minmax(0,1fr);
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) !important;
   grid-template-areas:
     "name"
     "desc"
-    "route";
-  row-gap:7px;
-  padding:20px 18px 16px;
+    "route" !important;
+  gap:6px !important;
+  width:100%;
+  min-width:0;
 }
 
 .service-card .service-name{
-  grid-area:name;
-  display:flex;
-  align-items:center;
-  gap:10px;
-  min-width:0;
-  font-size:20px;
-  line-height:1.25;
-  font-weight:700;
-  white-space:normal;
-  overflow:visible;
-  text-overflow:clip;
-}
-
-.service-card .service-diamond{
-  flex:0 0 auto;
-}
-
-.service-card .service-desc,
-.service-card .service-desc-second-row{
-  grid-area:desc;
-  display:block;
+  grid-area:name !important;
   width:100%;
   min-width:0;
-  color:var(--muted);
-  font-size:13px;
-  line-height:1.5;
-  white-space:normal;
-  overflow-wrap:anywhere;
-}
-
-.service-card .route-meta{
-  grid-area:route;
-}
-
-.service-card .events{
-  border-top:1px solid var(--hairline);
-}
-
-.service-card .health-row{
-  padding:12px 18px;
-  min-height:56px;
-}
-
-.service-card .section-head{
-  min-height:54px;
-  padding:12px 18px;
-  margin:0;
-  border-top:1px solid var(--hairline);
-}
-
-.service-card .section-label{
-  font-size:14px;
-  font-weight:700;
-}
-
-.service-card .section-count{
-  min-width:28px;
-  height:28px;
-  border-radius:7px;
-  padding:0 8px;
-}
-
-.service-card .event-list{
-  border-top:1px solid var(--hairline);
-}
-
-.service-card .event{
-  display:block;
-  width:100%;
-  min-width:0;
-  padding:14px 18px 13px;
-  color:inherit;
-  text-decoration:none;
-}
-
-.service-card .event + .event{
-  border-top:1px solid var(--hairline);
-}
-
-.service-card .event-line{
-  display:grid;
-  grid-template-columns:max-content minmax(0,1fr);
-  column-gap:9px;
-  align-items:start;
-  width:100%;
-  min-width:0;
-}
-
-.service-card .event-status{
-  grid-column:1;
-  display:block;
-  width:max-content;
-  max-width:100%;
-  margin:0;
-  padding:0;
-  line-height:1.45;
-  white-space:nowrap;
-}
-
-.service-card .event-status-empty{
-  display:none;
-}
-
-.service-card .event-title{
-  grid-column:2;
-  display:block;
-  min-width:0;
-  max-width:100%;
   white-space:normal !important;
   overflow:visible !important;
   text-overflow:clip !important;
   overflow-wrap:anywhere;
-  word-break:normal;
+}
+
+.service-card .service-desc-second-row{
+  grid-area:desc !important;
+  width:100%;
+  min-width:0;
+  white-space:normal !important;
+  overflow:visible !important;
+  text-overflow:clip !important;
+  overflow-wrap:anywhere;
+}
+
+.service-card .route-meta{
+  grid-area:route !important;
+  width:100%;
+  min-width:0;
+}
+
+.service-card .source-badge{
+  display:none !important;
+}
+
+/* Status */
+.service-card .health-row{
+  width:100%;
+  min-width:0;
+  flex-wrap:wrap;
+}
+
+.service-card .health-text{
+  min-width:0;
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+
+/* Section title */
+.service-card .section-head{
+  width:100%;
+  min-width:0;
+}
+
+.service-card .section-label{
+  flex:1 1 auto;
+  min-width:0;
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+
+.service-card .section-count{
+  flex:0 0 auto;
+}
+
+/* Events：固定「狀態欄 + 內容欄」，避免標籤與標題重疊 */
+.service-card .event{
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) !important;
+  width:100%;
+  min-width:0;
+}
+
+.service-card .event-main{
+  display:grid !important;
+  grid-template-columns:max-content minmax(0,1fr) !important;
+  align-items:start !important;
+  gap:6px 10px !important;
+  width:100%;
+  min-width:0;
+}
+
+.service-card .event.no-status .event-main{
+  grid-template-columns:minmax(0,1fr) !important;
+}
+
+.service-card .event .tag{
+  grid-column:1;
+  flex:none;
+  width:max-content;
+  max-width:100%;
+  white-space:nowrap;
   line-height:1.45;
 }
 
-.service-card .event.no-status .event-line{
-  grid-template-columns:minmax(0,1fr);
+.service-card .event-title{
+  grid-column:2;
+  min-width:0;
+  width:100%;
+  white-space:normal !important;
+  overflow:visible !important;
+  text-overflow:clip !important;
+  overflow-wrap:anywhere !important;
+  word-break:normal !important;
+  line-height:1.45;
 }
 
 .service-card .event.no-status .event-title{
@@ -1880,72 +1861,87 @@ html,body{
 }
 
 .service-card .event-time{
-  display:block;
-  width:100%;
-  margin-top:6px;
-  text-align:right;
+  display:block !important;
+  width:100% !important;
+  min-width:0 !important;
+  max-width:100% !important;
+  margin-top:5px;
+  text-align:right !important;
+  justify-self:stretch !important;
   white-space:normal !important;
   overflow:visible !important;
   text-overflow:clip !important;
   overflow-wrap:anywhere;
   font-variant-numeric:tabular-nums;
-  line-height:1.35;
 }
 
+/* Footer：來源只留左下，更新時間右下 */
 .service-card .card-footer{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:8px 14px;
-  margin:0;
-  padding:12px 18px;
-  border-top:1px solid var(--hairline);
-  color:var(--muted);
-  font-size:11px;
-  line-height:1.35;
-  flex-wrap:wrap;
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) auto !important;
+  gap:8px 16px !important;
+  align-items:end !important;
+  width:auto;
+  min-width:0;
 }
 
 .service-card .card-footer > span{
   min-width:0;
   max-width:100%;
-  white-space:normal;
+  white-space:normal !important;
+  overflow:visible !important;
+  text-overflow:clip !important;
+  overflow-wrap:anywhere;
 }
 
-@media (max-width:520px){
+.service-card .card-footer > span:last-child{
+  justify-self:end;
+  text-align:right;
+  white-space:nowrap !important;
+}
+
+/* 桌面與大螢幕：充分利用卡片寬度 */
+@container (min-width:700px){
+  .service-card .service-name{
+    font-size:20px;
+  }
+
+  .service-card .service-desc-second-row{
+    font-size:13px;
+  }
+
+  .service-card .event-title{
+    font-size:15px;
+  }
+
+  .service-card .event-time{
+    font-size:12px;
+  }
+}
+
+/* 一般手機 */
+@container (max-width:520px){
   .service-card .service-head{
-    padding:16px 14px 14px;
+    gap:5px !important;
   }
 
   .service-card .service-name{
-    font-size:18px;
+    font-size:17px;
   }
 
-  .service-card .service-desc,
   .service-card .service-desc-second-row{
     font-size:12px;
+    line-height:1.5;
   }
 
-  .service-card .health-row,
-  .service-card .section-head{
-    padding-left:14px;
-    padding-right:14px;
-  }
-
-  .service-card .event{
-    padding:13px 14px 12px;
-  }
-
-  .service-card .event-line{
-    column-gap:7px;
+  .service-card .event-main{
+    grid-template-columns:max-content minmax(0,1fr) !important;
+    gap:5px 8px !important;
   }
 
   .service-card .event-title{
     font-size:14px;
-  }
-
-  .service-card .event-status{
-    font-size:12px;
+    line-height:1.48;
   }
 
   .service-card .event-time{
@@ -1953,26 +1949,80 @@ html,body{
   }
 
   .service-card .card-footer{
-    padding:11px 14px;
     font-size:10px;
   }
 }
 
-@media (max-width:390px){
-  .service-card .event-line{
-    grid-template-columns:max-content minmax(0,1fr);
+/* 窄手機：狀態標籤獨立一行，標題下一行，徹底避免重疊 */
+@container (max-width:420px){
+  .service-card .event-main{
+    grid-template-columns:minmax(0,1fr) !important;
+    gap:4px !important;
   }
 
-  .service-card .event-status{
-    white-space:nowrap;
+  .service-card .event .tag,
+  .service-card .event-title{
+    grid-column:1 !important;
+  }
+
+  .service-card .event .tag{
+    width:max-content;
   }
 
   .service-card .card-footer{
-    flex-direction:column;
-    align-items:stretch;
+    grid-template-columns:minmax(0,1fr) !important;
+    gap:4px !important;
   }
 
   .service-card .card-footer > span:last-child{
-    text-align:right;
+    justify-self:start !important;
+    text-align:left !important;
+    white-space:normal !important;
   }
+}
+
+/* 超窄裝置 */
+@container (max-width:340px){
+  .service-card .service-name{
+    font-size:16px;
+  }
+
+  .service-card .section-head{
+    gap:6px;
+  }
+
+  .service-card .event-title{
+    font-size:13px;
+  }
+}
+
+/* 橫屏手機：降低垂直密度 */
+@media (orientation:landscape) and (max-height:520px){
+  .service-card .service-head{
+    padding-bottom:9px !important;
+  }
+
+  .service-card .health-row{
+    padding:8px 0 10px !important;
+  }
+
+  .service-card .event{
+    padding:9px 0 !important;
+  }
+
+  .service-card .card-footer{
+    padding-top:8px !important;
+    padding-bottom:8px !important;
+  }
+}
+
+/* 防止任何舊規則重新造成 ellipsis */
+.service-card .event-title,
+.service-card .event-time,
+.service-card .service-name,
+.service-card .service-desc,
+.service-card .service-desc-second-row,
+.service-card .card-footer span{
+  -webkit-line-clamp:unset !important;
+  line-clamp:unset !important;
 }
