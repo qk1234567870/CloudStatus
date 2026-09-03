@@ -1726,3 +1726,253 @@ html,body{
     text-align:left;
   }
 }
+
+
+/* ============================================================
+   v68 Approved Card Layout
+   依最終卡片範例：
+   - 右上來源移除，僅 footer 顯示資料來源
+   - 狀態標籤固定獨立欄，不與標題重疊
+   - 標題自然換行
+   - 時間獨立靠右完整顯示
+   ============================================================ */
+
+.service-card{
+  width:100%;
+  min-width:0;
+  overflow:hidden;
+}
+
+.service-card .service-head{
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  grid-template-areas:
+    "name"
+    "desc"
+    "route";
+  row-gap:7px;
+  padding:20px 18px 16px;
+}
+
+.service-card .service-name{
+  grid-area:name;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+  font-size:20px;
+  line-height:1.25;
+  font-weight:700;
+  white-space:normal;
+  overflow:visible;
+  text-overflow:clip;
+}
+
+.service-card .service-diamond{
+  flex:0 0 auto;
+}
+
+.service-card .service-desc,
+.service-card .service-desc-second-row{
+  grid-area:desc;
+  display:block;
+  width:100%;
+  min-width:0;
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.5;
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+
+.service-card .route-meta{
+  grid-area:route;
+}
+
+.service-card .events{
+  border-top:1px solid var(--hairline);
+}
+
+.service-card .health-row{
+  padding:12px 18px;
+  min-height:56px;
+}
+
+.service-card .section-head{
+  min-height:54px;
+  padding:12px 18px;
+  margin:0;
+  border-top:1px solid var(--hairline);
+}
+
+.service-card .section-label{
+  font-size:14px;
+  font-weight:700;
+}
+
+.service-card .section-count{
+  min-width:28px;
+  height:28px;
+  border-radius:7px;
+  padding:0 8px;
+}
+
+.service-card .event-list{
+  border-top:1px solid var(--hairline);
+}
+
+.service-card .event{
+  display:block;
+  width:100%;
+  min-width:0;
+  padding:14px 18px 13px;
+  color:inherit;
+  text-decoration:none;
+}
+
+.service-card .event + .event{
+  border-top:1px solid var(--hairline);
+}
+
+.service-card .event-line{
+  display:grid;
+  grid-template-columns:max-content minmax(0,1fr);
+  column-gap:9px;
+  align-items:start;
+  width:100%;
+  min-width:0;
+}
+
+.service-card .event-status{
+  grid-column:1;
+  display:block;
+  width:max-content;
+  max-width:100%;
+  margin:0;
+  padding:0;
+  line-height:1.45;
+  white-space:nowrap;
+}
+
+.service-card .event-status-empty{
+  display:none;
+}
+
+.service-card .event-title{
+  grid-column:2;
+  display:block;
+  min-width:0;
+  max-width:100%;
+  white-space:normal !important;
+  overflow:visible !important;
+  text-overflow:clip !important;
+  overflow-wrap:anywhere;
+  word-break:normal;
+  line-height:1.45;
+}
+
+.service-card .event.no-status .event-line{
+  grid-template-columns:minmax(0,1fr);
+}
+
+.service-card .event.no-status .event-title{
+  grid-column:1;
+}
+
+.service-card .event-time{
+  display:block;
+  width:100%;
+  margin-top:6px;
+  text-align:right;
+  white-space:normal !important;
+  overflow:visible !important;
+  text-overflow:clip !important;
+  overflow-wrap:anywhere;
+  font-variant-numeric:tabular-nums;
+  line-height:1.35;
+}
+
+.service-card .card-footer{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px 14px;
+  margin:0;
+  padding:12px 18px;
+  border-top:1px solid var(--hairline);
+  color:var(--muted);
+  font-size:11px;
+  line-height:1.35;
+  flex-wrap:wrap;
+}
+
+.service-card .card-footer > span{
+  min-width:0;
+  max-width:100%;
+  white-space:normal;
+}
+
+@media (max-width:520px){
+  .service-card .service-head{
+    padding:16px 14px 14px;
+  }
+
+  .service-card .service-name{
+    font-size:18px;
+  }
+
+  .service-card .service-desc,
+  .service-card .service-desc-second-row{
+    font-size:12px;
+  }
+
+  .service-card .health-row,
+  .service-card .section-head{
+    padding-left:14px;
+    padding-right:14px;
+  }
+
+  .service-card .event{
+    padding:13px 14px 12px;
+  }
+
+  .service-card .event-line{
+    column-gap:7px;
+  }
+
+  .service-card .event-title{
+    font-size:14px;
+  }
+
+  .service-card .event-status{
+    font-size:12px;
+  }
+
+  .service-card .event-time{
+    font-size:11px;
+  }
+
+  .service-card .card-footer{
+    padding:11px 14px;
+    font-size:10px;
+  }
+}
+
+@media (max-width:390px){
+  .service-card .event-line{
+    grid-template-columns:max-content minmax(0,1fr);
+  }
+
+  .service-card .event-status{
+    white-space:nowrap;
+  }
+
+  .service-card .card-footer{
+    flex-direction:column;
+    align-items:stretch;
+  }
+
+  .service-card .card-footer > span:last-child{
+    text-align:right;
+  }
+}
