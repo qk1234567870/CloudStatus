@@ -3,11 +3,11 @@
 
   function startApp() {
   var CONFIG = Object.freeze({
-    version: "76.0.0",
+    version: "77.0.0",
     expectedServiceCount: 23,
 
     refreshInterval: 5 * 60 * 1000,
-    cacheKey: "cloudstatus-cache-v76",
+    cacheKey: "cloudstatus-cache-v77",
     cacheMaxAge: 15 * 60 * 1000,
     staleCacheMaxAge: 24 * 60 * 60 * 1000,
     foregroundRefreshThreshold: 2 * 60 * 1000,
@@ -27,7 +27,7 @@
   var state = { services: [], filter: "all", search: "", activeOnly: false };
 
   var REFRESH_INTERVAL = CONFIG.refreshInterval || 5 * 60 * 1000;
-  var CACHE_KEY = CONFIG.cacheKey || "cloudstatus-cache-v76";
+  var CACHE_KEY = CONFIG.cacheKey || "cloudstatus-cache-v77";
   var CACHE_MAX_AGE = CONFIG.cacheMaxAge || 15 * 60 * 1000;
   var STALE_CACHE_MAX_AGE = CONFIG.staleCacheMaxAge || 24 * 60 * 60 * 1000;
   var FETCH_TIMEOUT = CONFIG.fetchTimeout || 6500;
@@ -1231,90 +1231,53 @@
     };
   }
 
-  var masonryLayoutToken=0;
-  var masonryLayoutFrame=0;
+  var layoutMode="";
 
-  function resetMasonryLayout(grid,cards){
-    grid.classList.remove("masonry-active");
-    grid.style.height="";
-    cards.forEach(function(card){
-      card.style.position="";
-      card.style.left="";
-      card.style.top="";
-      card.style.width="";
-      card.style.maxWidth="";
-      card.style.boxSizing="";
-      card.style.marginBottom="";
-      card.style.transform="";
-    });
+  function currentLayoutMode(){
+    var grid=$("#services");
+    if(!grid) return "single";
+    var width=Math.floor(grid.getBoundingClientRect().width || grid.clientWidth || 0);
+    return width>=760 ? "double" : "single";
   }
 
-  function layoutDesktopMasonry() {
-    var grid=$("#services");
-    if(!grid) return;
-
-    var cards=Array.prototype.slice.call(grid.querySelectorAll(".service"));
-    var availableWidth=Math.floor(grid.getBoundingClientRect().width || grid.clientWidth || window.innerWidth);
-
-    masonryLayoutToken++;
-    var token=masonryLayoutToken;
-
-    cancelAnimationFrame(masonryLayoutFrame);
-
-    // 小於 760px 一律回到正常文件流單欄。
-    if(availableWidth<760 || !cards.length){
-      resetMasonryLayout(grid,cards);
-      return;
+  function renderServiceFlow(list,ctx,mode){
+    var cardTemplate=window.CloudStatusCardTemplate;
+    if(!cardTemplate || typeof cardTemplate.render!=="function"){
+      throw new Error("CloudStatus card template is not loaded");
     }
 
-    var gap=CONFIG.masonryGap||14;
-    var columns=2;
-    var colWidth=Math.floor((availableWidth-gap)/columns);
+    if(!list.length){
+      return '<div class="empty">沒有符合條件的服務或事件。</div>';
+    }
 
-    // 第一階段：先確立所有卡片最終寬度與 absolute 模式。
-    // 這一步完成後 Container Query / 文字換行才會得到正確高度。
-    grid.classList.add("masonry-active");
-    grid.style.height="";
+    if(mode!=="double"){
+      return list.map(function(service){
+        return cardTemplate.render(service,ctx);
+      }).join("");
+    }
 
-    cards.forEach(function(card){
-      card.style.position="absolute";
-      card.style.left="0px";
-      card.style.top="0px";
-      card.style.width=colWidth+"px";
-      card.style.maxWidth=colWidth+"px";
-      card.style.boxSizing="border-box";
-      card.style.marginBottom="0px";
-      card.style.transform="none";
+    var left=[];
+    var right=[];
+
+    list.forEach(function(service,index){
+      var html=cardTemplate.render(service,ctx);
+      if(index%2===0) left.push(html);
+      else right.push(html);
     });
 
-    masonryLayoutFrame=requestAnimationFrame(function(){
-      if(token!==masonryLayoutToken) return;
+    return ''+
+      '<div class="service-columns">'+
+        '<div class="service-column service-column-left">'+left.join("")+'</div>'+
+        '<div class="service-column service-column-right">'+right.join("")+'</div>'+
+      '</div>';
+  }
 
-      // 強制一次 layout，確保卡片寬度與 Container Query 已套用。
-      void grid.offsetHeight;
-
-      masonryLayoutFrame=requestAnimationFrame(function(){
-        if(token!==masonryLayoutToken) return;
-
-        var heights=[0,0];
-
-        cards.forEach(function(card){
-          // 每張卡放進當前最短欄。
-          var col=heights[1]<heights[0] ? 1 : 0;
-          var x=col*(colWidth+gap);
-          var y=heights[col];
-
-          card.style.left=x+"px";
-          card.style.top=y+"px";
-
-          // 使用 offsetHeight，避免 transform / subpixel 影響。
-          var height=Math.ceil(card.offsetHeight);
-          heights[col]=y+height+gap;
-        });
-
-        grid.style.height=Math.max(0,Math.max(heights[0],heights[1])-gap)+"px";
-      });
-    });
+  function relayoutForViewport(){
+    var next=currentLayoutMode();
+    if(next!==layoutMode){
+      lastRenderSignature="";
+      render();
+    }
   }
 
   var renderFrame=0;
@@ -1338,22 +1301,22 @@
     renderSummary();
 
     var list=visibleServices();
-    var cardTemplate=window.CloudStatusCardTemplate;
-    if(!cardTemplate || typeof cardTemplate.render!=="function"){
-      throw new Error("CloudStatus card template is not loaded");
-    }
-
+    var mode=currentLayoutMode();
     var ctx=templateContext();
-    var signature=[state.filter,state.search,state.activeOnly?"1":"0",servicesSignature(list)].join("||");
+    var signature=[
+      state.filter,
+      state.search,
+      state.activeOnly?"1":"0",
+      mode,
+      servicesSignature(list)
+    ].join("||");
 
     if(signature!==lastRenderSignature){
-      $("#services").innerHTML=list.length
-        ? list.map(function(service){return cardTemplate.render(service,ctx);}).join("")
-        : '<div class="empty">沒有符合條件的服務或事件。</div>';
+      $("#services").innerHTML=renderServiceFlow(list,ctx,mode);
       lastRenderSignature=signature;
     }
 
-    layoutDesktopMasonry();
+    layoutMode=mode;
   }
 
   function render(){
@@ -1454,18 +1417,17 @@
     return !lastRefresh || Date.now()-lastRefresh>=FOREGROUND_REFRESH_THRESHOLD;
   }
 
-  var masonryResizeObserver=null;
+  var layoutResizeObserver=null;
 
-  function startResponsiveLayoutObserver() {
+  function startResponsiveLayoutObserver(){
     var grid=$("#services");
     if(!grid || typeof ResizeObserver==="undefined") return;
-    if(masonryResizeObserver) masonryResizeObserver.disconnect();
+    if(layoutResizeObserver) layoutResizeObserver.disconnect();
 
-    masonryResizeObserver=new ResizeObserver(function(){
-      cancelAnimationFrame(masonryLayoutFrame);
-      masonryLayoutFrame=requestAnimationFrame(layoutDesktopMasonry);
+    layoutResizeObserver=new ResizeObserver(function(){
+      relayoutForViewport();
     });
-    masonryResizeObserver.observe(grid);
+    layoutResizeObserver.observe(grid);
   }
 
   function startAutoRefresh() {
@@ -1636,11 +1598,11 @@
   $("#activeOnly").addEventListener("change",function(e){state.activeOnly=e.target.checked;render();});
   $("#reload").addEventListener("click",function(){refresh({force:true});});
 
-  var masonryResizeTimer=null;
+  var layoutResizeTimer=null;
   window.addEventListener("resize",function(){
-    clearTimeout(masonryResizeTimer);
-    masonryResizeTimer=setTimeout(function(){
-      layoutDesktopMasonry();
+    clearTimeout(layoutResizeTimer);
+    layoutResizeTimer=setTimeout(function(){
+      relayoutForViewport();
       scheduleFilterLayout();
     },120);
   });
@@ -1649,12 +1611,12 @@
   startFilterLayout();
 
   window.addEventListener("orientationchange",function(){
-    setTimeout(layoutDesktopMasonry,80);
-    setTimeout(layoutDesktopMasonry,260);
+    setTimeout(relayoutForViewport,80);
+    setTimeout(relayoutForViewport,260);
   });
 
   window.addEventListener("pageshow",function(){
-    requestAnimationFrame(layoutDesktopMasonry);
+    requestAnimationFrame(relayoutForViewport);
   });
 
   if(window.visualViewport){
@@ -1663,7 +1625,7 @@
       clearTimeout(visualViewportTimer);
       visualViewportTimer=setTimeout(function(){
         scheduleFilterLayout();
-        layoutDesktopMasonry();
+        relayoutForViewport();
       },80);
     }
     window.visualViewport.addEventListener("resize",handleVisualViewport);
@@ -1672,7 +1634,7 @@
 
   if(document.fonts && document.fonts.ready){
     document.fonts.ready.then(function(){
-      layoutDesktopMasonry();
+      relayoutForViewport();
     });
   }
 

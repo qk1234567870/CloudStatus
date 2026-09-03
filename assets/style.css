@@ -953,39 +953,6 @@ footer{
 }
 
 
-/* ============================================================
-   v75 Desktop Masonry
-   桌面雙欄使用 absolute 定位；手機永遠回正常文件流。
-   ============================================================ */
-#services.masonry-active{
-  position:relative;
-  display:block;
-  width:100%;
-}
-
-#services.masonry-active > .service{
-  position:absolute;
-  margin:0;
-  transition:none;
-}
-
-@media (max-width:759px){
-  #services.masonry-active{
-    height:auto !important;
-  }
-
-  #services.masonry-active > .service,
-  #services > .service{
-    position:relative !important;
-    left:auto !important;
-    top:auto !important;
-    width:100% !important;
-    max-width:100% !important;
-    margin:0 0 14px !important;
-  }
-}
-
-
 /* v76 Layout Engine invariants */
 .topbar,.toolbar,.filter-shell,.tools,.summary,#services,footer{
   width:100%;max-width:100%;min-width:0;
@@ -1003,5 +970,53 @@ footer{
   body{
     padding-left:max(14px,env(safe-area-inset-left));
     padding-right:max(14px,env(safe-area-inset-right));
+  }
+}
+
+
+/* ============================================================
+   v77 Service Flow Layout
+   Desktop/landscape: two independent normal-flow columns.
+   Mobile: original-order single normal flow.
+   ============================================================ */
+#services{
+  position:relative;
+  width:100%;
+  min-width:0;
+}
+
+.service-columns{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;
+  width:100%;
+  min-width:0;
+  align-items:start;
+}
+
+.service-column{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  min-width:0;
+}
+
+.service-column > .service{
+  position:relative !important;
+  left:auto !important;
+  top:auto !important;
+  width:100% !important;
+  max-width:100% !important;
+  margin:0 !important;
+}
+
+@media (max-width:759px){
+  #services > .service{
+    position:relative !important;
+    left:auto !important;
+    top:auto !important;
+    width:100% !important;
+    max-width:100% !important;
+    margin:0 0 14px !important;
   }
 }
