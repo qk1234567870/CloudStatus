@@ -1292,3 +1292,46 @@ html,body{
 .active-section-label{
   color:#f0b36a;
 }
+
+
+/* v63 responsive split */
+#services{
+  width:100%;
+  min-width:0;
+}
+
+#services[data-layout-mode="phone-portrait"]:not(.masonry-active),
+#services[data-layout-mode="phone-landscape"]:not(.masonry-active),
+#services[data-layout-mode="desktop"]:not(.masonry-active){
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+}
+
+#services:not(.masonry-active) .service{
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  box-sizing:border-box;
+}
+
+@media (orientation: landscape) and (max-width:980px){
+  .shell{
+    width:min(100%,calc(100vw - 28px));
+  }
+
+  .service,
+  .service-head,
+  .service-name,
+  .service-desc,
+  .service-desc-second-row,
+  .event-title{
+    min-width:0;
+  }
+
+  .service-name,
+  .service-desc,
+  .service-desc-second-row,
+  .event-title{
+    overflow-wrap:anywhere;
+  }
+}
