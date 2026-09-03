@@ -16,8 +16,8 @@
     readerTimeout: 7500,
     fallbackConcurrency: 4,
 
-    desktopMasonryMinWidth: 660,
-    desktopMaxWidth: 1180,
+    desktopMasonryMinWidth: 760,
+    desktopMaxWidth: 1100,
     masonryGap: 14
     });
   var SERVICES = window.CLOUDSTATUS_SERVICES || [];
