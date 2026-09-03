@@ -8,7 +8,7 @@
   var state = { services: [], filter: "all", search: "", activeOnly: false };
 
   var REFRESH_INTERVAL = CONFIG.refreshInterval || 5 * 60 * 1000;
-  var CACHE_KEY = CONFIG.cacheKey || "cloudstatus-cache-v77";
+  var CACHE_KEY = CONFIG.cacheKey || "cloudstatus-cache-v72";
   var CACHE_MAX_AGE = CONFIG.cacheMaxAge || 15 * 60 * 1000;
   var STALE_CACHE_MAX_AGE = CONFIG.staleCacheMaxAge || 24 * 60 * 60 * 1000;
   var FETCH_TIMEOUT = CONFIG.fetchTimeout || 6500;
@@ -1217,7 +1217,7 @@
     }
 
     var activeEvents=!service.loading
-      ? (service.events||[]).filter(isActiveEvent).slice(0,CONFIG.activeEventLimit||20)
+      ? (service.events||[]).filter(isActiveEvent)
       : [];
     var recentEvents=!service.loading
       ? (service.events||[]).filter(function(e){return !isActiveEvent(e);}).slice(0,3)
@@ -1252,10 +1252,10 @@
             : escapeHtml(service.nameZh||service.desc)
           )+
         '</span>'+
-        (CONFIG.showRouteMeta!==false && service.category==="crossborder" && service.carrierLabel
+        (service.category==="crossborder" && service.carrierLabel
           ? '<span class="route-meta">'+escapeHtml(service.carrierLabel)+(service.routeClassLabel?' · '+escapeHtml(service.routeClassLabel):'')+'</span>'
           : '')+
-        (CONFIG.showSourceBadge!==false ? '<span class="source-badge">'+escapeHtml(service.sourceLabel)+'</span>' : '')+
+        '<span class="source-badge">'+escapeHtml(service.sourceLabel)+'</span>'+
       '</div><div class="events">'+body+'</div></article>';
   }
 

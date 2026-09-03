@@ -3,7 +3,7 @@
   "use strict";
 
   var config = window.CloudStatusConfig || {};
-  var version = config.version || "77.0.0";
+  var version = config.version || "62.0.0";
 
   var manifest = [
   "cloudflare",
