@@ -3,11 +3,11 @@
 
   function startApp() {
   var CONFIG = Object.freeze({
-    version: "75.0.0",
+    version: "76.0.0",
     expectedServiceCount: 23,
 
     refreshInterval: 5 * 60 * 1000,
-    cacheKey: "cloudstatus-cache-v75",
+    cacheKey: "cloudstatus-cache-v76",
     cacheMaxAge: 15 * 60 * 1000,
     staleCacheMaxAge: 24 * 60 * 60 * 1000,
     foregroundRefreshThreshold: 2 * 60 * 1000,
@@ -22,10 +22,12 @@
     });
   var SERVICES = window.CLOUDSTATUS_SERVICES || [];
   var SERVICE_PARSERS = window.CloudStatusServiceParsers || {};
+  var SERVICE_ORDER=Object.create(null);
+  SERVICES.forEach(function(service,index){ SERVICE_ORDER[service.id]=index; });
   var state = { services: [], filter: "all", search: "", activeOnly: false };
 
   var REFRESH_INTERVAL = CONFIG.refreshInterval || 5 * 60 * 1000;
-  var CACHE_KEY = CONFIG.cacheKey || "cloudstatus-cache-v75";
+  var CACHE_KEY = CONFIG.cacheKey || "cloudstatus-cache-v76";
   var CACHE_MAX_AGE = CONFIG.cacheMaxAge || 15 * 60 * 1000;
   var STALE_CACHE_MAX_AGE = CONFIG.staleCacheMaxAge || 24 * 60 * 60 * 1000;
   var FETCH_TIMEOUT = CONFIG.fetchTimeout || 6500;
@@ -1190,6 +1192,11 @@
         return (serviceOrder[a.id]!=null?serviceOrder[a.id]:99)-
                (serviceOrder[b.id]!=null?serviceOrder[b.id]:99);
       });
+    }else{
+      list.sort(function(a,b){
+        var ai=SERVICE_ORDER[a.id], bi=SERVICE_ORDER[b.id];
+        return (ai==null?9999:ai)-(bi==null?9999:bi);
+      });
     }
     return list;
   }
@@ -1310,18 +1317,51 @@
     });
   }
 
-  function render() {
+  var renderFrame=0;
+  var renderPending=false;
+  var lastRenderSignature="";
+
+  function servicesSignature(list){
+    return list.map(function(service){
+      return [
+        service.id,service.loading?"1":"0",service.health||"",service.healthText||"",
+        service.sourceLabel||"",service.fallback?"1":"0",service.updatedAt||"",
+        (service.events||[]).map(function(e){
+          return [e.title||"",e.status||"",e.start||"",e.end||""].join("~");
+        }).join("¦")
+      ].join("§");
+    }).join("¶");
+  }
+
+  function performRender(){
+    renderPending=false;
     renderSummary();
+
     var list=visibleServices();
     var cardTemplate=window.CloudStatusCardTemplate;
     if(!cardTemplate || typeof cardTemplate.render!=="function"){
       throw new Error("CloudStatus card template is not loaded");
     }
+
     var ctx=templateContext();
-    $("#services").innerHTML=list.length
-      ? list.map(function(service){return cardTemplate.render(service,ctx);}).join("")
-      : '<div class="empty">沒有符合條件的服務或事件。</div>';
+    var signature=[state.filter,state.search,state.activeOnly?"1":"0",servicesSignature(list)].join("||");
+
+    if(signature!==lastRenderSignature){
+      $("#services").innerHTML=list.length
+        ? list.map(function(service){return cardTemplate.render(service,ctx);}).join("")
+        : '<div class="empty">沒有符合條件的服務或事件。</div>';
+      lastRenderSignature=signature;
+    }
+
     layoutDesktopMasonry();
+  }
+
+  function render(){
+    renderPending=true;
+    cancelAnimationFrame(renderFrame);
+    renderFrame=requestAnimationFrame(function(){
+      if(renderPending) performRender();
+    });
   }
 
   async function refresh(options) {
@@ -1616,6 +1656,19 @@
   window.addEventListener("pageshow",function(){
     requestAnimationFrame(layoutDesktopMasonry);
   });
+
+  if(window.visualViewport){
+    var visualViewportTimer=0;
+    function handleVisualViewport(){
+      clearTimeout(visualViewportTimer);
+      visualViewportTimer=setTimeout(function(){
+        scheduleFilterLayout();
+        layoutDesktopMasonry();
+      },80);
+    }
+    window.visualViewport.addEventListener("resize",handleVisualViewport);
+    window.visualViewport.addEventListener("scroll",handleVisualViewport);
+  }
 
   if(document.fonts && document.fonts.ready){
     document.fonts.ready.then(function(){
