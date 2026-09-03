@@ -110,12 +110,33 @@ h1{margin:0;font-size:clamp(26px,3.2vw,38px);line-height:1.2;letter-spacing:-.02
 .message.link{display:block}
 
 .card-footer{
-  display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 16px;align-items:end;
-  min-width:0;padding:11px 18px 12px;border-top:1px solid var(--hairline);
-  color:var(--muted-2);font-size:11px;line-height:1.4
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:clamp(6px,2cqi,16px);
+  align-items:center;
+  min-width:0;
+  padding:11px clamp(10px,3.5cqi,18px) 12px;
+  border-top:1px solid var(--hairline);
+  color:var(--muted-2);
+  font-size:clamp(9px,2.8cqi,11px);
+  line-height:1.35;
+  white-space:nowrap;
 }
-.card-footer>span{min-width:0;max-width:100%;white-space:normal;overflow-wrap:anywhere}
-.card-footer>span:last-child{justify-self:end;text-align:right;white-space:nowrap}
+.card-footer>span{
+  min-width:0;
+  max-width:100%;
+  white-space:nowrap;
+  overflow:visible;
+  text-overflow:clip;
+}
+.card-footer>span:first-child{
+  justify-self:start;
+}
+.card-footer>span:last-child{
+  justify-self:end;
+  text-align:right;
+  white-space:nowrap;
+}
 
 @container (max-width:520px){
   .service-head{padding:16px 16px 13px}
@@ -129,9 +150,17 @@ h1{margin:0;font-size:clamp(26px,3.2vw,38px);line-height:1.2;letter-spacing:-.02
 @container (max-width:420px){
   .event-main{grid-template-columns:minmax(0,1fr);gap:3px}
   .tag,.event-title{grid-column:1}
-  .card-footer{grid-template-columns:minmax(0,1fr);gap:4px}
-  .card-footer>span:last-child{justify-self:start;text-align:left;white-space:normal}
 }
+
+@container (max-width:360px){
+  .card-footer{
+    gap:5px;
+    padding-left:9px;
+    padding-right:9px;
+    font-size:8.5px;
+  }
+}
+
 @container (max-width:340px){
   .service-name{font-size:17px}
   .event-title{font-size:13px}
