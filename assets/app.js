@@ -3,11 +3,11 @@
 
   function startApp() {
   var CONFIG = Object.freeze({
-    version: "72.0.0",
+    version: "73.0.0",
     expectedServiceCount: 23,
 
     refreshInterval: 5 * 60 * 1000,
-    cacheKey: "cloudstatus-cache-v72",
+    cacheKey: "cloudstatus-cache-v73",
     cacheMaxAge: 15 * 60 * 1000,
     staleCacheMaxAge: 24 * 60 * 60 * 1000,
     foregroundRefreshThreshold: 2 * 60 * 1000,
@@ -25,7 +25,7 @@
   var state = { services: [], filter: "all", search: "", activeOnly: false };
 
   var REFRESH_INTERVAL = CONFIG.refreshInterval || 5 * 60 * 1000;
-  var CACHE_KEY = CONFIG.cacheKey || "cloudstatus-cache-v72";
+  var CACHE_KEY = CONFIG.cacheKey || "cloudstatus-cache-v73";
   var CACHE_MAX_AGE = CONFIG.cacheMaxAge || 15 * 60 * 1000;
   var STALE_CACHE_MAX_AGE = CONFIG.staleCacheMaxAge || 24 * 60 * 60 * 1000;
   var FETCH_TIMEOUT = CONFIG.fetchTimeout || 6500;
@@ -1419,12 +1419,158 @@
     });
   }
 
-  $("#filters").addEventListener("click",function(e){
-    var b=e.target.closest("[data-filter]"); if(!b)return;
-    state.filter=b.getAttribute("data-filter");
-    Array.prototype.forEach.call(document.querySelectorAll(".chip"),function(x){x.classList.toggle("active",x===b);});
+
+  var FILTER_ORDER=[
+    {value:"all",label:"全部"},
+    {value:"cloud",label:"雲端"},
+    {value:"ai",label:"AI"},
+    {value:"developer",label:"開發者"},
+    {value:"platform",label:"平台"},
+    {value:"hosting",label:"Hosting"},
+    {value:"datacenter",label:"數據中心"},
+    {value:"backbone",label:"骨幹網"},
+    {value:"crossborder",label:"跨境線路"}
+  ];
+  var filterResizeObserver=null;
+  var filterLayoutFrame=0;
+
+  function setFilter(value){
+    state.filter=value;
+    Array.prototype.forEach.call(document.querySelectorAll("[data-filter]"),function(el){
+      el.classList.toggle("active",el.getAttribute("data-filter")===value);
+    });
+    closeFilterMore();
     render();
+    scheduleFilterLayout();
+  }
+
+  function closeFilterMore(){
+    var btn=$("#filterMore");
+    var menu=$("#filterMoreMenu");
+    if(!btn || !menu) return;
+    btn.setAttribute("aria-expanded","false");
+    menu.hidden=true;
+  }
+
+  function toggleFilterMore(){
+    var btn=$("#filterMore");
+    var menu=$("#filterMoreMenu");
+    if(!btn || !menu) return;
+    var open=btn.getAttribute("aria-expanded")==="true";
+    btn.setAttribute("aria-expanded",open?"false":"true");
+    menu.hidden=open;
+  }
+
+  function measureFilterWidth(label,active){
+    var probe=document.createElement("button");
+    probe.className="chip"+(active?" active":"");
+    probe.textContent=label;
+    probe.style.position="fixed";
+    probe.style.visibility="hidden";
+    probe.style.pointerEvents="none";
+    probe.style.left="-9999px";
+    document.body.appendChild(probe);
+    var width=Math.ceil(probe.getBoundingClientRect().width);
+    probe.remove();
+    return width;
+  }
+
+  function rebuildFilterLayout(){
+    var shell=document.querySelector(".filter-shell");
+    var filters=$("#filters");
+    var moreWrap=$("#filterMoreWrap");
+    var more=$("#filterMore");
+    var menu=$("#filterMoreMenu");
+    if(!shell || !filters || !moreWrap || !more || !menu) return;
+
+    var available=Math.floor(shell.getBoundingClientRect().width);
+    if(available<=0) return;
+
+    var style=getComputedStyle(filters);
+    var gap=parseFloat(style.columnGap || style.gap) || 0;
+    var moreWidth=measureFilterWidth("更多⌄",false);
+    var widths=FILTER_ORDER.map(function(item){
+      return measureFilterWidth(item.label,item.value===state.filter);
+    });
+
+    // First try to fit every category without a More button.
+    var allWidth=widths.reduce(function(sum,w){return sum+w;},0)+gap*(FILTER_ORDER.length-1);
+    var visibleCount=FILTER_ORDER.length;
+
+    if(allWidth>available){
+      // Reserve More button first; then fit as many real buttons as possible.
+      var used=moreWidth;
+      visibleCount=0;
+      for(var i=0;i<FILTER_ORDER.length;i++){
+        var extra=widths[i]+(visibleCount>0?gap:0)+(visibleCount===0?gap:0);
+        if(used+extra>available) break;
+        used+=extra;
+        visibleCount++;
+      }
+      // Keep at least one direct category.
+      visibleCount=Math.max(1,visibleCount);
+    }
+
+    var visible=FILTER_ORDER.slice(0,visibleCount);
+    var overflow=FILTER_ORDER.slice(visibleCount);
+
+    filters.innerHTML=visible.map(function(item){
+      return '<button class="chip'+(item.value===state.filter?' active':'')+'" data-filter="'+item.value+'">'+item.label+'</button>';
+    }).join("");
+
+    if(overflow.length){
+      moreWrap.hidden=false;
+      menu.innerHTML=overflow.map(function(item){
+        return '<button class="filter-more-item'+(item.value===state.filter?' active':'')+'" type="button" role="menuitem" data-filter="'+item.value+'">'+item.label+'</button>';
+      }).join("");
+      more.classList.toggle("active",overflow.some(function(item){return item.value===state.filter;}));
+    }else{
+      moreWrap.hidden=true;
+      menu.innerHTML="";
+      closeFilterMore();
+    }
+  }
+
+  function scheduleFilterLayout(){
+    cancelAnimationFrame(filterLayoutFrame);
+    filterLayoutFrame=requestAnimationFrame(rebuildFilterLayout);
+  }
+
+  function startFilterLayout(){
+    scheduleFilterLayout();
+    var shell=document.querySelector(".filter-shell");
+    if(shell && typeof ResizeObserver!=="undefined"){
+      filterResizeObserver=new ResizeObserver(scheduleFilterLayout);
+      filterResizeObserver.observe(shell);
+    }
+    window.addEventListener("orientationchange",function(){
+      setTimeout(scheduleFilterLayout,80);
+      setTimeout(scheduleFilterLayout,260);
+    });
+  }
+
+  $("#filters").addEventListener("click",function(e){
+    var b=e.target.closest("[data-filter]");
+    if(!b)return;
+    setFilter(b.getAttribute("data-filter"));
   });
+
+  $("#filterMore").addEventListener("click",function(e){
+    e.stopPropagation();
+    toggleFilterMore();
+  });
+
+  $("#filterMoreMenu").addEventListener("click",function(e){
+    var b=e.target.closest("[data-filter]");
+    if(!b)return;
+    setFilter(b.getAttribute("data-filter"));
+  });
+
+  document.addEventListener("click",function(e){
+    var wrap=$("#filterMoreWrap");
+    if(wrap && !wrap.contains(e.target)) closeFilterMore();
+  });
+
   $("#search").addEventListener("input",function(e){state.search=e.target.value;render();});
   $("#activeOnly").addEventListener("change",function(e){state.activeOnly=e.target.checked;render();});
   $("#reload").addEventListener("click",function(){refresh({force:true});});
@@ -1432,9 +1578,14 @@
   var masonryResizeTimer=null;
   window.addEventListener("resize",function(){
     clearTimeout(masonryResizeTimer);
-    masonryResizeTimer=setTimeout(layoutDesktopMasonry,120);
+    masonryResizeTimer=setTimeout(function(){
+      layoutDesktopMasonry();
+      scheduleFilterLayout();
+    },120);
   });
 
+  startResponsiveLayoutObserver();
+  startFilterLayout();
   loadCache();
   refresh({force:true});
   startAutoRefresh();
