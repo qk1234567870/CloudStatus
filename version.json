@@ -1,6 +1,6 @@
 {
   "name": "CloudStatus Pure Pages",
-  "version": "63.0.0",
+  "version": "64.0.0",
   "updated": "2026-08-27",
   "current_state_and_history_independent": true,
   "status_inference": false,
@@ -84,9 +84,9 @@
   "last_read_time_includes_year": true,
   "asset_cache_busting": true,
   "html_no_cache_meta": true,
-  "cache_key": "cloudstatus-cache-v63",
+  "cache_key": "cloudstatus-cache-v64",
   "page_max_width": "1360px",
-  "synchronized_asset_version": "63.0.0",
+  "synchronized_asset_version": "64.0.0",
   "masonry_columns": "dynamic-1-to-4",
   "max_shell_width": "1180px",
   "layout_columns": "1-mobile-2-tablet-desktop",
@@ -109,5 +109,8 @@
   "incident_model": "active-separated-from-recent-history",
   "statuspage_strategy": "unresolved-plus-history",
   "architecture": "app-inline-config + service-registry-manifest-loader",
-  "service_loader": "parallel-manifest"
+  "service_loader": "parallel-manifest",
+  "card_architecture": "single-universal-template",
+  "card_count_source": "registered-service-count",
+  "fixed_service_count": false
 }

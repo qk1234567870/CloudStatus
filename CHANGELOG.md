@@ -2,6 +2,20 @@
 
 CloudStatus 版本更新記錄。
 
+## v64.0.0
+
+- 正式改為「一套通用卡片模板 + N 個服務資料」架構。
+- 現有服務卡片樣式作為唯一模板 `renderCardTemplate(service)`。
+- 所有服務一律經由 `renderServiceCards()` 使用同一模板生成，不存在 Cloudflare/GitHub/OpenAI 等專用卡片。
+- 卡片數量完全由已註冊服務數量決定：有多少服務，就生成多少張卡片。
+- 移除固定 23 個服務的數量檢查與相關假設。
+- 新增服務時只需增加服務模組；不需要修改 HTML、CSS 或卡片模板。
+- 刪除服務模組後，對應卡片自然消失。
+- 服務模組仍只負責名稱、分類、來源、metadata 與解析邏輯。
+- `app.js` 負責唯一卡片模板、事件區、狀態區、搜尋、分類、Masonry、快取與刷新。
+- v61 目前事件 / 最近事件分離與既有 UI 完整保留。
+- Generic ZIP 不包含 `CNAME`。
+
 ## v63.0.0
 
 - 保留服務模組化：`services.js` + `services/*.js`。

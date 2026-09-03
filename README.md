@@ -61,3 +61,19 @@
 - `assets/services/*.js`：各服務來源設定
 - `assets/app.js`：全域設定、抓取、解析、事件合併、快取與 UI
 - `assets/style.css`：全端響應式樣式
+
+
+## 卡片架構
+
+CloudStatus 使用單一通用服務卡片模板。
+
+```text
+服務模組資料
+   ↓
+renderCardTemplate(service)
+   ↓
+通用服務卡片
+```
+
+卡片數量由服務註冊數量自動決定，不設定固定上限或固定數量。
+新增服務只需新增服務模組；卡片模板、HTML 與 CSS 不需要為個別服務修改。
