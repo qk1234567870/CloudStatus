@@ -2,6 +2,17 @@
 
 CloudStatus 版本更新記錄。
 
+## v77.0.0
+
+- 完全移除 JavaScript absolute Masonry Engine。
+- 桌面 / 足夠寬度橫屏改成兩個獨立 DOM 欄，每欄使用正常文件流。
+- 卡片不再計算 `top / left / grid height`，Safari 捲動、工具列收合與非同步高度變化不再依賴 Y 座標重算。
+- 雙欄依原始服務順序交錯分配：1/3/5… 左欄，2/4/6… 右欄。
+- 760px 以下直接輸出原始服務順序的單欄，不使用雙欄 DOM。
+- ResizeObserver、resize、VisualViewport、設備旋轉只在單欄/雙欄模式跨越 760px 時重新生成服務 DOM。
+- 保留 v76 Layout Engine / Render Scheduler、v74 Header 左對齊、v73 動態更多與單一卡片模板。
+- 23 個服務模組保持不變。
+
 ## v76.0.0
 
 - 重構桌面/橫屏 Layout Engine：首頁所有區塊只使用 `.shell` 實際 content width。
