@@ -2,6 +2,16 @@
 
 CloudStatus 版本更新記錄。
 
+## v65.0.0
+
+- 修正 v64 通用卡片模板接線錯誤：`render()` 不再呼叫已移除的 `renderService()`，統一使用 `renderServiceCards()`。
+- 頁面初始化時立即依服務註冊數量建立全部 `載入中…` 卡片，不等待任何網路來源。
+- 新增 `createInitialServiceState()`，所有服務使用同一份初始卡片資料結構。
+- 新增 `updateServiceState(serviceId, state)`，各服務資料完成後按 `id` 更新自己的通用卡片，不依賴陣列 index。
+- 快取恢復改為按服務 `id` 對應；新增服務會自動補 loading 卡片，已刪除服務不再從舊快取復活。
+- 卡片數量仍完全由服務資料決定，不存在固定 23 張限制。
+- 保留唯一 `renderCardTemplate(service)` 卡片模板及既有 UI、事件、搜尋、分類、Masonry、快取與刷新功能。
+
 ## v64.0.0
 
 - 正式改為「一套通用卡片模板 + N 個服務資料」架構。
