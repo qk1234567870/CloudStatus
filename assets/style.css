@@ -1493,3 +1493,236 @@ html,body{
   .service-card .service-name{font-size:17px}
   .card-footer{font-size:10px}
 }
+
+
+/* ============================================================
+   v67 Responsive Card Template
+   卡片內部真正自適應：標題可換行、時間完整、Footer 可換行、
+   來源不擠壓、任何手機寬度不橫向溢出。
+   ============================================================ */
+
+.service-card,
+.service-card *{
+  box-sizing:border-box;
+}
+
+.service-card{
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  overflow:hidden;
+}
+
+.service-card .service-head{
+  width:100%;
+  min-width:0;
+  grid-template-columns:minmax(0,1fr) auto;
+}
+
+.service-card .service-name,
+.service-card .service-desc,
+.service-card .service-desc-second-row,
+.service-card .route-meta,
+.service-card .events,
+.service-card .event-list,
+.service-card .event,
+.service-card .event-main,
+.service-card .event-title{
+  min-width:0;
+  max-width:100%;
+}
+
+.service-card .service-name{
+  white-space:normal;
+  overflow:visible;
+  text-overflow:clip;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+}
+
+.service-card .service-desc,
+.service-card .service-desc-second-row,
+.service-card .route-meta{
+  white-space:normal;
+  overflow:visible;
+  text-overflow:clip;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+}
+
+.service-card .source-badge{
+  max-width:42vw;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.service-card .event{
+  width:100%;
+  min-width:0;
+  padding:11px 0;
+}
+
+.service-card .event-main{
+  display:flex;
+  align-items:flex-start;
+  flex-wrap:wrap;
+  gap:5px 7px;
+  width:100%;
+}
+
+.service-card .event .tag{
+  flex:0 0 auto;
+}
+
+.service-card .event-title{
+  flex:1 1 220px;
+  display:block;
+  white-space:normal !important;
+  overflow:visible !important;
+  text-overflow:clip !important;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+  line-height:1.45;
+}
+
+.service-card .event-time{
+  display:block;
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  justify-self:stretch;
+  text-align:right;
+  white-space:normal;
+  overflow:visible;
+  text-overflow:clip;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+  font-variant-numeric:tabular-nums;
+}
+
+.service-card .card-footer{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:space-between;
+  gap:5px 12px;
+  width:auto;
+  min-width:0;
+}
+
+.service-card .card-footer > span{
+  min-width:0;
+  max-width:100%;
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+
+.service-card .section-head{
+  min-width:0;
+}
+
+.service-card .section-label{
+  min-width:0;
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+
+.service-card .section-count{
+  flex:0 0 auto;
+}
+
+/* 平板 / 窄桌面 */
+@media (max-width:760px){
+  .service-card .service-head{
+    column-gap:10px;
+  }
+
+  .service-card .event-title{
+    flex-basis:180px;
+  }
+}
+
+/* 手機 */
+@media (max-width:520px){
+  .service-card .service-head{
+    grid-template-columns:minmax(0,1fr) auto;
+    column-gap:8px;
+    row-gap:6px;
+  }
+
+  .service-card .service-name{
+    font-size:17px;
+    line-height:1.3;
+  }
+
+  .service-card .source-badge{
+    max-width:32vw;
+    font-size:11px;
+  }
+
+  .service-card .service-desc,
+  .service-card .service-desc-second-row{
+    font-size:12px;
+    line-height:1.5;
+  }
+
+  .service-card .event-main{
+    display:grid;
+    grid-template-columns:auto minmax(0,1fr);
+    gap:4px 6px;
+    align-items:start;
+  }
+
+  .service-card .event-title{
+    flex:none;
+    width:auto;
+    font-size:14px;
+    line-height:1.48;
+  }
+
+  .service-card .event-time{
+    margin-top:3px;
+    font-size:11px;
+    line-height:1.35;
+  }
+
+  .service-card .card-footer{
+    align-items:flex-start;
+    font-size:10px;
+  }
+
+  .service-card .card-footer > span:last-child{
+    margin-left:auto;
+    text-align:right;
+  }
+}
+
+/* 超窄手機：來源移到第二行，避免標題和來源互相擠壓 */
+@media (max-width:390px){
+  .service-card .service-head{
+    grid-template-columns:minmax(0,1fr);
+    grid-template-areas:
+      "name"
+      "source"
+      "desc"
+      "route";
+  }
+
+  .service-card .source-badge{
+    justify-self:start;
+    max-width:100%;
+  }
+
+  .service-card .card-footer{
+    flex-direction:column;
+    align-items:stretch;
+  }
+
+  .service-card .card-footer > span,
+  .service-card .card-footer > span:last-child{
+    width:100%;
+    margin-left:0;
+    text-align:left;
+  }
+}
