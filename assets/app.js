@@ -7,34 +7,14 @@
   var SERVICE_PARSERS = window.CloudStatusServiceParsers || {};
   var state = { services: [], filter: "all", search: "", activeOnly: false };
 
-  var BASIC = CONFIG.basic || {};
-  var LAYOUT = CONFIG.layout || {};
-  var REFRESH = CONFIG.refresh || {};
-  var CACHE = CONFIG.cache || {};
-  var NETWORK = CONFIG.network || {};
-  var DISPLAY = CONFIG.display || {};
-
-  var REFRESH_INTERVAL = REFRESH.interval || 5 * 60 * 1000;
-  var CACHE_KEY = BASIC.cacheKey || "cloudstatus-cache-v76";
-  var CACHE_MAX_AGE = CACHE.maxAge || 15 * 60 * 1000;
-  var STALE_CACHE_MAX_AGE = CACHE.staleMaxAge || 24 * 60 * 60 * 1000;
-  var FETCH_TIMEOUT = NETWORK.fetchTimeout || 6500;
-  var READER_TIMEOUT = NETWORK.readerTimeout || 7500;
-  var FALLBACK_CONCURRENCY = NETWORK.fallbackConcurrency || 4;
-  var FOREGROUND_REFRESH_THRESHOLD = REFRESH.foregroundThreshold || 2 * 60 * 1000;
-
-  function applyConfiguredCssVars() {
-    var root=document.documentElement;
-    root.style.setProperty("--cs-max-width",(LAYOUT.maxWidth || 1180)+"px");
-    root.style.setProperty("--cs-gap",(LAYOUT.gap || 14)+"px");
-    root.style.setProperty("--cs-mobile-padding",(LAYOUT.mobilePadding || 12)+"px");
-    root.style.setProperty("--cs-side-padding-min",(LAYOUT.sidePaddingMin || 20)+"px");
-    root.style.setProperty("--cs-side-padding-max",(LAYOUT.sidePaddingMax || 64)+"px");
-    root.style.setProperty("--cs-source-badge-max-width",(LAYOUT.sourceBadgeMaxWidth || 240)+"px");
-    root.style.setProperty("--cs-source-badge-max-ratio",String(LAYOUT.sourceBadgeMaxRatio || 0.42));
-  }
-
-  applyConfiguredCssVars();
+  var REFRESH_INTERVAL = CONFIG.refreshInterval || 5 * 60 * 1000;
+  var CACHE_KEY = CONFIG.cacheKey || "cloudstatus-cache-v77";
+  var CACHE_MAX_AGE = CONFIG.cacheMaxAge || 15 * 60 * 1000;
+  var STALE_CACHE_MAX_AGE = CONFIG.staleCacheMaxAge || 24 * 60 * 60 * 1000;
+  var FETCH_TIMEOUT = CONFIG.fetchTimeout || 6500;
+  var READER_TIMEOUT = CONFIG.readerTimeout || 7500;
+  var FALLBACK_CONCURRENCY = CONFIG.fallbackConcurrency || 4;
+  var FOREGROUND_REFRESH_THRESHOLD = CONFIG.foregroundRefreshThreshold || 2 * 60 * 1000;
   var lastRefresh = 0;
   var refreshInFlight = false;
 
@@ -1237,10 +1217,10 @@
     }
 
     var activeEvents=!service.loading
-      ? (service.events||[]).filter(isActiveEvent).slice(0,DISPLAY.activeEventLimit||20)
+      ? (service.events||[]).filter(isActiveEvent).slice(0,CONFIG.activeEventLimit||20)
       : [];
     var recentEvents=!service.loading
-      ? (service.events||[]).filter(function(e){return !isActiveEvent(e);}).slice(0,DISPLAY.recentEventLimit||3)
+      ? (service.events||[]).filter(function(e){return !isActiveEvent(e);}).slice(0,3)
       : [];
 
     if (!service.loading && activeEvents.length) {
@@ -1272,12 +1252,10 @@
             : escapeHtml(service.nameZh||service.desc)
           )+
         '</span>'+
-        (DISPLAY.showRouteMeta!==false && service.category==="crossborder" && service.carrierLabel
+        (CONFIG.showRouteMeta!==false && service.category==="crossborder" && service.carrierLabel
           ? '<span class="route-meta">'+escapeHtml(service.carrierLabel)+(service.routeClassLabel?' · '+escapeHtml(service.routeClassLabel):'')+'</span>'
           : '')+
-        (DISPLAY.showSourceBadge!==false
-          ? '<span class="source-badge">'+escapeHtml(service.sourceLabel)+'</span>'
-          : '')+
+        (CONFIG.showSourceBadge!==false ? '<span class="source-badge">'+escapeHtml(service.sourceLabel)+'</span>' : '')+
       '</div><div class="events">'+body+'</div></article>';
   }
 
@@ -1287,15 +1265,15 @@
 
     var cards=Array.prototype.slice.call(grid.querySelectorAll(".service"));
 
-    // 完全依實際內容容器寬度判斷。
-    // 門檻只從 config.js 的 layout.twoColumnMinWidth 讀取。
+    // 依實際內容容器寬度判斷，不依手機/桌面名稱。
+    // 容器 < 600px：單欄；>= 600px：雙欄 Masonry。
     var availableWidth=grid.clientWidth || window.innerWidth;
 
     // v72:
     // < 560px : one-column normal flow
     // >=560px : two-column Masonry, including mobile landscape.
     // No phone/tablet/orientation detection.
-    var useMasonry=LAYOUT.masonry!==false && availableWidth >= (LAYOUT.twoColumnMinWidth || 560);
+    var useMasonry=availableWidth >= (CONFIG.masonryMinWidth || 560);
 
     if(!useMasonry || !cards.length){
       grid.classList.remove("masonry-active");
@@ -1311,7 +1289,7 @@
       return;
     }
 
-    var gap=LAYOUT.gap||14;
+    var gap=CONFIG.masonryGap||14;
     grid.classList.add("masonry-active");
 
     cards.forEach(function(card){
@@ -1323,7 +1301,8 @@
     requestAnimationFrame(function(){
       var gridWidth=Math.floor(grid.getBoundingClientRect().width || grid.clientWidth || availableWidth);
 
-      // 只要進入雙欄就固定兩欄，並補到目前較短的一欄。
+      // 1180px 整體寬度下固定兩欄最穩定。
+      // <600px 已在前面走單欄；>=600px 一律雙欄 Masonry。
       var columns=2;
       var colWidth=Math.floor((gridWidth-gap)/columns);
       var heights=new Array(columns).fill(0);
@@ -1489,8 +1468,8 @@
     masonryResizeTimer=setTimeout(function(){
       layoutDesktopMasonry();
       requestAnimationFrame(layoutDesktopMasonry);
-      setTimeout(layoutDesktopMasonry,REFRESH.relayoutSecondPassDelay || 280);
-    },REFRESH.relayoutDelay || 80);
+      setTimeout(layoutDesktopMasonry,280);
+    },80);
   }
 
   window.addEventListener("resize",scheduleResponsiveRelayout);

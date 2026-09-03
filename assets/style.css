@@ -1,15 +1,4 @@
-/* CloudStatus v75 fallback variables.
-   真正可修改值位於 assets/config.js，app.js 啟動後會覆蓋這些 fallback。 */
-:root{
-  --cs-max-width:1180px;
-  --cs-gap:14px;
-  --cs-mobile-padding:12px;
-  --cs-side-padding-min:20px;
-  --cs-side-padding-max:64px;
-  --cs-source-badge-max-width:240px;
-  --cs-source-badge-max-ratio:.42;
-}
-
+/* CloudStatus v77 — v72 已驗證橫屏 / Masonry 核心原樣保留 */
 :root{
   --bg:#111214;
   --card:#1b1c1f;
@@ -40,7 +29,7 @@ body{
 button,input{font:inherit}
 a{-webkit-tap-highlight-color:transparent}
 .shell{
-  width:min(var(--cs-max-width),calc(100% - clamp(var(--cs-side-padding-min),4vw,var(--cs-side-padding-max))));
+  width:min(1180px,calc(100% - clamp(20px,4vw,64px)));
   margin:0 auto;
   padding:max(15px,env(safe-area-inset-top)) 12px max(30px,env(safe-area-inset-bottom))
 }
@@ -956,7 +945,7 @@ button { font-size: 14px; }
    寬螢幕只增加左右留白，不再增加卡片欄數。
    ========================================================= */
 .shell{
-  width:min(1180px,calc(100% - clamp(var(--cs-side-padding-min),4vw,var(--cs-side-padding-max)))) !important;
+  width:min(1180px,calc(100% - clamp(20px,4vw,64px))) !important;
   max-width:1180px !important;
   margin-left:auto !important;
   margin-right:auto !important;
@@ -1053,10 +1042,10 @@ button { font-size: 14px; }
 }
 
 /* =========================================================
-   v76 統一響應式版面
-   唯一斷點來源：assets/config.js → layout.twoColumnMinWidth
-   JS 加上 .masonry-active = 雙欄階梯
-   JS 移除 .masonry-active = 單欄正常文流
+   v72 統一雙欄階梯版面
+   <560px：單欄正常文流
+   >=560px：雙欄 Masonry，自動補位
+   不判斷手機 / 平板 / 橫直屏
    ========================================================= */
 
 html,
@@ -1068,15 +1057,8 @@ body{
 }
 
 .shell{
-  width:min(
-    var(--cs-max-width),
-    calc(100% - clamp(
-      var(--cs-side-padding-min),
-      4vw,
-      var(--cs-side-padding-max)
-    ))
-  );
-  max-width:var(--cs-max-width);
+  width:min(1180px,calc(100% - clamp(20px,4vw,64px)));
+  max-width:1180px;
   min-width:0;
   margin-inline:auto;
   box-sizing:border-box;
@@ -1093,7 +1075,6 @@ body{
   box-sizing:border-box;
 }
 
-/* 分類列 */
 .filters{
   display:flex;
   flex-wrap:nowrap;
@@ -1107,7 +1088,6 @@ body{
 .filters::-webkit-scrollbar{display:none}
 .chip{flex:0 0 auto}
 
-/* 搜尋列 */
 .search-row{
   display:flex;
   align-items:center;
@@ -1118,13 +1098,11 @@ body{
   flex:1 1 auto;
 }
 
-/* 統計列 */
 .summary{
   display:grid;
   grid-template-columns:repeat(3,minmax(0,1fr));
 }
 
-/* 卡片 */
 .service{
   min-width:0;
   width:100%;
@@ -1138,8 +1116,7 @@ body{
   grid-template-columns:minmax(0,1fr) auto;
   grid-template-areas:
     "name source"
-    "subtitle subtitle"
-    "route route";
+    "subtitle subtitle";
   column-gap:12px;
   row-gap:4px;
   align-items:start;
@@ -1155,18 +1132,14 @@ body{
 .source-badge{
   grid-area:source;
   min-width:0;
-  max-width:min(
-    calc(var(--cs-source-badge-max-ratio) * 100vw),
-    var(--cs-source-badge-max-width)
-  );
+  max-width:min(42vw,240px);
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
   text-align:right;
 }
 
-.service-desc,
-.service-desc-second-row{
+.service-desc{
   grid-area:subtitle;
   min-width:0;
   width:100%;
@@ -1175,8 +1148,8 @@ body{
   overflow-wrap:anywhere;
 }
 
+.service-desc-second-row,
 .route-meta{
-  grid-area:route;
   display:block;
   min-width:0;
   width:100%;
@@ -1191,51 +1164,54 @@ body{
   max-width:100%;
 }
 
-/* 單欄：正常文流 */
-#services{
+/* <560px：單欄，所有卡片保持正常文流 */
+#services,
+#services.masonry-active{
   display:grid;
   grid-template-columns:minmax(0,1fr);
   position:static;
   width:100%;
-  height:auto;
-  gap:var(--cs-gap);
+  height:auto !important;
+  gap:14px;
 }
 
-#services > .service{
-  position:static;
-  left:auto;
-  top:auto;
-  width:100%;
-  max-width:100%;
-}
-
-/* 雙欄：只由 JS 根據 config.js 的門檻啟用。
-   不再在 CSS 寫 560px / 600px / 1180px 等第二份斷點。 */
-#services.masonry-active{
-  display:block;
-  position:relative;
-  width:100%;
-  /* height 由 JS 寫入 inline style，不能用 !important 覆蓋 */
-}
-
+#services > .service,
 #services.masonry-active > .service{
-  position:absolute;
-  min-width:0;
+  position:static;
+  left:auto !important;
+  top:auto !important;
+  width:100% !important;
+  max-width:100% !important;
   box-sizing:border-box;
-  /* width / left / top 全由 JS 根據 config.js 計算 */
 }
 
-/* 極窄畫面只處理外觀，不決定單/雙欄 */
+/* >=560px：JS 啟用真正雙欄 Masonry 階梯補位 */
+@media (min-width:560px){
+  #services.masonry-active{
+    display:block !important;
+    position:relative !important;
+    width:100% !important;
+    /* height 由 JS 根據兩欄最長高度寫入 */
+  }
+
+  #services.masonry-active > .service{
+    position:absolute !important;
+    width:calc((100% - 14px)/2) !important;
+    max-width:calc((100% - 14px)/2) !important;
+    min-width:0 !important;
+    box-sizing:border-box !important;
+  }
+}
+
+/* 很窄時避免控制列互擠 */
 @media (max-width:430px){
   .shell{
     width:100%;
     max-width:100%;
-    padding-inline:var(--cs-mobile-padding);
+    padding-inline:12px;
   }
 
   .search-row{gap:8px}
 
-  .source-badge{
-    max-width:38vw;
-  }
+  .source-badge{max-width:38vw}
 }
