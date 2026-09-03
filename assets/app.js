@@ -3,11 +3,11 @@
 
   function startApp() {
   var CONFIG = Object.freeze({
-    version: "74.0.0",
+    version: "75.0.0",
     expectedServiceCount: 23,
 
     refreshInterval: 5 * 60 * 1000,
-    cacheKey: "cloudstatus-cache-v74",
+    cacheKey: "cloudstatus-cache-v75",
     cacheMaxAge: 15 * 60 * 1000,
     staleCacheMaxAge: 24 * 60 * 60 * 1000,
     foregroundRefreshThreshold: 2 * 60 * 1000,
@@ -25,7 +25,7 @@
   var state = { services: [], filter: "all", search: "", activeOnly: false };
 
   var REFRESH_INTERVAL = CONFIG.refreshInterval || 5 * 60 * 1000;
-  var CACHE_KEY = CONFIG.cacheKey || "cloudstatus-cache-v74";
+  var CACHE_KEY = CONFIG.cacheKey || "cloudstatus-cache-v75";
   var CACHE_MAX_AGE = CONFIG.cacheMaxAge || 15 * 60 * 1000;
   var STALE_CACHE_MAX_AGE = CONFIG.staleCacheMaxAge || 24 * 60 * 60 * 1000;
   var FETCH_TIMEOUT = CONFIG.fetchTimeout || 6500;
@@ -1224,69 +1224,89 @@
     };
   }
 
+  var masonryLayoutToken=0;
+  var masonryLayoutFrame=0;
+
+  function resetMasonryLayout(grid,cards){
+    grid.classList.remove("masonry-active");
+    grid.style.height="";
+    cards.forEach(function(card){
+      card.style.position="";
+      card.style.left="";
+      card.style.top="";
+      card.style.width="";
+      card.style.maxWidth="";
+      card.style.boxSizing="";
+      card.style.marginBottom="";
+      card.style.transform="";
+    });
+  }
+
   function layoutDesktopMasonry() {
     var grid=$("#services");
     if(!grid) return;
 
     var cards=Array.prototype.slice.call(grid.querySelectorAll(".service"));
+    var availableWidth=Math.floor(grid.getBoundingClientRect().width || grid.clientWidth || window.innerWidth);
 
-    // 依實際內容容器寬度判斷，不依手機/桌面名稱。
-    // 容器 <= 720px：單欄；> 720px：雙欄 Masonry。
-    var availableWidth=grid.clientWidth || window.innerWidth;
-    if(availableWidth<=720 || !cards.length){
-      grid.classList.remove("masonry-active");
-      grid.style.height="";
-      cards.forEach(function(card){
-        card.style.left="";
-        card.style.top="";
-        card.style.width="";
-        card.style.maxWidth="";
-    card.style.boxSizing="";
-        card.style.gridRowEnd="";
-      });
+    masonryLayoutToken++;
+    var token=masonryLayoutToken;
+
+    cancelAnimationFrame(masonryLayoutFrame);
+
+    // 小於 760px 一律回到正常文件流單欄。
+    if(availableWidth<760 || !cards.length){
+      resetMasonryLayout(grid,cards);
       return;
     }
 
     var gap=CONFIG.masonryGap||14;
+    var columns=2;
+    var colWidth=Math.floor((availableWidth-gap)/columns);
+
+    // 第一階段：先確立所有卡片最終寬度與 absolute 模式。
+    // 這一步完成後 Container Query / 文字換行才會得到正確高度。
     grid.classList.add("masonry-active");
+    grid.style.height="";
 
     cards.forEach(function(card){
+      card.style.position="absolute";
       card.style.left="0px";
       card.style.top="0px";
-      card.style.gridRowEnd="";
+      card.style.width=colWidth+"px";
+      card.style.maxWidth=colWidth+"px";
+      card.style.boxSizing="border-box";
+      card.style.marginBottom="0px";
+      card.style.transform="none";
     });
 
-    requestAnimationFrame(function(){
-      var gridWidth=Math.floor(grid.getBoundingClientRect().width || grid.clientWidth || availableWidth);
+    masonryLayoutFrame=requestAnimationFrame(function(){
+      if(token!==masonryLayoutToken) return;
 
-      // 1180px 整體寬度下固定兩欄最穩定。
-      // <=720px 已在前面走單欄；>720px 一律雙欄 Masonry。
-      var columns=2;
-      var colWidth=Math.floor((gridWidth-gap)/columns);
-      var heights=new Array(columns).fill(0);
+      // 強制一次 layout，確保卡片寬度與 Container Query 已套用。
+      void grid.offsetHeight;
 
-      cards.forEach(function(card){
-        // 找目前最短的一欄，形成真正「階梯式」補位。
-        var col=0;
-        for(var i=1;i<columns;i++){
-          if(heights[i]<heights[col]) col=i;
-        }
+      masonryLayoutFrame=requestAnimationFrame(function(){
+        if(token!==masonryLayoutToken) return;
 
-        var x=col*(colWidth+gap);
-        var y=heights[col];
+        var heights=[0,0];
 
-        card.style.width=colWidth+"px";
-    card.style.maxWidth=colWidth+"px";
-    card.style.boxSizing="border-box";
-        card.style.maxWidth=colWidth+"px";
-        card.style.left=x+"px";
-        card.style.top=y+"px";
+        cards.forEach(function(card){
+          // 每張卡放進當前最短欄。
+          var col=heights[1]<heights[0] ? 1 : 0;
+          var x=col*(colWidth+gap);
+          var y=heights[col];
 
-        var h=card.getBoundingClientRect().height;
-        heights[col]=y+h+gap;
+          card.style.left=x+"px";
+          card.style.top=y+"px";
+
+          // 使用 offsetHeight，避免 transform / subpixel 影響。
+          var height=Math.ceil(card.offsetHeight);
+          heights[col]=y+height+gap;
+        });
+
+        grid.style.height=Math.max(0,Math.max(heights[0],heights[1])-gap)+"px";
       });
-
-      grid.style.height=Math.max(0,Math.max.apply(null,heights)-gap)+"px";
     });
   }
 
@@ -1402,7 +1422,8 @@
     if(masonryResizeObserver) masonryResizeObserver.disconnect();
 
     masonryResizeObserver=new ResizeObserver(function(){
-      layoutDesktopMasonry();
+      cancelAnimationFrame(masonryLayoutFrame);
+      masonryLayoutFrame=requestAnimationFrame(layoutDesktopMasonry);
     });
     masonryResizeObserver.observe(grid);
   }
@@ -1586,6 +1607,22 @@
 
   startResponsiveLayoutObserver();
   startFilterLayout();
+
+  window.addEventListener("orientationchange",function(){
+    setTimeout(layoutDesktopMasonry,80);
+    setTimeout(layoutDesktopMasonry,260);
+  });
+
+  window.addEventListener("pageshow",function(){
+    requestAnimationFrame(layoutDesktopMasonry);
+  });
+
+  if(document.fonts && document.fonts.ready){
+    document.fonts.ready.then(function(){
+      layoutDesktopMasonry();
+    });
+  }
+
   loadCache();
   refresh({force:true});
   startAutoRefresh();

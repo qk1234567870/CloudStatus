@@ -951,3 +951,36 @@ footer{
     animation:none!important;
   }
 }
+
+
+/* ============================================================
+   v75 Desktop Masonry
+   桌面雙欄使用 absolute 定位；手機永遠回正常文件流。
+   ============================================================ */
+#services.masonry-active{
+  position:relative;
+  display:block;
+  width:100%;
+}
+
+#services.masonry-active > .service{
+  position:absolute;
+  margin:0;
+  transition:none;
+}
+
+@media (max-width:759px){
+  #services.masonry-active{
+    height:auto !important;
+  }
+
+  #services.masonry-active > .service,
+  #services > .service{
+    position:relative !important;
+    left:auto !important;
+    top:auto !important;
+    width:100% !important;
+    max-width:100% !important;
+    margin:0 0 14px !important;
+  }
+}
