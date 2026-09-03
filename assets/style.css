@@ -1041,50 +1041,77 @@ button { font-size: 14px; }
 }
 
 /* =========================================================
-   v70 響應式版面
-   手機直屏：單欄正常文流
-   手機橫屏：雙欄 CSS Grid 正常文流
-   桌面：雙欄 Masonry
+   v71 統一自適應版面
+   不偵測手機 / 平板 / 方向。
+   只按實際可用寬度排版。
    ========================================================= */
 
-html,body{
+html{
+  width:100%;
   max-width:100%;
+  overflow-x:hidden;
+}
+
+body{
+  width:100%;
+  max-width:100%;
+  min-width:0;
   overflow-x:hidden;
 }
 
 .shell{
   width:min(1180px,calc(100% - clamp(20px,4vw,64px)));
   max-width:1180px;
+  min-width:0;
   margin-inline:auto;
   box-sizing:border-box;
 }
 
-.topbar,.filters,.search-row,.summary,#services{
+.topbar,
+.filters,
+.search-row,
+.summary,
+#services{
+  width:100%;
   min-width:0;
   max-width:100%;
   box-sizing:border-box;
 }
 
+/* 分類列 */
 .filters{
   display:flex;
   flex-wrap:nowrap;
   gap:8px;
   overflow-x:auto;
   overflow-y:hidden;
+  overscroll-behavior-inline:contain;
   -webkit-overflow-scrolling:touch;
   scrollbar-width:none;
 }
 .filters::-webkit-scrollbar{display:none}
 .chip{flex:0 0 auto}
 
-.summary{grid-template-columns:repeat(3,minmax(0,1fr))}
-
-.service,.service-head,.service-name,.source-badge,
-.service-desc,.service-desc-second-row,.event-title,.event-time{
+/* 搜尋列 */
+.search-row{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.search-row input{
   min-width:0;
+  flex:1 1 auto;
 }
 
+/* 統計列 */
+.summary{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+}
+
+/* 卡片共同規則 */
 .service{
+  min-width:0;
   width:100%;
   max-width:100%;
   box-sizing:border-box;
@@ -1098,41 +1125,58 @@ html,body{
     "name source"
     "subtitle subtitle";
   column-gap:12px;
+  row-gap:4px;
   align-items:start;
+  min-width:0;
 }
 
 .service-name{
   grid-area:name;
+  min-width:0;
   overflow-wrap:anywhere;
 }
 
 .source-badge{
   grid-area:source;
+  min-width:0;
+  max-width:min(42vw,240px);
   white-space:nowrap;
-  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  text-align:right;
 }
 
 .service-desc{
   grid-area:subtitle;
+  min-width:0;
   width:100%;
   max-width:100%;
   white-space:normal;
   overflow-wrap:anywhere;
 }
 
-.service-desc-second-row{
+.service-desc-second-row,
+.route-meta{
   display:block;
+  min-width:0;
   width:100%;
   max-width:100%;
   white-space:normal;
   overflow-wrap:anywhere;
 }
 
-/* 預設直屏 / 窄畫面：單欄，所有卡片保留在正常文流 */
+.event-title,
+.event-time{
+  min-width:0;
+  max-width:100%;
+}
+
+/* < 560px：單欄 */
 #services,
 #services.masonry-active{
   display:grid;
   grid-template-columns:minmax(0,1fr);
+  align-items:start;
   position:static;
   width:100%;
   height:auto !important;
@@ -1148,15 +1192,14 @@ html,body{
   max-width:100% !important;
 }
 
-/* 橫屏：直接雙欄 Grid，不使用 absolute/Masonry */
-@media (orientation:landscape) and (min-width:560px){
+/* >= 560px：雙欄 Grid。手機橫屏、平板、窄桌面都走正常文流。 */
+@media (min-width:560px){
   #services,
   #services.masonry-active{
     display:grid !important;
     grid-template-columns:repeat(2,minmax(0,1fr)) !important;
     align-items:start;
     position:static !important;
-    width:100%;
     height:auto !important;
     gap:14px;
   }
@@ -1168,11 +1211,10 @@ html,body{
     top:auto !important;
     width:100% !important;
     max-width:100% !important;
-    min-width:0 !important;
   }
 }
 
-/* 真正桌面寬度：JS 啟用雙欄 Masonry */
+/* >= 1180px：只有完整桌面內容寬度才由 JS 啟用 Masonry。 */
 @media (min-width:1180px){
   #services.masonry-active{
     display:block !important;
@@ -1187,12 +1229,19 @@ html,body{
   }
 }
 
-/* 窄直屏 */
-@media (orientation:portrait) and (max-width:759px){
+/* 很窄時避免控制列互相擠壓 */
+@media (max-width:430px){
   .shell{
     width:100%;
     max-width:100%;
-    padding-left:clamp(10px,3vw,18px);
-    padding-right:clamp(10px,3vw,18px);
+    padding-inline:12px;
+  }
+
+  .search-row{
+    gap:8px;
+  }
+
+  .source-badge{
+    max-width:38vw;
   }
 }
