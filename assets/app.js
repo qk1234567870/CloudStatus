@@ -8,7 +8,7 @@
   var state = { services: [], filter: "all", search: "", activeOnly: false };
 
   var REFRESH_INTERVAL = CONFIG.refreshInterval || 5 * 60 * 1000;
-  var CACHE_KEY = CONFIG.cacheKey || "cloudstatus-cache-v71";
+  var CACHE_KEY = CONFIG.cacheKey || "cloudstatus-cache-v63";
   var CACHE_MAX_AGE = CONFIG.cacheMaxAge || 15 * 60 * 1000;
   var STALE_CACHE_MAX_AGE = CONFIG.staleCacheMaxAge || 24 * 60 * 60 * 1000;
   var FETCH_TIMEOUT = CONFIG.fetchTimeout || 6500;
@@ -1252,83 +1252,91 @@
             : escapeHtml(service.nameZh||service.desc)
           )+
         '</span>'+
-        (service.category==="crossborder" && service.carrierLabel
-          ? '<span class="route-meta">'+escapeHtml(service.carrierLabel)+(service.routeClassLabel?' · '+escapeHtml(service.routeClassLabel):'')+'</span>'
-          : '')+
         '<span class="source-badge">'+escapeHtml(service.sourceLabel)+'</span>'+
       '</div><div class="events">'+body+'</div></article>';
+  }
+
+  var masonryFrame=0;
+  var masonryTimer=0;
+
+  function resetMasonry(grid,cards) {
+    grid.classList.remove("masonry-active");
+    grid.style.height="";
+    grid.style.position="";
+    cards.forEach(function(card){
+      card.style.position="";
+      card.style.left="";
+      card.style.top="";
+      card.style.width="";
+      card.style.maxWidth="";
+      card.style.boxSizing="";
+      card.style.gridRowEnd="";
+    });
   }
 
   function layoutDesktopMasonry() {
     var grid=$("#services");
     if(!grid) return;
 
-    var cards=Array.prototype.slice.call(grid.querySelectorAll(".service"));
+    var cards=Array.prototype.slice.call(grid.querySelectorAll(":scope > .service"));
+    var gridWidth=Math.floor(grid.getBoundingClientRect().width || grid.clientWidth || 0);
+    var minWidth=CONFIG.desktopMasonryMinWidth||760;
+    var portraitPhone=window.matchMedia &&
+      window.matchMedia("(orientation: portrait)").matches &&
+      window.innerWidth<=720;
 
-    // 依實際內容容器寬度判斷，不依手機/桌面名稱。
-    // 容器 < 600px：單欄；>= 600px：雙欄 Masonry。
-    var availableWidth=grid.clientWidth || window.innerWidth;
-
-    // v71:
-    // < 560px  : one-column normal flow
-    // 560-1179 : two-column CSS Grid (handled by CSS)
-    // >= 1180  : two-column Masonry
-    // JS never decides phone/tablet/orientation.
-    var useMasonry=availableWidth >= (CONFIG.desktopMasonryMinWidth || 1180);
-
-    if(!useMasonry || !cards.length){
-      grid.classList.remove("masonry-active");
-      grid.style.height="";
-      cards.forEach(function(card){
-        card.style.left="";
-        card.style.top="";
-        card.style.width="";
-        card.style.maxWidth="";
-    card.style.boxSizing="";
-        card.style.gridRowEnd="";
-      });
+    if(!cards.length || gridWidth<minWidth || portraitPhone){
+      resetMasonry(grid,cards);
       return;
     }
 
     var gap=CONFIG.masonryGap||14;
-    grid.classList.add("masonry-active");
+    var colWidth=Math.floor((gridWidth-gap)/2);
+    var heights=[0,0];
 
+    grid.classList.add("masonry-active");
+    grid.style.position="relative";
+    grid.style.width="100%";
+
+    // 第一階段：兩欄先取得最終寬度，避免使用舊寬度量高度。
     cards.forEach(function(card){
+      card.style.position="absolute";
+      card.style.width=colWidth+"px";
+      card.style.maxWidth=colWidth+"px";
+      card.style.boxSizing="border-box";
       card.style.left="0px";
       card.style.top="0px";
-      card.style.gridRowEnd="";
     });
 
-    requestAnimationFrame(function(){
-      var gridWidth=Math.floor(grid.getBoundingClientRect().width || grid.clientWidth || availableWidth);
+    // 強制瀏覽器完成本次排版，再讀取卡片真實高度。
+    void grid.offsetHeight;
 
-      // 1180px 整體寬度下固定兩欄最穩定。
-      // <600px 已在前面走單欄；>=600px 一律雙欄 Masonry。
-      var columns=2;
-      var colWidth=Math.floor((gridWidth-gap)/columns);
-      var heights=new Array(columns).fill(0);
+    // 第二階段：每張卡片放入目前最短的一欄。
+    cards.forEach(function(card){
+      var col=heights[0]<=heights[1]?0:1;
+      var x=col*(colWidth+gap);
+      var y=heights[col];
 
-      cards.forEach(function(card){
-        // 找目前最短的一欄，形成真正「階梯式」補位。
-        var col=0;
-        for(var i=1;i<columns;i++){
-          if(heights[i]<heights[col]) col=i;
-        }
+      card.style.left=x+"px";
+      card.style.top=y+"px";
 
-        var x=col*(colWidth+gap);
-        var y=heights[col];
+      var h=Math.ceil(card.getBoundingClientRect().height);
+      heights[col]=y+h+gap;
+    });
 
-        card.style.width=colWidth+"px";
-        card.style.maxWidth=colWidth+"px";
-        card.style.boxSizing="border-box";
-        card.style.left=x+"px";
-        card.style.top=y+"px";
+    // 容器高度必須等於最高欄，避免下面文字穿進卡片區。
+    grid.style.height=Math.max(0,Math.max(heights[0],heights[1])-gap)+"px";
+  }
 
-        var h=card.getBoundingClientRect().height;
-        heights[col]=y+h+gap;
+  function scheduleMasonry() {
+    if(masonryFrame) cancelAnimationFrame(masonryFrame);
+    clearTimeout(masonryTimer);
+
+    masonryFrame=requestAnimationFrame(function(){
+      masonryFrame=requestAnimationFrame(function(){
+        layoutDesktopMasonry();
+        masonryTimer=setTimeout(layoutDesktopMasonry,120);
       });
-
-      grid.style.height=Math.max(0,Math.max.apply(null,heights)-gap)+"px";
     });
   }
 
@@ -1336,7 +1344,7 @@
     renderSummary();
     var list=visibleServices();
     $("#services").innerHTML=list.length?list.map(renderService).join(""):'<div class="empty">沒有符合條件的服務或事件。</div>';
-    layoutDesktopMasonry();
+    scheduleMasonry();
   }
 
   async function refresh(options) {
@@ -1432,13 +1440,32 @@
 
   function startResponsiveLayoutObserver() {
     var grid=$("#services");
-    if(!grid || typeof ResizeObserver==="undefined") return;
+    if(!grid) return;
+
     if(masonryResizeObserver) masonryResizeObserver.disconnect();
 
-    masonryResizeObserver=new ResizeObserver(function(){
-      layoutDesktopMasonry();
-    });
-    masonryResizeObserver.observe(grid);
+    if(typeof ResizeObserver!=="undefined"){
+      masonryResizeObserver=new ResizeObserver(function(){
+        scheduleMasonry();
+      });
+      masonryResizeObserver.observe(grid);
+      if(grid.parentElement) masonryResizeObserver.observe(grid.parentElement);
+    }
+
+    window.addEventListener("resize",scheduleMasonry,{passive:true});
+    window.addEventListener("orientationchange",function(){
+      setTimeout(scheduleMasonry,80);
+    },{passive:true});
+
+    if(window.visualViewport){
+      window.visualViewport.addEventListener("resize",scheduleMasonry,{passive:true});
+    }
+
+    if(document.fonts && document.fonts.ready){
+      document.fonts.ready.then(scheduleMasonry).catch(function(){});
+    }
+
+    window.addEventListener("load",scheduleMasonry,{once:true});
   }
 
   function startAutoRefresh() {
@@ -1463,23 +1490,7 @@
   $("#activeOnly").addEventListener("change",function(e){state.activeOnly=e.target.checked;render();});
   $("#reload").addEventListener("click",function(){refresh({force:true});});
 
-  var masonryResizeTimer=null;
-  function scheduleResponsiveRelayout(){
-    clearTimeout(masonryResizeTimer);
-    masonryResizeTimer=setTimeout(function(){
-      layoutDesktopMasonry();
-      requestAnimationFrame(layoutDesktopMasonry);
-    },100);
-  }
-
-  window.addEventListener("resize",scheduleResponsiveRelayout);
-
-  if(window.visualViewport){
-    window.visualViewport.addEventListener("resize",scheduleResponsiveRelayout);
-  }
-
   startResponsiveLayoutObserver();
-
   loadCache();
   refresh({force:true});
   startAutoRefresh();
