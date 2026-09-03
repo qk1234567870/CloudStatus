@@ -16,7 +16,7 @@
     readerTimeout: 7500,
     fallbackConcurrency: 4,
 
-    desktopMasonryMinWidth: 760,
+    desktopMasonryMinWidth: 480,
     desktopMaxWidth: 1180,
     masonryGap: 14
     });
