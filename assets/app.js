@@ -7,44 +7,22 @@
   var SERVICE_PARSERS = window.CloudStatusServiceParsers || {};
   var state = { services: [], filter: "all", search: "", activeOnly: false };
 
-  var REFRESH_INTERVAL = CONFIG.refreshInterval || 5 * 60 * 1000;
-  var CACHE_KEY = CONFIG.cacheKey || "cloudstatus-cache-v63";
-  var CACHE_MAX_AGE = CONFIG.cacheMaxAge || 15 * 60 * 1000;
-  var STALE_CACHE_MAX_AGE = CONFIG.staleCacheMaxAge || 24 * 60 * 60 * 1000;
-  var FETCH_TIMEOUT = CONFIG.fetchTimeout || 6500;
-  var READER_TIMEOUT = CONFIG.readerTimeout || 7500;
-  var FALLBACK_CONCURRENCY = CONFIG.fallbackConcurrency || 4;
-  var FOREGROUND_REFRESH_THRESHOLD = CONFIG.foregroundRefreshThreshold || 2 * 60 * 1000;
+  var REFRESH_INTERVAL = CONFIG.refresh.interval;
+  var CACHE_KEY = CONFIG.cache.key;
+  var CACHE_MAX_AGE = CONFIG.cache.maxAge;
+  var STALE_CACHE_MAX_AGE = CONFIG.cache.staleMaxAge;
+  var FETCH_TIMEOUT = CONFIG.network.fetchTimeout;
+  var READER_TIMEOUT = CONFIG.network.readerTimeout;
+  var FALLBACK_CONCURRENCY = CONFIG.network.fallbackConcurrency;
+  var FOREGROUND_REFRESH_THRESHOLD = CONFIG.refresh.foregroundThreshold;
+  var RECENT_EVENT_LIMIT = CONFIG.events.recentLimit;
+  var EVENT_MERGE_LIMIT = CONFIG.events.mergeLimit;
   var lastRefresh = 0;
   var refreshInFlight = false;
 
-  var STATUS_LABELS = {
-    investigating: "調查中",
-    identified: "已確認",
-    monitoring: "監控中",
-    resolved: "已解決",
-    postmortem: "事後分析",
-    maintenance: "維護",
-    scheduled: "已排程",
-    in_progress: "進行中",
-    completed: "已完成",
-    degraded: "效能下降",
-    outage: "服務中斷",
-    active: "啟用",
-    closed: "已關閉"
-  };
+  var STATUS_LABELS = CONFIG.events.statusLabels;
 
-  var NOISE = [
-    /^#+\s*/i, /^recent incidents?$/i, /^past incidents?$/i, /^incident history$/i,
-    /^view all$/i, /^view history$/i, /^subscribe$/i, /^rss(?: feed)?$/i, /^atom$/i,
-    /^webhook$/i, /^documentation$/i, /^privacy(?: policy)?$/i, /^terms/i,
-    /^powered by/i, /^contact us$/i, /^send feedback$/i,
-    /^get (?:email|text message|sms) notifications?/i,
-    /^receive (?:email|text message|sms) notifications?/i,
-    /^\[[^\]]*\]\([^)]+\)$/i,
-    /網址來源\s*:/i,
-    /url source\s*:/i
-  ];
+  var NOISE = CONFIG.events.noisePatterns;
 
   function $(q) { return document.querySelector(q); }
   function cleanText(v) { return String(v == null ? "" : v).replace(/\s+/g, " ").trim(); }
@@ -65,12 +43,7 @@
     return map[s] || null;
   }
 
-  var CLOSED_EVENT_STATUSES = {
-    resolved:true,
-    postmortem:true,
-    completed:true,
-    closed:true
-  };
+  var CLOSED_EVENT_STATUSES = CONFIG.events.closedStatuses;
 
   function isActiveEvent(event) {
     if (!event || !event.status) return false;
@@ -206,7 +179,7 @@
   function sortRecent(events) {
     return dedupe(events).sort(function(a,b){
       return timeValue(b.start || b.end) - timeValue(a.start || a.end);
-    }).slice(0,20);
+    }).slice(0,EVENT_MERGE_LIMIT);
   }
 
   async function fetchJson(url) {
@@ -963,17 +936,7 @@
     return sortRecent(out);
   }
 
-  var SOURCE_PRIORITY = {
-    "official-api": 10,
-    "official-json": 20,
-    "official-rss": 30,
-    "official-history": 40,
-    "official-status": 50,
-    "official-announcement": 60,
-    "official-backup": 70,
-    "trusted-third-party": 80,
-    "other-backup": 90
-  };
+  var SOURCE_PRIORITY = CONFIG.sources.priority;
 
   function sourcePriority(source) {
     if (source && typeof source.priority === "number") {
@@ -1009,7 +972,7 @@
 
     try{
       var result=await runSource(source,service);
-      var events=(result.events||[]).slice(0,20);
+      var events=(result.events||[]).slice(0,EVENT_MERGE_LIMIT);
       var health=result.health||null;
       var healthText=result.healthText||null;
 
@@ -1044,7 +1007,7 @@
       var source=sources[i];
 
       // 已取得完整官方資料時，不再啟動第三方來源。
-      if(isThirdPartySource(source) && health && events.length>=3 && activeEventCount(events)>0) break;
+      if(isThirdPartySource(source) && health && events.length>=RECENT_EVENT_LIMIT && activeEventCount(events)>0) break;
 
       try{
         var result=await runSource(source,service);
@@ -1060,7 +1023,7 @@
           if(labels.indexOf(source.label)<0) labels.push(source.label);
         }
 
-        if(events.length>=3 && health && (health==="normal" || activeEventCount(events)>0)) break;
+        if(events.length>=RECENT_EVENT_LIMIT && health && (health==="normal" || activeEventCount(events)>0)) break;
       }catch(e){
         failures.push(source.label+": "+String(e));
       }
@@ -1068,7 +1031,7 @@
 
     return {
       id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,
-      events:events.slice(0,20),health:health,healthText:healthText,
+      events:events.slice(0,EVENT_MERGE_LIMIT),health:health,healthText:healthText,
       sourceLabel:labels.length===1?labels[0]:(labels.length>1?"多來源":"官方頁"),
       fallback:!events.length&&!health,
       failures:failures
@@ -1220,27 +1183,27 @@
       ? (service.events||[]).filter(isActiveEvent)
       : [];
     var recentEvents=!service.loading
-      ? (service.events||[]).filter(function(e){return !isActiveEvent(e);}).slice(0,3)
+      ? (service.events||[]).filter(function(e){return !isActiveEvent(e);}).slice(0,RECENT_EVENT_LIMIT)
       : [];
 
     if (!service.loading && activeEvents.length) {
-      body += '<div class="section-label active-section-label">目前 '+activeEvents.length+' 個事件</div>';
+      body += '<div class="section-label active-section-label">'+CONFIG.ui.labels.currentEvents+' '+activeEvents.length+' '+CONFIG.ui.labels.eventUnit+'</div>';
       body += activeEvents.map(function(e){return renderEvent(e,service);}).join("");
     }
 
     if (!service.loading && recentEvents.length) {
-      body += '<div class="section-label">最近 '+recentEvents.length+' 筆事件</div>';
+      body += '<div class="section-label">'+CONFIG.ui.labels.recentEvents+' '+recentEvents.length+' '+CONFIG.ui.labels.eventRecordUnit+'</div>';
       body += recentEvents.map(function(e){return renderEvent(e,service);}).join("");
     } else if (!service.loading && !activeEvents.length && service.health && service.category==="crossborder") {
       body += '<div class="history-empty">狀態依 Cloudflare Radar 公開 BGP 資料判定</div>';
     } else if (!service.loading && !activeEvents.length && service.health) {
-      body += '<div class="history-empty">近期沒有可顯示的可靠事件</div>';
+      body += '<div class="history-empty">'+CONFIG.ui.labels.noRecentReliableEvents+'</div>';
     } else if (!service.loading && !activeEvents.length && service.category==="crossborder" && service.fallback) {
       body += '<a class="message link" href="'+escapeHtml(service.page)+'" target="_blank" rel="noopener">[Cloudflare Radar] 暫時無法取得可靠上游狀態，不推斷目前狀態 →</a>';
     } else if (!service.loading && !activeEvents.length && service.fallback) {
       body += '<a class="message link" href="'+escapeHtml(service.page)+'" target="_blank" rel="noopener">[官方狀態頁] 自動來源未取得可靠事件資料，查看官方即時狀態 →</a>';
     } else if (!service.loading && !activeEvents.length) {
-      body += '<div class="message">目前沒有可顯示的可靠事件資料</div>';
+      body += '<div class="message">'+CONFIG.ui.labels.noReliableEvents+'</div>';
     }
 
     return '<article class="service">'+
@@ -1263,24 +1226,12 @@
     var grid=$("#services");
     if(!grid) return;
 
-    var cards=Array.prototype.slice.call(grid.querySelectorAll(".service"))
-      .filter(function(card){
-        return card.offsetParent!==null;
-      });
+    var cards=Array.prototype.slice.call(grid.querySelectorAll(".service"));
 
-    var gridWidth=Math.floor(grid.getBoundingClientRect().width || grid.clientWidth || window.innerWidth);
-    var viewportWidth=Math.round(window.visualViewport ? window.visualViewport.width : window.innerWidth);
-    var viewportHeight=Math.round(window.visualViewport ? window.visualViewport.height : window.innerHeight);
-    var landscape=viewportWidth>viewportHeight;
-    var coarse=window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
-
-    var phonePortrait=coarse && !landscape && viewportWidth<=(CONFIG.phonePortraitMaxWidth||759);
-    var phoneLandscape=coarse && landscape && viewportWidth<=(CONFIG.phoneLandscapeMaxWidth||980);
-
-    var mode=phonePortrait ? "phone-portrait" : (phoneLandscape ? "phone-landscape" : "desktop");
-    grid.setAttribute("data-layout-mode",mode);
-
-    function resetToSingleColumn(){
+    // 依實際內容容器寬度判斷，不依手機/桌面名稱。
+    // 容器 <= 720px：單欄；> 720px：雙欄 Masonry。
+    var availableWidth=grid.clientWidth || window.innerWidth;
+    if(availableWidth<=720 || !cards.length){
       grid.classList.remove("masonry-active");
       grid.style.height="";
       cards.forEach(function(card){
@@ -1288,40 +1239,13 @@
         card.style.top="";
         card.style.width="";
         card.style.maxWidth="";
-        card.style.boxSizing="";
+    card.style.boxSizing="";
         card.style.gridRowEnd="";
       });
-    }
-
-    if(!cards.length){
-      resetToSingleColumn();
       return;
     }
 
-    // 手機直向：永遠單欄。
-    if(mode==="phone-portrait"){
-      resetToSingleColumn();
-      return;
-    }
-
-    // 手機橫向：只有 1 張卡時必須滿寬。
-    // 2 張以上且寬度足夠才切雙欄。
-    if(mode==="phone-landscape"){
-      if(cards.length<2 || gridWidth<(CONFIG.phoneLandscapeTwoColumnMinWidth||760)){
-        resetToSingleColumn();
-        return;
-      }
-    }
-
-    // 桌面/平板：只有 1 張卡也改為滿寬，避免半邊空白。
-    if(mode==="desktop"){
-      if(cards.length<2 || gridWidth<(CONFIG.desktopMasonryMinWidth||760)){
-        resetToSingleColumn();
-        return;
-      }
-    }
-
-    var gap=CONFIG.masonryGap||14;
+    var gap=CONFIG.layout.masonryGap;
     grid.classList.add("masonry-active");
 
     cards.forEach(function(card){
@@ -1331,19 +1255,28 @@
     });
 
     requestAnimationFrame(function(){
-      var width=Math.floor(grid.getBoundingClientRect().width || grid.clientWidth || gridWidth);
+      var gridWidth=Math.floor(grid.getBoundingClientRect().width || grid.clientWidth || availableWidth);
+
+      // 1180px 整體寬度下固定兩欄最穩定。
+      // <=720px 已在前面走單欄；>720px 一律雙欄 Masonry。
       var columns=2;
-      var colWidth=Math.floor((width-gap)/columns);
-      var heights=[0,0];
+      var colWidth=Math.floor((gridWidth-gap)/columns);
+      var heights=new Array(columns).fill(0);
 
       cards.forEach(function(card){
-        var col=heights[0]<=heights[1] ? 0 : 1;
+        // 找目前最短的一欄，形成真正「階梯式」補位。
+        var col=0;
+        for(var i=1;i<columns;i++){
+          if(heights[i]<heights[col]) col=i;
+        }
+
         var x=col*(colWidth+gap);
         var y=heights[col];
 
         card.style.width=colWidth+"px";
+    card.style.maxWidth=colWidth+"px";
+    card.style.boxSizing="border-box";
         card.style.maxWidth=colWidth+"px";
-        card.style.boxSizing="border-box";
         card.style.left=x+"px";
         card.style.top=y+"px";
 
@@ -1351,7 +1284,7 @@
         heights[col]=y+h+gap;
       });
 
-      grid.style.height=Math.max(0,Math.max(heights[0],heights[1])-gap)+"px";
+      grid.style.height=Math.max(0,Math.max.apply(null,heights)-gap)+"px";
     });
   }
 
@@ -1487,28 +1420,10 @@
   $("#reload").addEventListener("click",function(){refresh({force:true});});
 
   var masonryResizeTimer=null;
-  function scheduleMasonryLayout(delay){
-    clearTimeout(masonryResizeTimer);
-    masonryResizeTimer=setTimeout(function(){
-      requestAnimationFrame(layoutDesktopMasonry);
-    },delay==null?80:delay);
-  }
-
   window.addEventListener("resize",function(){
-    scheduleMasonryLayout(80);
-  },{passive:true});
-
-  window.addEventListener("orientationchange",function(){
-    // iOS 旋轉期間 viewport 會經過中間尺寸，因此做兩次重算。
-    scheduleMasonryLayout(100);
-    setTimeout(function(){scheduleMasonryLayout(0);},320);
-  },{passive:true});
-
-  if(window.visualViewport){
-    window.visualViewport.addEventListener("resize",function(){
-      scheduleMasonryLayout(60);
-    },{passive:true});
-  }
+    clearTimeout(masonryResizeTimer);
+    masonryResizeTimer=setTimeout(layoutDesktopMasonry,120);
+  });
 
   loadCache();
   refresh({force:true});
@@ -1523,9 +1438,9 @@
     console.error(error);
     var updated = document.querySelector("#updated");
     var services = document.querySelector("#services");
-    if (updated) updated.textContent = "模組載入失敗";
+    if (updated) updated.textContent = CONFIG.ui.labels.moduleLoadFailed;
     if (services) {
-      services.innerHTML = '<div class="empty">服務模組載入失敗，請重新整理頁面。</div>';
+      services.innerHTML = '<div class="empty">'+CONFIG.ui.labels.moduleLoadFailedMessage+'</div>';
     }
   });
 })();
