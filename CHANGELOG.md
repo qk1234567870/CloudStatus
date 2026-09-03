@@ -2,56 +2,17 @@
 
 CloudStatus 版本更新記錄。
 
-## v76.0.0
+## v77.0.0
 
-- 修正 v75 重構後的兩個實際回歸問題。
-- 服務模組 Loader 已改為讀取 `config.basic.version` 與 `config.basic.expectedServiceCount`；v75 仍讀舊的 `config.version`，因此模組 URL 會錯誤回退到舊版 `v62` cache key。
-- 移除 CSS 中與 `config.js` 重複的 560px / 1180px 響應式斷點；單雙欄門檻現在真正只由 `layout.twoColumnMinWidth` 控制。
-- 修正 `#services` 的 `height:auto!important` 覆蓋 JS Masonry inline 高度，造成橫屏雙欄後頁面高度 / 下拉範圍異常。
-- Masonry 啟用時，卡片 width / left / top / 容器 height 全由 JS 統一計算。
-- 單欄時維持正常文流。
-- `route-meta` 固定到卡片 Header 第三列，不再和右上來源名稱擠在同一列。
-- 保留「只要雙欄，一律 Masonry 階梯補位」。
-- 23 個服務與資料解析規則不變。
-- 所有資源同步更新至 `v76.0.0`。
-
-## v75.0.0
-
-- 深度重構設定架構，`assets/config.js` 成為真正唯一主要設定來源。
-- 移除 v74 的舊版相容 getter，不再同時維護平面鍵與巢狀設定。
-- `app.js` 改為直接讀取 `basic / layout / refresh / cache / network / display`。
-- 版面相關設定由 JS 自動同步到 CSS Variables，避免 config.js 與 style.css 各寫一份數值造成不同步。
-- `twoColumnMinWidth`、`gap`、`maxWidth`、mobile padding、左右留白與來源標籤寬度均由 config.js 控制。
-- `masonry: false` 現在真正可關閉 Masonry；保持 true 時，所有雙欄一律階梯補位。
-- `activeEventLimit`、`showSourceBadge`、`showRouteMeta` 現在真正接入 UI 邏輯。
-- resize 重排延遲也集中到 refresh 設定。
-- 保留 23 個服務、資料源、事件模型與跨境線路邏輯。
-- 所有資源同步更新至 `v75.0.0`。
-
-## v74.0.0
-
-- 為 `assets/config.js` 補上完整繁體中文設定說明。
-- 每個可修改設定均說明用途、單位、影響與建議值。
-- 明確標示 px / ms / true / false 的含義。
-- 自動更新時間附上分鐘換算範例。
-- 說明正常快取與 stale cache 的差異。
-- 說明 fetchTimeout、readerTimeout 與 fallbackConcurrency。
-- 說明 recentEventLimit 與 activeEventLimit 的差異。
-- 說明雙欄門檻與「雙欄一律 Masonry 階梯補位」規則。
-- 將程式相容 getter 獨立標成「不要直接修改」區域。
-- 版面與資料邏輯維持 v73，不改變既有 23 個服務行為。
-- 所有資源同步更新至 `v74.0.0`。
-
-## v73.0.0
-
-- 將所有常用全域設定集中至 `assets/config.js`，方便直接修改。
-- 設定依「基本 / 版面 / 自動更新 / 快取 / 網路 / 顯示」分組。
-- 版面可集中調整最大寬度、雙欄門檻、卡片間距與 Masonry 開關。
-- 自動更新、前景刷新、快取、timeout、fallback concurrency 皆集中管理。
-- 最近事件顯示數量改由全域設定控制。
-- 保留服務模組化架構：各服務 URL / parser 仍放 `assets/services/*.js`，避免單一設定檔膨脹成難維護的解析器檔案。
-- 固定規則：只要進入雙欄，一律使用 Masonry 階梯補位。
-- 所有資源同步更新至 `v73.0.0`。
+- 直接回到已實機驗證正常的 v72 響應式 / Masonry 核心重新整理。
+- 不沿用 v73–v76 對響應式架構的改寫。
+- 只要達到雙欄門檻，手機橫屏、平板與桌面一律使用 Masonry 階梯補位。
+- `assets/config.js` 集中常用設定並加入完整繁體中文註釋。
+- 設定維持 v72 原本的扁平鍵結構，避免 Loader / app.js 讀取路徑不同步。
+- 新增 `recentEventLimit`、`activeEventLimit`、`showSourceBadge`、`showRouteMeta`。
+- 不重寫 v72 的 CSS 響應式 / Masonry 規則。
+- 23 個服務、資料來源、事件模型與 Cloudflare Radar 邏輯保持不變。
+- 所有資源同步更新至 `v77.0.0`。
 
 ## v72.0.0
 

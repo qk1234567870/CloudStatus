@@ -73,61 +73,15 @@ CloudStatus 不判斷裝置類型。版面只根據 `#services` 的實際可用�
 - 最大內容寬度：1180px
 
 
-## 設定
+## v77 維護方式
 
-所有常用全域設定集中在：
+本版直接以已實機驗證正常的 v72 響應式 / Masonry 為基底。
 
-`assets/config.js`
-
-可直接修改：
-- 最大內容寬度
-- 單欄 / 雙欄分界
-- 卡片間距
-- 雙欄 Masonry
-- 自動更新週期
-- 前景重新整理門檻
-- 快取時間
-- Fetch / Reader timeout
-- fallback 並發數
-- 最近事件顯示數量
-
-固定版面原則：只要進入雙欄，就一律使用 Masonry 階梯補位。
-
-各服務的網址、來源與解析器仍獨立放在 `assets/services/*.js`，避免全域設定與服務解析程式混成單一巨大檔案。
-
-
-## v75 設定架構
-
-`assets/config.js` 現在是真正的單一設定來源。
-
-`app.js` 直接讀取：
-- `basic`
-- `layout`
-- `refresh`
-- `cache`
-- `network`
-- `display`
-
-不再使用舊版相容 getter。
-
-版面數值會由 `app.js` 自動寫入 CSS Variables，因此最大寬度、間距、左右留白、來源標籤寬度等不需要再同步修改 CSS。
+常用設定集中在 `assets/config.js`，並維持 v72 原本的扁平鍵值結構。
 
 固定規則：
-- `< twoColumnMinWidth`：單欄
-- `>= twoColumnMinWidth`：雙欄
-- 只要雙欄且 `masonry: true`：一律階梯補位
+- `< masonryMinWidth`：單欄
+- `>= masonryMinWidth`：雙欄 Masonry
+- 只要雙欄，一律階梯補位
 
-
-## v76 響應式設定原則
-
-單欄 / 雙欄的唯一門檻：
-
-`assets/config.js` → `layout.twoColumnMinWidth`
-
-CSS 不再保存第二份 560px / 600px / 1180px 版面門檻。
-
-JS 行為：
-- 實際容器寬度低於門檻：單欄正常文流
-- 實際容器寬度達到門檻：雙欄 Masonry
-- 雙欄卡片會補到目前較短的一欄
-- Masonry 容器高度由 JS 按最長欄實際高度設定
+v77 不重寫 v72 的手機橫屏 Masonry 核心。
