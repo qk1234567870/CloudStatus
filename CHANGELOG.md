@@ -2,6 +2,17 @@
 
 CloudStatus 版本更新記錄。
 
+## v76.0.0
+
+- 重構桌面/橫屏 Layout Engine：首頁所有區塊只使用 `.shell` 實際 content width。
+- 移除首頁所有 `100vw - Npx` 寬度計算，避免 Safari 橫屏 layout viewport / visual viewport 不一致造成右側溢出。
+- Safe Area 改由 body 單一管理，Header、分類、搜尋、統計、Services 全部受同一寬度邊界約束。
+- 加入 VisualViewport resize/scroll 監聽，Safari 工具列收合、橫屏旋轉與可視區變化時重新計算分類與 Masonry。
+- 新增 Render Scheduler，以 requestAnimationFrame 合併非同步服務更新，減少連續 DOM 重建與卡片跳動。
+- 一般服務強制維持註冊順序；跨境線路篩選保留既定運營商/線路級別排序。
+- 卡片 DOM 只有內容或順序真正變化時才重建。
+- v75 Masonry、v74 Header 左對齊、v73 動態更多與卡片模板全部保留。
+
 ## v75.0.0
 
 - Desktop Masonry 完整重構；不再使用 `position: relative + left/top` 偏移。
