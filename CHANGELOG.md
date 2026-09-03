@@ -2,6 +2,17 @@
 
 CloudStatus 版本更新記錄。
 
+## v75.0.0
+
+- Desktop Masonry 完整重構；不再使用 `position: relative + left/top` 偏移。
+- 桌面卡片改為真正 `position: absolute`，每張卡直接定位於目前最短欄，消除右欄大面積空白。
+- 採兩階段排版：先固定欄寬，等待 Container Query / 文字換行生效，再測量實際高度與定位。
+- 使用 `offsetHeight` 取得穩定卡片高度，避免 subpixel / transform 造成累積誤差。
+- 加入 layout token，舊的 requestAnimationFrame 排版不會覆蓋新的排版結果。
+- 760px 以下強制回到正常文件流單欄，完全不使用 absolute Masonry。
+- resize、ResizeObserver、設備旋轉、pageshow、字型載入完成後都會重新計算 Masonry。
+- v74 標題與快取狀態靠左、v73 動態更多、卡片模板與 23 個服務模組全部保持不變。
+
 ## v74.0.0
 
 - 首頁標題固定對齊內容區最左側。
