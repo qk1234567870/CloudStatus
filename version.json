@@ -108,10 +108,8 @@
   "subtitle_layout": "forced-full-width-second-row",
   "incident_model": "active-separated-from-recent-history",
   "statuspage_strategy": "unresolved-plus-history",
-  "architecture": "service modules + reusable card templates + renderer",
+  "architecture": "service-modules + card-templates + renderer + app",
   "service_loader": "parallel-manifest",
-  "templates": [
-    "service-card",
-    "event-item"
-  ]
+  "card_template": "assets/templates/service-card.js",
+  "event_template": "assets/templates/event-item.js"
 }

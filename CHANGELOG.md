@@ -4,17 +4,15 @@ CloudStatus 版本更新記錄。
 
 ## v64.0.0
 
-- 依照最終卡片範例全面重構為 Template Renderer 架構。
-- 新增 `templates/service-card.js`：23 個服務共用同一張服務卡片模板。
-- 新增 `templates/event-item.js`：目前事件與最近事件共用事件模板。
-- 新增 `renderer.js`：負責 Service Model → Template → DOM。
-- `app.js` 不再直接拼接卡片 HTML，只負責資料取得、解析、快取、刷新、搜尋與篩選。
-- 最終卡片改為：藍色服務名稱 / 右側來源 / 灰色副標題 / 狀態徽章 / 目前事件數量 / 最近事件數量 / 卡片底部資料來源與更新時間。
-- 事件時間固定為第二行靠右，長標題可自然換行，不再和時間互相擠壓。
-- 每張卡片新增 `updatedAt`，顯示該服務本次資料完成時間。
-- 服務模組化維持不變；全域設定仍留在 `app.js`。
-- 23 個服務、跨境排序、Statuspage unresolved + history、Masonry、自動刷新與快取全部保留。
-- Generic ZIP 不包含 `CNAME`。
+- 按指定「最終畫面（卡片範例）」正式導入卡片模板架構。
+- 新增 `templates/service-card.js`：統一卡片 Header、狀態、目前事件、最近事件與 Footer。
+- 新增 `templates/event-item.js`：統一事件標籤、標題與右側第二行時間。
+- 新增 `renderer.js`：Service Model 套用模板後生成畫面；`app.js` 不再直接拼接卡片 HTML。
+- 23 個 `services/*.js` 仍只負責服務來源資料，與卡片版面完全分離。
+- 卡片模板固定為：左上服務名 / 右上來源、第二行灰色副標、狀態 Badge、目前事件、最近 3 筆事件、底部資料來源 / 更新時間。
+- 目前事件不受最近 3 筆限制；歷史事件仍最多 3 筆。
+- 全域設定仍留在 `app.js`，不重新拆出 config 模組。
+- 手機 / 橫屏 / 桌面雙欄 Masonry 與既有資料來源邏輯保持不變。
 
 ## v63.0.0
 
