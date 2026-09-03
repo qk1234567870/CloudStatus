@@ -2,6 +2,19 @@
 
 CloudStatus 版本更新記錄。
 
+## v76.0.0
+
+- 修正 v75 重構後的兩個實際回歸問題。
+- 服務模組 Loader 已改為讀取 `config.basic.version` 與 `config.basic.expectedServiceCount`；v75 仍讀舊的 `config.version`，因此模組 URL 會錯誤回退到舊版 `v62` cache key。
+- 移除 CSS 中與 `config.js` 重複的 560px / 1180px 響應式斷點；單雙欄門檻現在真正只由 `layout.twoColumnMinWidth` 控制。
+- 修正 `#services` 的 `height:auto!important` 覆蓋 JS Masonry inline 高度，造成橫屏雙欄後頁面高度 / 下拉範圍異常。
+- Masonry 啟用時，卡片 width / left / top / 容器 height 全由 JS 統一計算。
+- 單欄時維持正常文流。
+- `route-meta` 固定到卡片 Header 第三列，不再和右上來源名稱擠在同一列。
+- 保留「只要雙欄，一律 Masonry 階梯補位」。
+- 23 個服務與資料解析規則不變。
+- 所有資源同步更新至 `v76.0.0`。
+
 ## v75.0.0
 
 - 深度重構設定架構，`assets/config.js` 成為真正唯一主要設定來源。

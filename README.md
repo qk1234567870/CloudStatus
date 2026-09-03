@@ -116,3 +116,18 @@ CloudStatus 不判斷裝置類型。版面只根據 `#services` 的實際可用�
 - `< twoColumnMinWidth`：單欄
 - `>= twoColumnMinWidth`：雙欄
 - 只要雙欄且 `masonry: true`：一律階梯補位
+
+
+## v76 響應式設定原則
+
+單欄 / 雙欄的唯一門檻：
+
+`assets/config.js` → `layout.twoColumnMinWidth`
+
+CSS 不再保存第二份 560px / 600px / 1180px 版面門檻。
+
+JS 行為：
+- 實際容器寬度低於門檻：單欄正常文流
+- 實際容器寬度達到門檻：雙欄 Masonry
+- 雙欄卡片會補到目前較短的一欄
+- Masonry 容器高度由 JS 按最長欄實際高度設定
