@@ -3,10 +3,10 @@
 
   function startApp() {
   var CONFIG = Object.freeze({
-    version: "64.0.0",
+    version: "65.0.0",
 
     refreshInterval: 5 * 60 * 1000,
-    cacheKey: "cloudstatus-cache-v64",
+    cacheKey: "cloudstatus-cache-v65",
     cacheMaxAge: 15 * 60 * 1000,
     staleCacheMaxAge: 24 * 60 * 60 * 1000,
     foregroundRefreshThreshold: 2 * 60 * 1000,
@@ -1130,7 +1130,15 @@
       var age=Date.now()-cache.timestamp;
       if(age>STALE_CACHE_MAX_AGE) return false;
 
-      state.services=cache.services;
+      var cachedById=Object.create(null);
+      cache.services.forEach(function(item){
+        if(item && item.id) cachedById[item.id]=item;
+      });
+
+      state.services=SERVICES.map(function(service){
+        return cachedById[service.id] || createInitialServiceState(service);
+      });
+
       lastRefresh=cache.timestamp;
       render();
 
@@ -1219,6 +1227,37 @@
   // 所有服務只提供資料；UI 一律經由此模板產生。
   function renderServiceCards(services) {
     return (services || []).map(renderCardTemplate).join("");
+  }
+
+  function createInitialServiceState(service) {
+    return {
+      id: service.id,
+      name: service.name,
+      nameZh: service.nameZh || "",
+      desc: service.desc || "",
+      category: service.category,
+      page: service.page,
+      carrier: service.carrier || null,
+      carrierLabel: service.carrierLabel || null,
+      routeClass: service.routeClass || null,
+      routeClassLabel: service.routeClassLabel || null,
+      events: [],
+      health: null,
+      healthText: null,
+      sourceLabel: "載入中",
+      fallback: false,
+      failures: [],
+      loading: true
+    };
+  }
+
+  function updateServiceState(serviceId, nextState) {
+    var index=state.services.findIndex(function(item){ return item.id===serviceId; });
+    if(index===-1){
+      state.services.push(nextState);
+    }else{
+      state.services[index]=nextState;
+    }
   }
 
   function renderCardTemplate(service) {
@@ -1350,7 +1389,9 @@
   function render() {
     renderSummary();
     var list=visibleServices();
-    $("#services").innerHTML=list.length?list.map(renderService).join(""):'<div class="empty">沒有符合條件的服務或事件。</div>';
+    $("#services").innerHTML=list.length
+      ? renderServiceCards(list)
+      : '<div class="empty">沒有符合條件的服務或事件。</div>';
     layoutDesktopMasonry();
   }
 
@@ -1371,12 +1412,7 @@
 
       // 沒有快取時先立即畫出所有服務卡片，不等待第一個網路請求。
       if(!state.services.length){
-        state.services=SERVICES.map(function(service){
-          return {
-            id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,
-            events:[],health:null,healthText:null,sourceLabel:"載入中",fallback:false,failures:[],loading:true
-          };
-        });
+        state.services=SERVICES.map(createInitialServiceState);
         render();
       }
 
@@ -1388,7 +1424,7 @@
 
         var visible=Object.assign({},partial,{loading:false});
         delete visible._remainingSources;
-        state.services[index]=visible;
+        updateServiceState(service.id,visible);
         render();
       }));
 
@@ -1408,7 +1444,7 @@
       await runWithConcurrency(needs,FALLBACK_CONCURRENCY,async function(item){
         var result=await completeService(item.service,item.partial);
         result.loading=false;
-        state.services[item.index]=result;
+        updateServiceState(item.service.id,result);
         render();
       });
 
