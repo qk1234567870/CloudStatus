@@ -57,8 +57,7 @@
 
 ## 程式架構
 
-- `assets/config.js`：全域執行參數
 - `assets/services.js`：服務註冊、manifest 與模組載入器
 - `assets/services/*.js`：各服務來源設定
-- `assets/app.js`：抓取、解析、事件合併、快取與 UI
+- `assets/app.js`：全域設定、抓取、解析、事件合併、快取與 UI
 - `assets/style.css`：全端響應式樣式

@@ -108,7 +108,6 @@
   "subtitle_layout": "forced-full-width-second-row",
   "incident_model": "active-separated-from-recent-history",
   "statuspage_strategy": "unresolved-plus-history",
-  "architecture": "config-registry-manifest-loader-app",
-  "service_loader": "parallel-manifest",
-  "configuration": "single-source-assets-config-js"
+  "architecture": "app-inline-config + service-registry-manifest-loader",
+  "service_loader": "parallel-manifest"
 }

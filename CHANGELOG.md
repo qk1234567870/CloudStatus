@@ -4,15 +4,12 @@ CloudStatus 版本更新記錄。
 
 ## v63.0.0
 
-- 將全域可調設定統一集中到 `assets/config.js`。
-- 刷新週期、前景刷新門檻、快取 key/有效期、Fetch/Reader timeout、fallback 併發全部由 config 控制。
-- 最近事件數、事件合併保留數、結束狀態集合、狀態中文標籤、噪音過濾規則全部移入 config。
-- 官方/第三方來源優先級表移入 config。
-- 桌面 Masonry 門檻、最大寬度、卡片間距移入 config。
-- 主題色與主要 UI 文案移入 config。
-- `app.js` 只消費設定，不再自行維護這些全域常數。
-- 23 個服務自身的 URL、來源、分類與解析器設定仍各自保留在 `assets/services/*.js`，避免把服務模組重新塞回單一巨型檔案。
-- v62 模組化架構與 v61 目前/最近事件分離完整保留。
+- 保留服務模組化：`services.js` + `services/*.js`。
+- 移除 `config.js`；全域設定收回 `app.js`。
+- `index.html` 僅保留 `services.js` 與 `app.js` 兩個程式入口。
+- 23 個服務仍採 manifest 平行載入、固定排序後啟動。
+- v61 目前/最近事件分離、v60 統計置中、v59 響應式布局完整保留。
+- Generic ZIP 不包含 `CNAME`。
 
 ## v62.0.0
 
