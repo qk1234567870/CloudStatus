@@ -65,11 +65,11 @@
 
 ## 卡片模板
 
-卡片顯示與服務資料完全分離：
+卡片採單一模板直接生成：
 
-- `assets/templates/service-card.js`：統一服務卡片模板
-- `assets/templates/event-item.js`：統一事件項目模板
-- `assets/renderer.js`：將標準化 Service Model 套用模板並輸出 DOM
-- `assets/services/*.js`：只管理服務與來源資料，不管理卡片版面
+- `assets/card-template.js`：完整服務卡片模板，包含事件項目
+- `assets/services/*.js`：只管理服務與來源資料
+- `assets/app.js`：抓取、標準化、快取、篩選後直接將 Service Model 套入模板
 
-因此修改卡片樣式/結構時，不需要逐一修改 23 個服務模組。
+沒有額外 Renderer，也不再把卡片與事件拆成多層模板。
+修改 `assets/card-template.js` 即同步套用全部 23 個服務。

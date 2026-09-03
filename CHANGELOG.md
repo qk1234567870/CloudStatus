@@ -2,6 +2,25 @@
 
 CloudStatus 版本更新記錄。
 
+## v66.0.0
+
+- 移除多餘的 `assets/templates/` 目錄。
+- 唯一卡片模板由 `assets/templates/card-template.js` 移至 `assets/card-template.js`。
+- 服務模組仍維持 `assets/services/*.js`，因 23 個服務需要獨立管理。
+- 卡片生成、事件處理、資料來源、響應式布局均不變。
+- 資源版本與快取同步更新至 v66。
+
+## v65.0.0
+
+- 重做 v64 卡片模板架構，改為真正的「資料直接套單一模板生成」。
+- `templates/card-template.js` 成為唯一完整卡片模板；事件項目也由此模板內部生成。
+- 移除 `renderer.js`、`service-card.js`、`event-item.js` 三層依賴。
+- `app.js` 取得標準化 Service Model 後直接呼叫 `CloudStatusCardTemplate.render()`。
+- 23 個服務模組仍只負責服務與來源資料。
+- 保留指定卡片畫面：服務名/來源、灰色副標、狀態、目前事件、最近 3 筆事件、Footer 資料來源與更新時間。
+- 全域設定仍位於 `app.js`；不設 config 模組。
+- 手機、橫屏、桌面 Masonry 以及 v61 事件生命週期邏輯全部保留。
+
 ## v64.0.0
 
 - 按指定「最終畫面（卡片範例）」正式導入卡片模板架構。
