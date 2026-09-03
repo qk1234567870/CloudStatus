@@ -9,7 +9,7 @@
   <meta name="theme-color" content="#121214">
   <meta name="color-scheme" content="dark">
   <title>CloudStatus</title>
-  <link rel="stylesheet" href="./assets/style.css?v=72.0.0">
+  <link rel="stylesheet" href="./assets/style.css?v=73.0.0">
 </head>
 <body>
   <main class="shell">
@@ -22,22 +22,36 @@
     </header>
 
     <section class="toolbar">
-      <div id="filters" class="filters">
-        <button class="chip active" data-filter="all">全部</button>
-        <button class="chip" data-filter="cloud">雲端</button>
-        <button class="chip" data-filter="ai">AI</button>
-        <button class="chip" data-filter="developer">開發者</button>
-        <button class="chip" data-filter="platform">平台</button>
-        <button class="chip" data-filter="hosting">Hosting</button>
-        <button class="chip" data-filter="datacenter">數據中心</button>
-        <button class="chip" data-filter="backbone">骨幹網</button>
-        <button class="chip" data-filter="crossborder">跨境線路</button>
+      <div class="filter-shell">
+        <div id="filters" class="filters" aria-label="服務分類">
+          <button class="chip active" data-filter="all">全部</button>
+          <button class="chip" data-filter="cloud">雲端</button>
+          <button class="chip" data-filter="ai">AI</button>
+          <button class="chip" data-filter="developer">開發者</button>
+          <button class="chip" data-filter="platform">平台</button>
+          <button class="chip" data-filter="hosting">Hosting</button>
+          <button class="chip" data-filter="datacenter">數據中心</button>
+          <button class="chip" data-filter="backbone">骨幹網</button>
+          <button class="chip" data-filter="crossborder">跨境線路</button>
+        </div>
+
+        <div id="filterMoreWrap" class="filter-more-wrap" hidden>
+          <button id="filterMore" class="chip more-chip" type="button" aria-haspopup="menu" aria-expanded="false">
+            更多 <span class="more-arrow">⌄</span>
+          </button>
+          <div id="filterMoreMenu" class="filter-more-menu" role="menu" hidden></div>
+        </div>
       </div>
 
       <div class="tools">
-        <input id="search" type="search" placeholder="搜尋服務或事件…" autocomplete="off">
+        <div class="search-box">
+          <span class="search-icon" aria-hidden="true"></span>
+          <input id="search" type="search" placeholder="搜尋服務或事件…" autocomplete="off">
+        </div>
+
         <label class="toggle">
           <input id="activeOnly" type="checkbox">
+          <span class="toggle-box" aria-hidden="true"></span>
           <span>只看異常</span>
         </label>
       </div>
@@ -50,8 +64,8 @@
       來源依可信度逐層補足；只顯示可追溯的事件與狀態。
     </footer>
   </main>
-  <script src="./assets/services.js?v=72.0.0"></script>
-  <script src="./assets/card-template.js?v=72.0.0"></script>
-  <script src="./assets/app.js?v=72.0.0"></script>
+  <script src="./assets/services.js?v=73.0.0"></script>
+  <script src="./assets/card-template.js?v=73.0.0"></script>
+  <script src="./assets/app.js?v=73.0.0"></script>
 </body>
 </html>
