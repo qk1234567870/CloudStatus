@@ -8,7 +8,7 @@
   var state = { services: [], filter: "all", search: "", activeOnly: false };
 
   var REFRESH_INTERVAL = CONFIG.refreshInterval || 5 * 60 * 1000;
-  var CACHE_KEY = CONFIG.cacheKey || "cloudstatus-cache-v72";
+  var CACHE_KEY = CONFIG.cacheKey || "cloudstatus-cache-v71";
   var CACHE_MAX_AGE = CONFIG.cacheMaxAge || 15 * 60 * 1000;
   var STALE_CACHE_MAX_AGE = CONFIG.staleCacheMaxAge || 24 * 60 * 60 * 1000;
   var FETCH_TIMEOUT = CONFIG.fetchTimeout || 6500;
@@ -1265,15 +1265,16 @@
 
     var cards=Array.prototype.slice.call(grid.querySelectorAll(".service"));
 
-    // 只依 #services 實際可用寬度判斷。
+    // 依實際內容容器寬度判斷，不依手機/桌面名稱。
+    // 容器 < 600px：單欄；>= 600px：雙欄 Masonry。
     var availableWidth=grid.clientWidth || window.innerWidth;
 
-    // v72:
+    // v71:
     // < 560px  : one-column normal flow
-    // >= 560px : true two-column Masonry, always place the next card
-    //            into the currently shorter column.
-    // No device / UA / orientation detection.
-    var useMasonry=availableWidth >= (CONFIG.masonryMinWidth || 560);
+    // 560-1179 : two-column CSS Grid (handled by CSS)
+    // >= 1180  : two-column Masonry
+    // JS never decides phone/tablet/orientation.
+    var useMasonry=availableWidth >= (CONFIG.desktopMasonryMinWidth || 1180);
 
     if(!useMasonry || !cards.length){
       grid.classList.remove("masonry-active");
@@ -1301,7 +1302,8 @@
     requestAnimationFrame(function(){
       var gridWidth=Math.floor(grid.getBoundingClientRect().width || grid.clientWidth || availableWidth);
 
-      // 固定兩欄；每張卡片放入當前較短的一欄。
+      // 1180px 整體寬度下固定兩欄最穩定。
+      // <600px 已在前面走單欄；>=600px 一律雙欄 Masonry。
       var columns=2;
       var colWidth=Math.floor((gridWidth-gap)/columns);
       var heights=new Array(columns).fill(0);

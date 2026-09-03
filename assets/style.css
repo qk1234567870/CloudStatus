@@ -1041,12 +1041,17 @@ button { font-size: 14px; }
 }
 
 /* =========================================================
-   v72 統一自適應 + 全雙欄階梯補位
-   < 560px：單欄正常文流
-   >=560px：雙欄 Masonry，下一張自動補到較短欄
+   v71 統一自適應版面
+   不偵測手機 / 平板 / 方向。
+   只按實際可用寬度排版。
    ========================================================= */
 
-html,
+html{
+  width:100%;
+  max-width:100%;
+  overflow-x:hidden;
+}
+
 body{
   width:100%;
   max-width:100%;
@@ -1104,7 +1109,7 @@ body{
   grid-template-columns:repeat(3,minmax(0,1fr));
 }
 
-/* 卡片 Header */
+/* 卡片共同規則 */
 .service{
   min-width:0;
   width:100%;
@@ -1166,56 +1171,37 @@ body{
   max-width:100%;
 }
 
-/* 預設 <560px：單欄，完全正常文流 */
-#services{
+/* < 560px：單欄 */
+#services,
+#services.masonry-active{
   display:grid;
   grid-template-columns:minmax(0,1fr);
   align-items:start;
   position:static;
   width:100%;
-  height:auto;
+  height:auto !important;
   gap:14px;
 }
 
-#services > .service{
-  position:static;
-  left:auto;
-  top:auto;
-  width:100%;
-  max-width:100%;
-}
-
-/* JS 啟用 Masonry 後 */
-#services.masonry-active{
-  display:block;
-  position:relative;
-  width:100%;
-  height:auto;
-  gap:0;
-}
-
+#services > .service,
 #services.masonry-active > .service{
-  position:absolute;
-  min-width:0;
-  box-sizing:border-box;
+  position:static;
+  left:auto !important;
+  top:auto !important;
+  width:100% !important;
+  max-width:100% !important;
 }
 
-/* <560px 強制回單欄，避免任何殘留 inline 定位 */
-@media (max-width:559px){
-  .shell{
-    width:100%;
-    max-width:100%;
-    padding-inline:12px;
-  }
-
+/* >= 560px：雙欄 Grid。手機橫屏、平板、窄桌面都走正常文流。 */
+@media (min-width:560px){
   #services,
   #services.masonry-active{
     display:grid !important;
-    grid-template-columns:minmax(0,1fr) !important;
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    align-items:start;
     position:static !important;
-    width:100%;
     height:auto !important;
-    gap:14px !important;
+    gap:14px;
   }
 
   #services > .service,
@@ -1228,9 +1214,8 @@ body{
   }
 }
 
-/* >=560px：Masonry 卡片固定兩欄寬度。
-   left/top/容器高度由 JS 的最短欄演算法計算。 */
-@media (min-width:560px){
+/* >= 1180px：只有完整桌面內容寬度才由 JS 啟用 Masonry。 */
+@media (min-width:1180px){
   #services.masonry-active{
     display:block !important;
     position:relative !important;
@@ -1244,8 +1229,19 @@ body{
   }
 }
 
-/* 很窄時避免控制列互擠 */
+/* 很窄時避免控制列互相擠壓 */
 @media (max-width:430px){
-  .search-row{gap:8px}
-  .source-badge{max-width:38vw}
+  .shell{
+    width:100%;
+    max-width:100%;
+    padding-inline:12px;
+  }
+
+  .search-row{
+    gap:8px;
+  }
+
+  .source-badge{
+    max-width:38vw;
+  }
 }
