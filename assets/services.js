@@ -3,7 +3,8 @@
   "use strict";
 
   var config = window.CloudStatusConfig || {};
-  var version = config.version || "62.0.0";
+  var basic = config.basic || {};
+  var version = basic.version || "76.0.0";
 
   var manifest = [
   "cloudflare",
@@ -91,12 +92,12 @@
       return (ai == null ? 999 : ai) - (bi == null ? 999 : bi);
     });
 
-    if (config.expectedServiceCount && list.length !== config.expectedServiceCount) {
+    if (basic.expectedServiceCount && list.length !== basic.expectedServiceCount) {
       console.warn(
         "CloudStatus service modules loaded:",
         list.length,
         "/",
-        config.expectedServiceCount
+        basic.expectedServiceCount
       );
     }
 

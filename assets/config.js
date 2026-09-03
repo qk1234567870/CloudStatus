@@ -19,13 +19,13 @@ window.CloudStatusConfig = Object.freeze({
   // 01. 基本
   // ==========================================================================
   basic: Object.freeze({
-    version: "75.0.0",
+    version: "76.0.0",
 
     // 預期服務數量。新增 / 刪除服務時才修改。
     expectedServiceCount: 23,
 
     // localStorage 快取名稱。版本更新時跟著改，避免讀到舊快取。
-    cacheKey: "cloudstatus-cache-v75"
+    cacheKey: "cloudstatus-cache-v76"
   }),
 
 
@@ -39,7 +39,7 @@ window.CloudStatusConfig = Object.freeze({
     // 單欄 → 雙欄門檻。
     // < 560px：單欄
     // >=560px：雙欄 Masonry
-    twoColumnMinWidth: 660,
+    twoColumnMinWidth: 560,
 
     // 卡片水平 / 垂直間距。
     gap: 14,

@@ -15,7 +15,7 @@
   var DISPLAY = CONFIG.display || {};
 
   var REFRESH_INTERVAL = REFRESH.interval || 5 * 60 * 1000;
-  var CACHE_KEY = BASIC.cacheKey || "cloudstatus-cache-v75";
+  var CACHE_KEY = BASIC.cacheKey || "cloudstatus-cache-v76";
   var CACHE_MAX_AGE = CACHE.maxAge || 15 * 60 * 1000;
   var STALE_CACHE_MAX_AGE = CACHE.staleMaxAge || 24 * 60 * 60 * 1000;
   var FETCH_TIMEOUT = NETWORK.fetchTimeout || 6500;
@@ -1287,8 +1287,8 @@
 
     var cards=Array.prototype.slice.call(grid.querySelectorAll(".service"));
 
-    // 依實際內容容器寬度判斷，不依手機/桌面名稱。
-    // 容器 < 600px：單欄；>= 600px：雙欄 Masonry。
+    // 完全依實際內容容器寬度判斷。
+    // 門檻只從 config.js 的 layout.twoColumnMinWidth 讀取。
     var availableWidth=grid.clientWidth || window.innerWidth;
 
     // v72:
@@ -1323,8 +1323,7 @@
     requestAnimationFrame(function(){
       var gridWidth=Math.floor(grid.getBoundingClientRect().width || grid.clientWidth || availableWidth);
 
-      // 1180px 整體寬度下固定兩欄最穩定。
-      // <600px 已在前面走單欄；>=600px 一律雙欄 Masonry。
+      // 只要進入雙欄就固定兩欄，並補到目前較短的一欄。
       var columns=2;
       var colWidth=Math.floor((gridWidth-gap)/columns);
       var heights=new Array(columns).fill(0);
