@@ -3,10 +3,11 @@
 
   function startApp() {
   var CONFIG = Object.freeze({
-    version: "65.0.0",
+    version: "64.0.0",
+    expectedServiceCount: 23,
 
     refreshInterval: 5 * 60 * 1000,
-    cacheKey: "cloudstatus-cache-v65",
+    cacheKey: "cloudstatus-cache-v64",
     cacheMaxAge: 15 * 60 * 1000,
     staleCacheMaxAge: 24 * 60 * 60 * 1000,
     foregroundRefreshThreshold: 2 * 60 * 1000,
@@ -147,6 +148,17 @@
 
     var y = formatDate(b);
     return y ? x + "-" + y : x;
+  }
+
+  function formatCardTime(v) {
+    if (!v) return "";
+    var d=new Date(v);
+    if (isNaN(d.getTime())) return "";
+    try{
+      return new Intl.DateTimeFormat("zh-TW",{
+        hour:"2-digit",minute:"2-digit",hour12:false
+      }).format(d);
+    }catch(e){return "";}
   }
 
   function looksNoise(title) {
@@ -1019,7 +1031,7 @@
       return {
         id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,
         events:[],health:null,healthText:null,sourceLabel:"官方頁",fallback:true,failures:["No source"],
-        _remainingSources:[]
+        updatedAt:Date.now(),_remainingSources:[]
       };
     }
 
@@ -1035,6 +1047,7 @@
         sourceLabel:(events.length||health)?source.label:"官方頁",
         fallback:!events.length&&!health,
         failures:[],
+        updatedAt:Date.now(),
         _remainingSources:sources.slice(1)
       };
     }catch(e){
@@ -1042,6 +1055,7 @@
         id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,
         events:[],health:null,healthText:null,sourceLabel:"官方頁",fallback:true,
         failures:[source.label+": "+String(e)],
+        updatedAt:Date.now(),
         _remainingSources:sources.slice(1)
       };
     }
@@ -1087,7 +1101,8 @@
       events:events.slice(0,20),health:health,healthText:healthText,
       sourceLabel:labels.length===1?labels[0]:(labels.length>1?"多來源":"官方頁"),
       fallback:!events.length&&!health,
-      failures:failures
+      failures:failures,
+      updatedAt:Date.now()
     };
   }
 
@@ -1130,15 +1145,7 @@
       var age=Date.now()-cache.timestamp;
       if(age>STALE_CACHE_MAX_AGE) return false;
 
-      var cachedById=Object.create(null);
-      cache.services.forEach(function(item){
-        if(item && item.id) cachedById[item.id]=item;
-      });
-
-      state.services=SERVICES.map(function(service){
-        return cachedById[service.id] || createInitialServiceState(service);
-      });
-
+      state.services=cache.services;
       lastRefresh=cache.timestamp;
       render();
 
@@ -1201,123 +1208,25 @@
     return list;
   }
 
-  function renderSummary() {
-    var loaded=state.services.filter(function(s){return !s.loading;});
-    var auto=loaded.filter(function(s){return !s.fallback;}).length;
-    var fallback=loaded.filter(function(s){return s.fallback;}).length;
-    $("#summary").innerHTML =
-      '<div class="metric"><strong>'+state.services.length+'</strong><span>服務</span></div>'+
-      '<div class="metric"><strong>'+auto+'</strong><span>自動取得</span></div>'+
-      '<div class="metric"><strong>'+fallback+'</strong><span>官方頁備援</span></div>';
-  }
-
-  function renderEvent(e,service) {
-    var tag = e.status && STATUS_LABELS[e.status]
-      ? '<span class="tag '+escapeHtml(e.status)+'">['+escapeHtml(STATUS_LABELS[e.status])+']</span>'
-      : '';
-    var eventClass = e.status && STATUS_LABELS[e.status] ? "event" : "event no-status";
-    return '<a class="'+eventClass+'" href="'+escapeHtml(e.url||service.page)+'" target="_blank" rel="noopener">'+
-      tag+
-      '<span class="event-title" title="'+escapeHtml(e.title+(e.sourceLabel?" · "+e.sourceLabel:""))+'">'+escapeHtml(e.title)+'</span>'+
-      '<span class="event-time">'+escapeHtml(formatRange(e.start,e.end))+'</span>'+
-      '</a>';
-  }
-
-  // 唯一通用服務卡片模板。
-  // 所有服務只提供資料；UI 一律經由此模板產生。
-  function renderServiceCards(services) {
-    return (services || []).map(renderCardTemplate).join("");
-  }
-
-  function createInitialServiceState(service) {
+  function templateView() {
     return {
-      id: service.id,
-      name: service.name,
-      nameZh: service.nameZh || "",
-      desc: service.desc || "",
-      category: service.category,
-      page: service.page,
-      carrier: service.carrier || null,
-      carrierLabel: service.carrierLabel || null,
-      routeClass: service.routeClass || null,
-      routeClassLabel: service.routeClassLabel || null,
-      events: [],
-      health: null,
-      healthText: null,
-      sourceLabel: "載入中",
-      fallback: false,
-      failures: [],
-      loading: true
+      escapeHtml:escapeHtml,
+      statusLabels:STATUS_LABELS,
+      formatRange:formatRange,
+      formatCardTime:formatCardTime,
+      isActiveEvent:isActiveEvent
     };
   }
 
-  function updateServiceState(serviceId, nextState) {
-    var index=state.services.findIndex(function(item){ return item.id===serviceId; });
-    if(index===-1){
-      state.services.push(nextState);
-    }else{
-      state.services[index]=nextState;
-    }
-  }
-
-  function renderCardTemplate(service) {
-    var body="";
-
-    if (service.loading) {
-      body += '<div class="message">載入中…</div>';
+  function render() {
+    var renderer=window.CloudStatusRenderer;
+    if(!renderer){
+      throw new Error("CloudStatusRenderer not loaded");
     }
 
-    // 「目前狀態」只來自來源本身明確提供的 current health。
-    // 歷史事件不反推目前服務狀態。
-    if (!service.loading && service.health==="normal") {
-      var normalLabel=service.category==="crossborder"?"[上游正常]":"[目前正常]";
-      body += '<div class="current-state good"><span class="state-dot"></span><strong>'+normalLabel+'</strong> '+escapeHtml(service.healthText||"來源顯示目前正常")+'</div>';
-    } else if (!service.loading && service.health==="incident" && service.healthText) {
-      var incidentLabel=service.category==="crossborder"?"[上游異常]":"[目前異常]";
-      body += '<div class="current-state warn"><span class="state-dot"></span><strong>'+incidentLabel+'</strong> '+escapeHtml(service.healthText)+'</div>';
-    }
-
-    var activeEvents=!service.loading
-      ? (service.events||[]).filter(isActiveEvent)
-      : [];
-    var recentEvents=!service.loading
-      ? (service.events||[]).filter(function(e){return !isActiveEvent(e);}).slice(0,3)
-      : [];
-
-    if (!service.loading && activeEvents.length) {
-      body += '<div class="section-label active-section-label">目前 '+activeEvents.length+' 個事件</div>';
-      body += activeEvents.map(function(e){return renderEvent(e,service);}).join("");
-    }
-
-    if (!service.loading && recentEvents.length) {
-      body += '<div class="section-label">最近 '+recentEvents.length+' 筆事件</div>';
-      body += recentEvents.map(function(e){return renderEvent(e,service);}).join("");
-    } else if (!service.loading && !activeEvents.length && service.health && service.category==="crossborder") {
-      body += '<div class="history-empty">狀態依 Cloudflare Radar 公開 BGP 資料判定</div>';
-    } else if (!service.loading && !activeEvents.length && service.health) {
-      body += '<div class="history-empty">近期沒有可顯示的可靠事件</div>';
-    } else if (!service.loading && !activeEvents.length && service.category==="crossborder" && service.fallback) {
-      body += '<a class="message link" href="'+escapeHtml(service.page)+'" target="_blank" rel="noopener">[Cloudflare Radar] 暫時無法取得可靠上游狀態，不推斷目前狀態 →</a>';
-    } else if (!service.loading && !activeEvents.length && service.fallback) {
-      body += '<a class="message link" href="'+escapeHtml(service.page)+'" target="_blank" rel="noopener">[官方狀態頁] 自動來源未取得可靠事件資料，查看官方即時狀態 →</a>';
-    } else if (!service.loading && !activeEvents.length) {
-      body += '<div class="message">目前沒有可顯示的可靠事件資料</div>';
-    }
-
-    return '<article class="service">'+
-      '<div class="service-head">'+
-        '<a class="service-name" href="'+escapeHtml(service.page)+'" target="_blank" rel="noopener">🔹 '+escapeHtml(service.name)+'</a>'+
-        '<span class="service-desc service-desc-second-row">'+
-          (service.nameZh && service.desc
-            ? '('+escapeHtml(service.desc)+') '+escapeHtml(service.nameZh)
-            : escapeHtml(service.nameZh||service.desc)
-          )+
-        '</span>'+
-        (service.category==="crossborder" && service.carrierLabel
-          ? '<span class="route-meta">'+escapeHtml(service.carrierLabel)+(service.routeClassLabel?' · '+escapeHtml(service.routeClassLabel):'')+'</span>'
-          : '')+
-        '<span class="source-badge">'+escapeHtml(service.sourceLabel)+'</span>'+
-      '</div><div class="events">'+body+'</div></article>';
+    $("#summary").innerHTML=renderer.renderSummary(state.services);
+    $("#services").innerHTML=renderer.renderServices(visibleServices(),templateView());
+    layoutDesktopMasonry();
   }
 
   function layoutDesktopMasonry() {
@@ -1386,15 +1295,6 @@
     });
   }
 
-  function render() {
-    renderSummary();
-    var list=visibleServices();
-    $("#services").innerHTML=list.length
-      ? renderServiceCards(list)
-      : '<div class="empty">沒有符合條件的服務或事件。</div>';
-    layoutDesktopMasonry();
-  }
-
   async function refresh(options) {
     options=options||{};
     if(refreshInFlight && !options.force) return;
@@ -1412,7 +1312,12 @@
 
       // 沒有快取時先立即畫出所有服務卡片，不等待第一個網路請求。
       if(!state.services.length){
-        state.services=SERVICES.map(createInitialServiceState);
+        state.services=SERVICES.map(function(service){
+          return {
+            id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,
+            events:[],health:null,healthText:null,sourceLabel:"載入中",fallback:false,failures:[],updatedAt:null,loading:true
+          };
+        });
         render();
       }
 
@@ -1424,7 +1329,7 @@
 
         var visible=Object.assign({},partial,{loading:false});
         delete visible._remainingSources;
-        updateServiceState(service.id,visible);
+        state.services[index]=visible;
         render();
       }));
 
@@ -1444,7 +1349,7 @@
       await runWithConcurrency(needs,FALLBACK_CONCURRENCY,async function(item){
         var result=await completeService(item.service,item.partial);
         result.loading=false;
-        updateServiceState(item.service.id,result);
+        state.services[item.index]=result;
         render();
       });
 

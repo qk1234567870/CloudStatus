@@ -2,8 +2,10 @@
 (function () {
   "use strict";
 
-  var version = "63.0.0";
-var manifest = [
+  var version = "64.0.0";
+  var expectedServiceCount = 23;
+
+  var manifest = [
   "cloudflare",
   "aws",
   "azure",
@@ -89,6 +91,15 @@ var manifest = [
       return (ai == null ? 999 : ai) - (bi == null ? 999 : bi);
     });
 
+    if (list.length !== expectedServiceCount) {
+      console.warn(
+        "CloudStatus service modules loaded:",
+        list.length,
+        "/",
+        expectedServiceCount
+      );
+    }
+
     return list;
   }
 
@@ -97,10 +108,7 @@ var manifest = [
     registerParser: registerParser,
     list: list,
     parsers: parsers,
-    manifest: manifest.slice(),
-    get count() {
-      return list.length;
-    }
+    manifest: manifest.slice()
   };
 
   window.CloudStatusServiceParsers = parsers;
