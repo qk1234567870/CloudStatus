@@ -2,7 +2,7 @@
 (function () {
   "use strict";
 
-  var version = "68.0.0";
+  var version = "69.0.0";
   var expectedServiceCount = 23;
 
   var manifest = [
