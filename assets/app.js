@@ -17,7 +17,7 @@
     fallbackConcurrency: 4,
 
     desktopMasonryMinWidth: 760,
-    desktopMaxWidth: 1180,
+    desktopMaxWidth: 1100,
     masonryGap: 14
     });
   var SERVICES = window.CLOUDSTATUS_SERVICES || [];
