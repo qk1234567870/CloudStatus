@@ -5,34 +5,27 @@
   var CONFIG = window.CloudStatusConfig || {};
   var SERVICES = window.CLOUDSTATUS_SERVICES || [];
   var SERVICE_PARSERS = window.CloudStatusServiceParsers || {};
+  var FEATURES = CONFIG.features || {};
+  var LAYOUT = CONFIG.layout || {};
+  var TEXT = CONFIG.text || {};
+  var EVENT_CONFIG = CONFIG.events || {};
+  var CROSSBORDER_SORT = CONFIG.crossborderSort || {};
   var state = { services: [], filter: "all", search: "", activeOnly: false };
 
-  var REFRESH_INTERVAL = CONFIG.refreshInterval || 5 * 60 * 1000;
-  var CACHE_KEY = CONFIG.cacheKey || "cloudstatus-cache-v72";
-  var CACHE_MAX_AGE = CONFIG.cacheMaxAge || 15 * 60 * 1000;
-  var STALE_CACHE_MAX_AGE = CONFIG.staleCacheMaxAge || 24 * 60 * 60 * 1000;
-  var FETCH_TIMEOUT = CONFIG.fetchTimeout || 6500;
-  var READER_TIMEOUT = CONFIG.readerTimeout || 7500;
-  var FALLBACK_CONCURRENCY = CONFIG.fallbackConcurrency || 4;
-  var FOREGROUND_REFRESH_THRESHOLD = CONFIG.foregroundRefreshThreshold || 2 * 60 * 1000;
+  var REFRESH_INTERVAL = (CONFIG.refresh && CONFIG.refresh.interval) || 5 * 60 * 1000;
+  var CACHE_KEY = (CONFIG.cache && CONFIG.cache.key) || "cloudstatus-cache-v72";
+  var CACHE_MAX_AGE = (CONFIG.cache && CONFIG.cache.maxAge) || 15 * 60 * 1000;
+  var STALE_CACHE_MAX_AGE = (CONFIG.cache && CONFIG.cache.staleMaxAge) || 24 * 60 * 60 * 1000;
+  var FETCH_TIMEOUT = (CONFIG.network && CONFIG.network.fetchTimeout) || 6500;
+  var READER_TIMEOUT = (CONFIG.network && CONFIG.network.readerTimeout) || 7500;
+  var FALLBACK_CONCURRENCY = (CONFIG.network && CONFIG.network.fallbackConcurrency) || 4;
+  var FOREGROUND_REFRESH_THRESHOLD = (CONFIG.refresh && CONFIG.refresh.foregroundThreshold) || 2 * 60 * 1000;
+  var RECENT_EVENT_LIMIT = EVENT_CONFIG.recentLimit || 3;
+  var RETAINED_EVENT_LIMIT = EVENT_CONFIG.retainedLimit || 20;
   var lastRefresh = 0;
   var refreshInFlight = false;
 
-  var STATUS_LABELS = {
-    investigating: "調查中",
-    identified: "已確認",
-    monitoring: "監控中",
-    resolved: "已解決",
-    postmortem: "事後分析",
-    maintenance: "維護",
-    scheduled: "已排程",
-    in_progress: "進行中",
-    completed: "已完成",
-    degraded: "效能下降",
-    outage: "服務中斷",
-    active: "啟用",
-    closed: "已關閉"
-  };
+  var STATUS_LABELS = CONFIG.statusLabels || {};
 
   var NOISE = [
     /^#+\s*/i, /^recent incidents?$/i, /^past incidents?$/i, /^incident history$/i,
@@ -206,7 +199,7 @@
   function sortRecent(events) {
     return dedupe(events).sort(function(a,b){
       return timeValue(b.start || b.end) - timeValue(a.start || a.end);
-    }).slice(0,20);
+    }).slice(0,RETAINED_EVENT_LIMIT);
   }
 
   async function fetchJson(url) {
@@ -1112,7 +1105,7 @@
       if(!cache || !Array.isArray(cache.services) || !cache.timestamp) return false;
 
       var age=Date.now()-cache.timestamp;
-      if(age>STALE_CACHE_MAX_AGE) return false;
+      if(age>STALE_CACHE_MAX_AGE || (age>CACHE_MAX_AGE && FEATURES.staleCache===false)) return false;
 
       state.services=cache.services;
       lastRefresh=cache.timestamp;
@@ -1150,17 +1143,9 @@
 
     // 「跨境線路」固定按運營商 → 線路級別排序，避免註冊順序造成混排。
     if(state.filter==="crossborder"){
-      var carrierOrder={telecom:0,unicom:1,mobile:2};
-      var classOrder={premium:0,international:1,public:2};
-      var serviceOrder={
-        "cn2-gia":0,
-        "cn2-gt":1,
-        "as4134":2,
-        "as9929":3,
-        "as10099":4,
-        "as4837":5,
-        "cmi":6
-      };
+      var carrierOrder=CROSSBORDER_SORT.carrierOrder || {};
+      var classOrder=CROSSBORDER_SORT.classOrder || {};
+      var serviceOrder=CROSSBORDER_SORT.serviceOrder || {};
       list.sort(function(a,b){
         var ca=carrierOrder[a.carrier]!=null?carrierOrder[a.carrier]:99;
         var cb=carrierOrder[b.carrier]!=null?carrierOrder[b.carrier]:99;
@@ -1178,13 +1163,21 @@
   }
 
   function renderSummary() {
+    var el=$("#summary");
+    if(!el) return;
+    if(FEATURES.summary===false){
+      el.innerHTML="";
+      el.classList.add("is-hidden");
+      return;
+    }
+    el.classList.remove("is-hidden");
     var loaded=state.services.filter(function(s){return !s.loading;});
     var auto=loaded.filter(function(s){return !s.fallback;}).length;
     var fallback=loaded.filter(function(s){return s.fallback;}).length;
-    $("#summary").innerHTML =
-      '<div class="metric"><strong>'+state.services.length+'</strong><span>服務</span></div>'+
-      '<div class="metric"><strong>'+auto+'</strong><span>自動取得</span></div>'+
-      '<div class="metric"><strong>'+fallback+'</strong><span>官方頁備援</span></div>';
+    el.innerHTML =
+      '<div class="metric"><strong>'+state.services.length+'</strong><span>'+escapeHtml(TEXT.summaryServices||"服務")+'</span></div>'+
+      '<div class="metric"><strong>'+auto+'</strong><span>'+escapeHtml(TEXT.summaryAuto||"自動取得")+'</span></div>'+
+      '<div class="metric"><strong>'+fallback+'</strong><span>'+escapeHtml(TEXT.summaryFallback||"官方頁備援")+'</span></div>';
   }
 
   function renderEvent(e,service) {
@@ -1208,10 +1201,10 @@
 
     // 「目前狀態」只來自來源本身明確提供的 current health。
     // 歷史事件不反推目前服務狀態。
-    if (!service.loading && service.health==="normal") {
+    if (FEATURES.currentState!==false && !service.loading && service.health==="normal") {
       var normalLabel=service.category==="crossborder"?"[上游正常]":"[目前正常]";
       body += '<div class="current-state good"><span class="state-dot"></span><strong>'+normalLabel+'</strong> '+escapeHtml(service.healthText||"來源顯示目前正常")+'</div>';
-    } else if (!service.loading && service.health==="incident" && service.healthText) {
+    } else if (FEATURES.currentState!==false && !service.loading && service.health==="incident" && service.healthText) {
       var incidentLabel=service.category==="crossborder"?"[上游異常]":"[目前異常]";
       body += '<div class="current-state warn"><span class="state-dot"></span><strong>'+incidentLabel+'</strong> '+escapeHtml(service.healthText)+'</div>';
     }
@@ -1220,15 +1213,15 @@
       ? (service.events||[]).filter(isActiveEvent)
       : [];
     var recentEvents=!service.loading
-      ? (service.events||[]).filter(function(e){return !isActiveEvent(e);}).slice(0,3)
+      ? (service.events||[]).filter(function(e){return !isActiveEvent(e);}).slice(0,RECENT_EVENT_LIMIT)
       : [];
 
-    if (!service.loading && activeEvents.length) {
+    if (FEATURES.activeEvents!==false && !service.loading && activeEvents.length) {
       body += '<div class="section-label active-section-label">目前 '+activeEvents.length+' 個事件</div>';
       body += activeEvents.map(function(e){return renderEvent(e,service);}).join("");
     }
 
-    if (!service.loading && recentEvents.length) {
+    if (FEATURES.recentEvents!==false && !service.loading && recentEvents.length) {
       body += '<div class="section-label">最近 '+recentEvents.length+' 筆事件</div>';
       body += recentEvents.map(function(e){return renderEvent(e,service);}).join("");
     } else if (!service.loading && !activeEvents.length && service.health && service.category==="crossborder") {
@@ -1246,17 +1239,35 @@
     return '<article class="service">'+
       '<div class="service-head">'+
         '<a class="service-name" href="'+escapeHtml(service.page)+'" target="_blank" rel="noopener">🔹 '+escapeHtml(service.name)+'</a>'+
-        '<span class="service-desc service-desc-second-row">'+
-          (service.nameZh && service.desc
-            ? '('+escapeHtml(service.desc)+') '+escapeHtml(service.nameZh)
-            : escapeHtml(service.nameZh||service.desc)
-          )+
-        '</span>'+
-        (service.category==="crossborder" && service.carrierLabel
+        (FEATURES.chineseSubtitle!==false
+          ? '<span class="service-desc service-desc-second-row">'+
+              (service.nameZh && service.desc
+                ? '('+escapeHtml(service.desc)+') '+escapeHtml(service.nameZh)
+                : escapeHtml(service.nameZh||service.desc)
+              )+
+            '</span>'
+          : '')+
+        (FEATURES.routeMeta!==false && service.category==="crossborder" && service.carrierLabel
           ? '<span class="route-meta">'+escapeHtml(service.carrierLabel)+(service.routeClassLabel?' · '+escapeHtml(service.routeClassLabel):'')+'</span>'
           : '')+
-        '<span class="source-badge">'+escapeHtml(service.sourceLabel)+'</span>'+
+        (FEATURES.sourceBadge!==false
+          ? '<span class="source-badge">'+escapeHtml(service.sourceLabel)+'</span>'
+          : '')+
       '</div><div class="events">'+body+'</div></article>';
+  }
+
+  var masonryGeneration=0;
+
+  function resetMasonry(grid,cards) {
+    grid.classList.remove("masonry-active");
+    grid.style.height="";
+    cards.forEach(function(card){
+      card.style.left="";
+      card.style.top="";
+      card.style.width="";
+      card.style.maxWidth="";
+      card.style.boxSizing="";
+    });
   }
 
   function layoutDesktopMasonry() {
@@ -1264,77 +1275,53 @@
     if(!grid) return;
 
     var cards=Array.prototype.slice.call(grid.querySelectorAll(".service"));
+    var availableWidth=Math.floor(grid.getBoundingClientRect().width || grid.clientWidth || 0);
+    var minWidth=LAYOUT.twoColumnMinWidth || 560;
+    var columns=Math.max(1,LAYOUT.columns || 2);
+    var gap=LAYOUT.cardGap || 14;
+    var useMasonry=FEATURES.masonry!==false && columns===2 && availableWidth>=minWidth && cards.length>0;
+    var generation=++masonryGeneration;
 
-    // 依實際內容容器寬度判斷，不依手機/桌面名稱。
-    // 容器 < 600px：單欄；>= 600px：雙欄 Masonry。
-    var availableWidth=grid.clientWidth || window.innerWidth;
-
-    // v72:
-    // < 560px : one-column normal flow
-    // >=560px : every two-column layout uses Masonry staircase packing
-    // JS never decides phone/tablet/orientation.
-    var useMasonry=availableWidth >= (CONFIG.gridTwoColumnMinWidth || 560);
-
-    if(!useMasonry || !cards.length){
-      grid.classList.remove("masonry-active");
-      grid.style.height="";
-      cards.forEach(function(card){
-        card.style.left="";
-        card.style.top="";
-        card.style.width="";
-        card.style.maxWidth="";
-    card.style.boxSizing="";
-        card.style.gridRowEnd="";
-      });
+    if(!useMasonry){
+      resetMasonry(grid,cards);
       return;
     }
 
-    var gap=CONFIG.masonryGap||14;
     grid.classList.add("masonry-active");
 
+    var colWidth=(availableWidth-gap)/2;
     cards.forEach(function(card){
+      card.style.boxSizing="border-box";
+      card.style.width=colWidth+"px";
+      card.style.maxWidth=colWidth+"px";
       card.style.left="0px";
       card.style.top="0px";
-      card.style.gridRowEnd="";
     });
 
     requestAnimationFrame(function(){
-      var gridWidth=Math.floor(grid.getBoundingClientRect().width || grid.clientWidth || availableWidth);
+      if(generation!==masonryGeneration || !grid.isConnected) return;
 
-      // 1180px 整體寬度下固定兩欄最穩定。
-      // <600px 已在前面走單欄；>=600px 一律雙欄 Masonry。
-      var columns=2;
-      var colWidth=Math.floor((gridWidth-gap)/columns);
-      var heights=new Array(columns).fill(0);
-
+      var heights=[0,0];
       cards.forEach(function(card){
-        // 找目前最短的一欄，形成真正「階梯式」補位。
-        var col=0;
-        for(var i=1;i<columns;i++){
-          if(heights[i]<heights[col]) col=i;
-        }
-
+        var col=heights[1] < heights[0] ? 1 : 0;
         var x=col*(colWidth+gap);
         var y=heights[col];
 
-        card.style.width=colWidth+"px";
-        card.style.maxWidth=colWidth+"px";
-        card.style.boxSizing="border-box";
         card.style.left=x+"px";
         card.style.top=y+"px";
 
-        var h=card.getBoundingClientRect().height;
+        var h=Math.ceil(card.getBoundingClientRect().height);
         heights[col]=y+h+gap;
       });
 
-      grid.style.height=Math.max(0,Math.max.apply(null,heights)-gap)+"px";
+      grid.style.height=Math.max(0,Math.max(heights[0],heights[1])-gap)+"px";
     });
   }
 
   function render() {
     renderSummary();
     var list=visibleServices();
-    $("#services").innerHTML=list.length?list.map(renderService).join(""):'<div class="empty">沒有符合條件的服務或事件。</div>';
+    $("#services").innerHTML=list.length?list.map(renderService).join(""):'<div class="empty">'+escapeHtml(TEXT.empty||"沒有符合條件的服務或事件。")+'</div>';
     layoutDesktopMasonry();
   }
 
@@ -1347,7 +1334,7 @@
     reload.disabled=true;
 
     if(!state.services.length){
-      $("#updated").textContent="正在讀取官方來源…";
+      $("#updated").textContent=TEXT.loading||"正在讀取官方來源…";
     }
 
     try{
@@ -1376,7 +1363,7 @@
         render();
       }));
 
-      $("#updated").textContent="主要來源已載入 · 正在補充備援資料…";
+      $("#updated").textContent=TEXT.primaryLoaded||"主要來源已載入 · 正在補充備援資料…";
 
       // 第二階段：只處理仍不足的服務，而且限制併發，避免一次開太多 Reader 連線。
       var needs=[];
@@ -1410,12 +1397,12 @@
         year:"numeric",month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit",hour12:false
       }).format(new Date(lastRefresh));
 
-      $("#updated").textContent="最後讀取於 "+now;
+      $("#updated").textContent=(TEXT.updatedPrefix||"最後讀取於 ")+now;
       render();
     }catch(e){
-      $("#updated").textContent="更新失敗";
+      $("#updated").textContent=TEXT.updateFailed||"更新失敗";
       if(!state.services.length){
-        $("#services").innerHTML='<div class="empty">資料載入失敗，請稍後重試。</div>';
+        $("#services").innerHTML='<div class="empty">'+escapeHtml(TEXT.loadFailed||"資料載入失敗，請稍後重試。")+'</div>';
       }
     }finally{
       refreshInFlight=false;
@@ -1427,57 +1414,135 @@
     return !lastRefresh || Date.now()-lastRefresh>=FOREGROUND_REFRESH_THRESHOLD;
   }
 
-  var masonryResizeObserver=null;
-
-  function startResponsiveLayoutObserver() {
-    var grid=$("#services");
-    if(!grid || typeof ResizeObserver==="undefined") return;
-    if(masonryResizeObserver) masonryResizeObserver.disconnect();
-
-    masonryResizeObserver=new ResizeObserver(function(){
-      layoutDesktopMasonry();
-    });
-    masonryResizeObserver.observe(grid);
-  }
 
   function startAutoRefresh() {
+    if(FEATURES.autoRefresh===false) return;
     setInterval(function(){
       if (document.visibilityState==="visible") refresh();
     },REFRESH_INTERVAL);
     document.addEventListener("visibilitychange",function(){
-      if (document.visibilityState==="visible" && shouldForegroundRefresh()) refresh();
+      if (FEATURES.foregroundRefresh!==false && document.visibilityState==="visible" && shouldForegroundRefresh()) refresh();
     });
     window.addEventListener("focus",function(){
-      if (shouldForegroundRefresh()) refresh();
+      if (FEATURES.foregroundRefresh!==false && shouldForegroundRefresh()) refresh();
     });
   }
 
-  $("#filters").addEventListener("click",function(e){
-    var b=e.target.closest("[data-filter]"); if(!b)return;
-    state.filter=b.getAttribute("data-filter");
-    Array.prototype.forEach.call(document.querySelectorAll(".chip"),function(x){x.classList.toggle("active",x===b);});
+  function applyRuntimeConfig() {
+    var root=document.documentElement;
+    root.style.setProperty("--shell-max",(LAYOUT.maxWidth||1180)+"px");
+    root.style.setProperty("--card-gap",(LAYOUT.cardGap||14)+"px");
+    root.style.setProperty("--page-pad","clamp("+(LAYOUT.pageSidePaddingMin||10)+"px,2.6vw,"+(LAYOUT.pageSidePaddingMax||32)+"px)");
+
+    var title=$("#pageTitle");
+    var updated=$("#updated");
+    var search=$("#search");
+    var filters=$("#filters");
+    var activeWrap=$("#activeOnlyWrap");
+    var activeLabel=$("#activeOnlyLabel");
+    var toolbar=$("#toolbar");
+    var footer=$("#footer");
+
+    if(title) title.textContent=TEXT.title||"☁️ 全球雲端與網路服務狀態";
+    if(updated) updated.textContent=TEXT.preparing||"準備讀取官方來源…";
+
+    if(search){
+      search.placeholder=TEXT.searchPlaceholder||"搜尋服務或事件…";
+      search.classList.toggle("is-hidden",FEATURES.search===false);
+    }
+
+    if(activeLabel) activeLabel.textContent=TEXT.activeOnly||"只看異常";
+    if(activeWrap) activeWrap.classList.toggle("is-hidden",FEATURES.activeOnly===false);
+
+    if(filters){
+      if(FEATURES.filters===false){
+        filters.classList.add("is-hidden");
+        filters.innerHTML="";
+      }else{
+        filters.classList.remove("is-hidden");
+        var defs=Array.isArray(CONFIG.filters)?CONFIG.filters:[];
+        filters.innerHTML=defs.map(function(item,index){
+          return '<button class="chip'+((item.id==="all" || index===0)?' active':'')+'" data-filter="'+escapeHtml(item.id)+'">'+escapeHtml(item.label)+'</button>';
+        }).join("");
+      }
+    }
+
+    if(toolbar) toolbar.classList.toggle("no-sticky",FEATURES.stickyToolbar===false);
+
+    if(footer){
+      footer.textContent=TEXT.footer||"";
+      footer.classList.toggle("is-hidden",FEATURES.footer===false);
+    }
+
+    if(toolbar){
+      toolbar.classList.toggle(
+        "is-hidden",
+        FEATURES.filters===false && FEATURES.search===false && FEATURES.activeOnly===false
+      );
+    }
+  }
+
+  var filtersEl=$("#filters");
+  if(filtersEl){
+    filtersEl.addEventListener("click",function(e){
+      var b=e.target.closest("[data-filter]");
+      if(!b) return;
+      state.filter=b.getAttribute("data-filter");
+      Array.prototype.forEach.call(document.querySelectorAll(".chip"),function(x){
+        x.classList.toggle("active",x===b);
+      });
+      render();
+    });
+  }
+
+  var searchEl=$("#search");
+  if(searchEl) searchEl.addEventListener("input",function(e){
+    state.search=e.target.value;
     render();
   });
-  $("#search").addEventListener("input",function(e){state.search=e.target.value;render();});
-  $("#activeOnly").addEventListener("change",function(e){state.activeOnly=e.target.checked;render();});
-  $("#reload").addEventListener("click",function(){refresh({force:true});});
+
+  var activeEl=$("#activeOnly");
+  if(activeEl) activeEl.addEventListener("change",function(e){
+    state.activeOnly=e.target.checked;
+    render();
+  });
+
+  var reloadEl=$("#reload");
+  if(reloadEl) reloadEl.addEventListener("click",function(){refresh({force:true});});
 
   var masonryResizeTimer=null;
   function scheduleResponsiveRelayout(){
     clearTimeout(masonryResizeTimer);
-    masonryResizeTimer=setTimeout(function(){
-      layoutDesktopMasonry();
-      requestAnimationFrame(layoutDesktopMasonry);
-    },100);
+    masonryResizeTimer=setTimeout(layoutDesktopMasonry,70);
   }
 
-  window.addEventListener("resize",scheduleResponsiveRelayout);
+  window.addEventListener("resize",scheduleResponsiveRelayout,{passive:true});
 
   if(window.visualViewport){
-    window.visualViewport.addEventListener("resize",scheduleResponsiveRelayout);
+    window.visualViewport.addEventListener("resize",scheduleResponsiveRelayout,{passive:true});
   }
 
+  var shellResizeObserver=null;
+  function startResponsiveLayoutObserver() {
+    var shell=document.querySelector(".shell");
+    if(!shell || typeof ResizeObserver==="undefined") return;
+
+    var lastWidth=0;
+    shellResizeObserver=new ResizeObserver(function(entries){
+      var width=entries && entries[0] ? Math.round(entries[0].contentRect.width) : 0;
+      if(width===lastWidth) return;
+      lastWidth=width;
+      scheduleResponsiveRelayout();
+    });
+    shellResizeObserver.observe(shell);
+  }
+
+  applyRuntimeConfig();
   startResponsiveLayoutObserver();
+
+  if(document.fonts && document.fonts.ready){
+    document.fonts.ready.then(scheduleResponsiveRelayout).catch(function(){});
+  }
 
   loadCache();
   refresh({force:true});
@@ -1492,9 +1557,9 @@
     console.error(error);
     var updated = document.querySelector("#updated");
     var services = document.querySelector("#services");
-    if (updated) updated.textContent = "模組載入失敗";
+    if (updated) updated.textContent = ((window.CloudStatusConfig||{}).text||{}).moduleFailed || "模組載入失敗";
     if (services) {
-      services.innerHTML = '<div class="empty">服務模組載入失敗，請重新整理頁面。</div>';
+      services.innerHTML = '<div class="empty">'+((((window.CloudStatusConfig||{}).text||{}).moduleLoadFailed)||'服務模組載入失敗，請重新整理頁面。')+'</div>';
     }
   });
 })();
