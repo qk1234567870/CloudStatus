@@ -1,6 +1,6 @@
 {
   "name": "CloudStatus Pure Pages",
-  "version": "77.0.0",
+  "version": "72.0.0",
   "updated": "2026-08-27",
   "current_state_and_history_independent": true,
   "status_inference": false,
@@ -84,9 +84,9 @@
   "last_read_time_includes_year": true,
   "asset_cache_busting": true,
   "html_no_cache_meta": true,
-  "cache_key": "cloudstatus-cache-v77",
+  "cache_key": "cloudstatus-cache-v72",
   "page_max_width": "1360px",
-  "synchronized_asset_version": "77.0.0",
+  "synchronized_asset_version": "72.0.0",
   "masonry_columns": "dynamic-1-to-4",
   "max_shell_width": "1180px",
   "layout_columns": "1-mobile-2-tablet-desktop",
@@ -129,10 +129,5 @@
   "one_column_below": 560,
   "two_column_grid_from": 560,
   "desktop_masonry_from": 1180,
-  "mobile_landscape_masonry": true,
-  "base_layout": "v72-verified",
-  "settings_file": "assets/config.js",
-  "settings_structure": "flat-compatible",
-  "all_two_column_layouts_use_masonry": true,
-  "responsive_core_rewritten": false
+  "mobile_landscape_masonry": true
 }

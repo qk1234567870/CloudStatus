@@ -2,18 +2,6 @@
 
 CloudStatus 版本更新記錄。
 
-## v77.0.0
-
-- 直接回到已實機驗證正常的 v72 響應式 / Masonry 核心重新整理。
-- 不沿用 v73–v76 對響應式架構的改寫。
-- 只要達到雙欄門檻，手機橫屏、平板與桌面一律使用 Masonry 階梯補位。
-- `assets/config.js` 集中常用設定並加入完整繁體中文註釋。
-- 設定維持 v72 原本的扁平鍵結構，避免 Loader / app.js 讀取路徑不同步。
-- 新增 `recentEventLimit`、`activeEventLimit`、`showSourceBadge`、`showRouteMeta`。
-- 不重寫 v72 的 CSS 響應式 / Masonry 規則。
-- 23 個服務、資料來源、事件模型與 Cloudflare Radar 邏輯保持不變。
-- 所有資源同步更新至 `v77.0.0`。
-
 ## v72.0.0
 
 - 手機橫屏恢復真正「雙欄階梯」自動補位。
