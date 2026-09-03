@@ -62,7 +62,7 @@
   "ui_language": "zh-TW",
   "time_zone": "Asia/Taipei",
   "desktop_card_autofill": "true-masonry-shortest-column",
-  "responsive_layout": "separate-phone-portrait-phone-landscape-desktop",
+  "responsive_layout": "all-devices",
   "mobile_breakpoint": "<=720px",
   "tablet_breakpoint": "721-1100px",
   "desktop_masonry": ">1100px non-touch",
@@ -110,5 +110,5 @@
   "statuspage_strategy": "unresolved-plus-history",
   "architecture": "config-registry-manifest-loader-app",
   "service_loader": "parallel-manifest",
-  "rotation_relayout": "resize-orientationchange-visualViewport"
+  "configuration": "single-source-assets-config-js"
 }
