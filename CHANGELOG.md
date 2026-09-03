@@ -2,28 +2,18 @@
 
 CloudStatus 版本更新記錄。
 
-## v65.0.0
-
-- 修正 v64 通用卡片模板接線錯誤：`render()` 不再呼叫已移除的 `renderService()`，統一使用 `renderServiceCards()`。
-- 頁面初始化時立即依服務註冊數量建立全部 `載入中…` 卡片，不等待任何網路來源。
-- 新增 `createInitialServiceState()`，所有服務使用同一份初始卡片資料結構。
-- 新增 `updateServiceState(serviceId, state)`，各服務資料完成後按 `id` 更新自己的通用卡片，不依賴陣列 index。
-- 快取恢復改為按服務 `id` 對應；新增服務會自動補 loading 卡片，已刪除服務不再從舊快取復活。
-- 卡片數量仍完全由服務資料決定，不存在固定 23 張限制。
-- 保留唯一 `renderCardTemplate(service)` 卡片模板及既有 UI、事件、搜尋、分類、Masonry、快取與刷新功能。
-
 ## v64.0.0
 
-- 正式改為「一套通用卡片模板 + N 個服務資料」架構。
-- 現有服務卡片樣式作為唯一模板 `renderCardTemplate(service)`。
-- 所有服務一律經由 `renderServiceCards()` 使用同一模板生成，不存在 Cloudflare/GitHub/OpenAI 等專用卡片。
-- 卡片數量完全由已註冊服務數量決定：有多少服務，就生成多少張卡片。
-- 移除固定 23 個服務的數量檢查與相關假設。
-- 新增服務時只需增加服務模組；不需要修改 HTML、CSS 或卡片模板。
-- 刪除服務模組後，對應卡片自然消失。
-- 服務模組仍只負責名稱、分類、來源、metadata 與解析邏輯。
-- `app.js` 負責唯一卡片模板、事件區、狀態區、搜尋、分類、Masonry、快取與刷新。
-- v61 目前事件 / 最近事件分離與既有 UI 完整保留。
+- 依照最終卡片範例全面重構為 Template Renderer 架構。
+- 新增 `templates/service-card.js`：23 個服務共用同一張服務卡片模板。
+- 新增 `templates/event-item.js`：目前事件與最近事件共用事件模板。
+- 新增 `renderer.js`：負責 Service Model → Template → DOM。
+- `app.js` 不再直接拼接卡片 HTML，只負責資料取得、解析、快取、刷新、搜尋與篩選。
+- 最終卡片改為：藍色服務名稱 / 右側來源 / 灰色副標題 / 狀態徽章 / 目前事件數量 / 最近事件數量 / 卡片底部資料來源與更新時間。
+- 事件時間固定為第二行靠右，長標題可自然換行，不再和時間互相擠壓。
+- 每張卡片新增 `updatedAt`，顯示該服務本次資料完成時間。
+- 服務模組化維持不變；全域設定仍留在 `app.js`。
+- 23 個服務、跨境排序、Statuspage unresolved + history、Masonry、自動刷新與快取全部保留。
 - Generic ZIP 不包含 `CNAME`。
 
 ## v63.0.0
