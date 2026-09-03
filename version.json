@@ -121,5 +121,6 @@
   "filter_overflow": "measured-width-dynamic-more-menu",
   "summary_layout": "three-equal-framed-cards",
   "card_layout": "unchanged",
-  "landscape": "clean-isolated-responsive"
+  "header_alignment": "content-left",
+  "updated_cache_alignment": "content-left"
 }
