@@ -2,6 +2,57 @@
 
 CloudStatus 版本更新記錄。
 
+## v75.0.0
+
+- 深度重構設定架構，`assets/config.js` 成為真正唯一主要設定來源。
+- 移除 v74 的舊版相容 getter，不再同時維護平面鍵與巢狀設定。
+- `app.js` 改為直接讀取 `basic / layout / refresh / cache / network / display`。
+- 版面相關設定由 JS 自動同步到 CSS Variables，避免 config.js 與 style.css 各寫一份數值造成不同步。
+- `twoColumnMinWidth`、`gap`、`maxWidth`、mobile padding、左右留白與來源標籤寬度均由 config.js 控制。
+- `masonry: false` 現在真正可關閉 Masonry；保持 true 時，所有雙欄一律階梯補位。
+- `activeEventLimit`、`showSourceBadge`、`showRouteMeta` 現在真正接入 UI 邏輯。
+- resize 重排延遲也集中到 refresh 設定。
+- 保留 23 個服務、資料源、事件模型與跨境線路邏輯。
+- 所有資源同步更新至 `v75.0.0`。
+
+## v74.0.0
+
+- 為 `assets/config.js` 補上完整繁體中文設定說明。
+- 每個可修改設定均說明用途、單位、影響與建議值。
+- 明確標示 px / ms / true / false 的含義。
+- 自動更新時間附上分鐘換算範例。
+- 說明正常快取與 stale cache 的差異。
+- 說明 fetchTimeout、readerTimeout 與 fallbackConcurrency。
+- 說明 recentEventLimit 與 activeEventLimit 的差異。
+- 說明雙欄門檻與「雙欄一律 Masonry 階梯補位」規則。
+- 將程式相容 getter 獨立標成「不要直接修改」區域。
+- 版面與資料邏輯維持 v73，不改變既有 23 個服務行為。
+- 所有資源同步更新至 `v74.0.0`。
+
+## v73.0.0
+
+- 將所有常用全域設定集中至 `assets/config.js`，方便直接修改。
+- 設定依「基本 / 版面 / 自動更新 / 快取 / 網路 / 顯示」分組。
+- 版面可集中調整最大寬度、雙欄門檻、卡片間距與 Masonry 開關。
+- 自動更新、前景刷新、快取、timeout、fallback concurrency 皆集中管理。
+- 最近事件顯示數量改由全域設定控制。
+- 保留服務模組化架構：各服務 URL / parser 仍放 `assets/services/*.js`，避免單一設定檔膨脹成難維護的解析器檔案。
+- 固定規則：只要進入雙欄，一律使用 Masonry 階梯補位。
+- 所有資源同步更新至 `v73.0.0`。
+
+## v72.0.0
+
+- 手機橫屏恢復真正「雙欄階梯」自動補位。
+- `<560px`：單欄正常文流。
+- `>=560px`：統一使用雙欄 Masonry，手機橫屏、平板與桌面皆可階梯補位。
+- 不使用手機 / 平板 / orientation / User-Agent 判斷，仍只看實際可用寬度。
+- Masonry 卡片寬度固定為 `(100% - 14px) / 2`，避免重疊與單卡覆蓋。
+- Masonry 容器高度由 JS 以兩欄最長高度重新計算，保留完整向下捲動範圍。
+- resize / visualViewport / ResizeObserver 後增加延遲重排，處理 iOS 瀏覽器工具列尺寸變化。
+- 卡片 Header、來源名稱省略與灰色副標題排列維持 v71。
+- 所有資料源與 23 個服務邏輯不變。
+- 所有資源同步更新至 `v72.0.0`。
+
 ## v71.0.0
 
 - 再次完整重構響應式版面，取消方向與裝置類型判斷。

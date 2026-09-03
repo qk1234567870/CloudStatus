@@ -71,3 +71,48 @@ CloudStatus 不判斷裝置類型。版面只根據 `#services` 的實際可用�
 - 小於 600px：單欄
 - 600px 以上：雙欄 Masonry
 - 最大內容寬度：1180px
+
+
+## 設定
+
+所有常用全域設定集中在：
+
+`assets/config.js`
+
+可直接修改：
+- 最大內容寬度
+- 單欄 / 雙欄分界
+- 卡片間距
+- 雙欄 Masonry
+- 自動更新週期
+- 前景重新整理門檻
+- 快取時間
+- Fetch / Reader timeout
+- fallback 並發數
+- 最近事件顯示數量
+
+固定版面原則：只要進入雙欄，就一律使用 Masonry 階梯補位。
+
+各服務的網址、來源與解析器仍獨立放在 `assets/services/*.js`，避免全域設定與服務解析程式混成單一巨大檔案。
+
+
+## v75 設定架構
+
+`assets/config.js` 現在是真正的單一設定來源。
+
+`app.js` 直接讀取：
+- `basic`
+- `layout`
+- `refresh`
+- `cache`
+- `network`
+- `display`
+
+不再使用舊版相容 getter。
+
+版面數值會由 `app.js` 自動寫入 CSS Variables，因此最大寬度、間距、左右留白、來源標籤寬度等不需要再同步修改 CSS。
+
+固定規則：
+- `< twoColumnMinWidth`：單欄
+- `>= twoColumnMinWidth`：雙欄
+- 只要雙欄且 `masonry: true`：一律階梯補位
