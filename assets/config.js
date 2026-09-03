@@ -1,24 +1,133 @@
-/* CloudStatus runtime configuration */
-(function () {
-  "use strict";
+// CloudStatus 全域設定
+// ============================================================================
+// 【唯一主要設定檔】
+// 日後要改版面、更新時間、快取、網路 timeout、事件顯示數量，全部改這裡。
+//
+// 【單位】
+// px    = 像素
+// ms    = 毫秒（1000 ms = 1 秒）
+// true  = 開啟
+// false = 關閉
+//
+// 【固定原則】
+// 只要進入雙欄，就一律使用 Masonry 階梯補位。
+// ============================================================================
 
-  window.CloudStatusConfig = Object.freeze({
-    version: "71.0.0",
+window.CloudStatusConfig = Object.freeze({
+
+  // ==========================================================================
+  // 01. 基本
+  // ==========================================================================
+  basic: Object.freeze({
+    version: "75.0.0",
+
+    // 預期服務數量。新增 / 刪除服務時才修改。
     expectedServiceCount: 23,
 
-    refreshInterval: 5 * 60 * 1000,
-    cacheKey: "cloudstatus-cache-v71",
-    cacheMaxAge: 15 * 60 * 1000,
-    staleCacheMaxAge: 24 * 60 * 60 * 1000,
-    foregroundRefreshThreshold: 2 * 60 * 1000,
+    // localStorage 快取名稱。版本更新時跟著改，避免讀到舊快取。
+    cacheKey: "cloudstatus-cache-v75"
+  }),
 
+
+  // ==========================================================================
+  // 02. 版面
+  // ==========================================================================
+  layout: Object.freeze({
+    // 主內容最大寬度。
+    maxWidth: 1180,
+
+    // 單欄 → 雙欄門檻。
+    // < 560px：單欄
+    // >=560px：雙欄 Masonry
+    twoColumnMinWidth: 560,
+
+    // 卡片水平 / 垂直間距。
+    gap: 14,
+
+    // 窄畫面左右內距。
+    mobilePadding: 12,
+
+    // 主容器左右最小留白。
+    sidePaddingMin: 20,
+
+    // 主容器左右最大留白。
+    sidePaddingMax: 64,
+
+    // 固定最多 2 欄。
+    maxColumns: 2,
+
+    // 雙欄是否使用階梯補位。
+    // 建議保持 true。
+    masonry: true,
+
+    // 來源標籤最多佔卡片寬度比例。
+    // 0.42 = 42%
+    sourceBadgeMaxRatio: 0.42,
+
+    // 來源標籤最大像素寬度。
+    sourceBadgeMaxWidth: 240
+  }),
+
+
+  // ==========================================================================
+  // 03. 自動更新
+  // ==========================================================================
+  refresh: Object.freeze({
+    // 自動更新間隔：5 分鐘。
+    interval: 5 * 60 * 1000,
+
+    // 從背景回前景，距上次更新超過 2 分鐘就立即重新抓取。
+    foregroundThreshold: 2 * 60 * 1000,
+
+    // resize / 旋轉 / Safari 工具列變化後第一次重排延遲。
+    relayoutDelay: 80,
+
+    // 第一次重排後，再補一次延遲重排，處理 iOS viewport 尚未穩定。
+    relayoutSecondPassDelay: 280
+  }),
+
+
+  // ==========================================================================
+  // 04. 快取
+  // ==========================================================================
+  cache: Object.freeze({
+    // 15 分鐘內視為正常快取。
+    maxAge: 15 * 60 * 1000,
+
+    // 最久保留 24 小時 stale cache。
+    staleMaxAge: 24 * 60 * 60 * 1000
+  }),
+
+
+  // ==========================================================================
+  // 05. 網路
+  // ==========================================================================
+  network: Object.freeze({
+    // 一般 API / JSON / RSS timeout：6.5 秒。
     fetchTimeout: 6500,
-    readerTimeout: 7500,
-    fallbackConcurrency: 4,
 
-    gridTwoColumnMinWidth: 560,
-  desktopMasonryMinWidth: 1180,
-    desktopMaxWidth: 1180,
-    masonryGap: 14
-  });
-})();
+    // Reader / HTML 備援 timeout：7.5 秒。
+    readerTimeout: 7500,
+
+    // 備援來源最大並發數。
+    fallbackConcurrency: 4
+  }),
+
+
+  // ==========================================================================
+  // 06. 顯示
+  // ==========================================================================
+  display: Object.freeze({
+    // 每個服務最多顯示幾筆已結束 / 歷史事件。
+    recentEventLimit: 3,
+
+    // 每個服務目前進行中事件最多顯示幾筆。
+    activeEventLimit: 20,
+
+    // 是否顯示右上角來源名稱。
+    showSourceBadge: true,
+
+    // 是否顯示跨境線路分類資訊。
+    showRouteMeta: true
+  })
+});
