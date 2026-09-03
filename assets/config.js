@@ -39,7 +39,7 @@ window.CloudStatusConfig = Object.freeze({
     // 單欄 → 雙欄門檻。
     // < 560px：單欄
     // >=560px：雙欄 Masonry
-    twoColumnMinWidth: 560,
+    twoColumnMinWidth: 660,
 
     // 卡片水平 / 垂直間距。
     gap: 14,
