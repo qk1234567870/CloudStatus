@@ -15,40 +15,26 @@
   <main class="shell">
     <header class="topbar">
       <div class="heading">
-        <h1>☁️ 全球雲端與網路服務狀態</h1>
-        <p id="updated">準備讀取官方來源…</p>
+        <h1 id="pageTitle"></h1>
+        <p id="updated"></p>
       </div>
       <button id="reload" class="icon-btn" type="button" aria-label="重新整理">↻</button>
     </header>
 
-    <section class="toolbar">
-      <div id="filters" class="filters">
-        <button class="chip active" data-filter="all">全部</button>
-        <button class="chip" data-filter="cloud">雲端</button>
-        <button class="chip" data-filter="ai">AI</button>
-        <button class="chip" data-filter="developer">開發者</button>
-        <button class="chip" data-filter="platform">平台</button>
-        <button class="chip" data-filter="hosting">Hosting</button>
-        <button class="chip" data-filter="datacenter">數據中心</button>
-        <button class="chip" data-filter="backbone">骨幹網</button>
-        <button class="chip" data-filter="crossborder">跨境線路</button>
-      </div>
-
-      <div class="tools">
-        <input id="search" type="search" placeholder="搜尋服務或事件…" autocomplete="off">
-        <label class="toggle">
+    <section class="toolbar" id="toolbar">
+      <div id="filters" class="filters"></div>
+      <div class="tools" id="tools">
+        <input id="search" type="search" autocomplete="off">
+        <label class="toggle" id="activeOnlyWrap">
           <input id="activeOnly" type="checkbox">
-          <span>只看異常</span>
+          <span id="activeOnlyLabel"></span>
         </label>
       </div>
     </section>
 
     <section class="summary" id="summary"></section>
-    <section class="grid" id="services"></section>
-
-    <footer>
-      來源依可信度逐層補足；只顯示可追溯的事件與狀態。
-    </footer>
+    <section id="services"></section>
+    <footer id="footer"></footer>
   </main>
 
   <script src="./assets/config.js?v=72.0.0"></script>

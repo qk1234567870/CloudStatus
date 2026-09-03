@@ -1,73 +1,40 @@
 # CloudStatus
 
-純 GitHub Pages 前端版的全球雲端、平台、Hosting、資料中心與骨幹網服務狀態頁。
+純靜態 GitHub Pages 服務狀態面板，不需要後端或 GitHub Actions。
 
-## 核心顯示規則
+## 結構
 
-每個服務分成兩個互相獨立的資訊層：
+- `index.html`：只保留頁面骨架
+- `assets/config.js`：所有可調設定與功能開關
+- `assets/app.js`：資料解析、渲染、快取、刷新與 Masonry 佈局
+- `assets/services.js`：服務模組註冊器 / 載入器
+- `assets/services/*.js`：各服務資料源設定
+- `assets/style.css`：單一乾淨樣式層
 
-1. **目前狀態**
-   - 只有來源本身明確提供 current health / status 時才顯示。
-   - 不會因為歷史事件名稱、正文文字或關鍵字推斷目前狀態。
-   - 因此「目前正常」可以和「今天曾發生、現已解決的事件」同時存在。
+## 響應式
 
-2. **最近事件**
-   - 最多顯示最近 3 筆可靠事件。
-   - 少於 3 筆就照實顯示，不硬湊。
-   - 每一筆事件的狀態只採用來源明確提供的 status。
-   - 沒有明確 status 時不自行標記成「處理中」「已解決」等狀態。
+版面不判斷手機、平板或橫直屏，只看 `#services` 的實際寬度。
 
-## 資料來源原則
+- `< 560px`：單欄
+- `>= 560px`：固定雙欄 Masonry
+- 雙欄採「目前最短欄優先」放置，因此卡片會自動階梯補位
+- 最大內容寬度預設 1180px
 
-來源按各服務實際可用性配置，優先使用可結構化、可追溯的官方資料：
+以上門檻、欄距、最大寬度都在 `assets/config.js` 修改。
 
-- 官方 API / JSON
-- 官方 RSS / Atom / Feed
-- 官方事件歷史
-- 官方狀態頁
-- Reader / 專屬備援只用來補足資料，且必須通過事件過濾
+## Config
 
-若自動來源無法取得可靠事件，直接提供官方狀態頁入口，不把普通頁面正文、導航、說明文字偽裝成事件。
+`assets/config.js` 是唯一設定入口：
 
-## 更新
+- `features`：所有 UI / 功能開關
+- `layout`：最大寬度、雙欄門檻、欄距
+- `refresh`：自動刷新與回前景刷新門檻
+- `cache`：快取設定
+- `network`：請求超時、Reader 超時、備援併發
+- `events`：最近事件數量與保留上限
+- `filters`：分類清單
+- `crossborderSort`：跨境線路排序
+- `statusLabels`：事件狀態文字
+- `text`：頁面 UI 文字
 
-- 頁面開啟後直接向來源讀取資料。
-- 前景狀態約每 5 分鐘自動更新。
-- 頁面從背景返回前景且資料已超過更新門檻時會重新讀取。
-- 不需要 GitHub Actions 定時抓取事件。
-- GitHub Pages 只負責託管靜態網站。
-
-## 部署
-
-將 `CloudStatus` 目錄內檔案放到 GitHub Pages 發佈來源即可。
-
-自訂網域由 GitHub Pages Repository Settings 設定；本套件不附帶固定 `CNAME`，避免覆蓋你現有的 Pages 網域設定。
-
-## 原則
-
-**不推斷、不造假、不硬湊三筆。**
-
-頁面只顯示來源能明確支持的目前狀態與事件資料。
-
-
-## 更新記錄
-
-版本更新內容已獨立至 [`CHANGELOG.md`](./CHANGELOG.md)，README 不再混入逐版更新日誌。
-
-
-## 程式架構
-
-- `assets/config.js`：全域執行參數
-- `assets/services.js`：服務註冊、manifest 與模組載入器
-- `assets/services/*.js`：各服務來源設定
-- `assets/app.js`：抓取、解析、事件合併、快取與 UI
-- `assets/style.css`：全端響應式樣式
-
-
-## 響應式版面
-
-CloudStatus 不判斷裝置類型。版面只根據 `#services` 的實際可用寬度：
-
-- 小於 600px：單欄
-- 600px 以上：雙欄 Masonry
-- 最大內容寬度：1180px
+資料來源仍放在 `assets/services/*.js`，避免 UI 設定與來源邏輯混在一起。
