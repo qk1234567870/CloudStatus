@@ -1253,7 +1253,7 @@ html,body{
 }
 
 /* 手機直向仍維持單欄 */
-@media (max-width:759px){
+@media (max-width:599px){
   .shell{
     width:100% !important;
     max-width:100% !important;
@@ -1438,7 +1438,7 @@ html,body{
 }
 
 /* 寬容器：JS 啟用兩欄 Masonry */
-@media (min-width:760px){
+@media (min-width:600px){
   #services.masonry-active{
     display:block !important;
     position:relative !important;
