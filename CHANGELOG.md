@@ -4,14 +4,12 @@ CloudStatus 版本更新記錄。
 
 ## v78.0.0
 
-- 修正 Cloudflare「2 個未解決事件，但目前事件只列 1 筆」的不一致。
-- `incidents/unresolved.json` 成為目前事件唯一權威來源；目前事件數直接取 unresolved 陣列實際筆數。
-- `incidents.json` 僅負責最近歷史事件，不再先與 unresolved 混合再分類。
-- Service Model 新增獨立 `activeEvents`，目前事件與最近事件從資料層分離。
-- 保留 Statuspage incident ID，去重時優先使用官方 incident ID。
-- 最近事件會排除目前 unresolved 事件，避免同一事件重複出現在兩個區塊。
-- Cloudflare 模組明確指定官方 `/api/v2/incidents/unresolved.json`。
-- v77 雙欄自然流、首頁與卡片版型保持不變。
+- 僅修改 Cloudflare。
+- Cloudflare「目前事件」改以官方 `/api/v2/incidents/unresolved.json` 作為唯一現役事件來源。
+- 官方 unresolved 回傳幾筆，就完整保留幾筆現役事件；健康狀態與未解決事件數量由同一份資料產生。
+- `incidents.json` 只補入已結束的近期歷史事件，避免舊的 open/monitoring 紀錄誤進「目前事件」。
+- 以 Cloudflare incident ID 優先去重；歷史事件不會覆蓋 unresolved 的現役版本。
+- 其他 22 個服務模組、app.js、card-template.js、style.css 均未修改。
 
 ## v77.0.0
 
