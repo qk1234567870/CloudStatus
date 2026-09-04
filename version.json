@@ -1,6 +1,6 @@
 {
   "name": "CloudStatus Pure Pages",
-  "version": "77.0.0",
+  "version": "78.0.0",
   "updated": "2026-08-27",
   "current_state_and_history_independent": true,
   "status_inference": false,
@@ -84,9 +84,9 @@
   "last_read_time_includes_year": true,
   "asset_cache_busting": true,
   "html_no_cache_meta": true,
-  "cache_key": "cloudstatus-cache-v77",
+  "cache_key": "cloudstatus-cache-v78",
   "page_max_width": "1360px",
-  "synchronized_asset_version": "77.0.0",
+  "synchronized_asset_version": "78.0.0",
   "masonry_columns": "dynamic-1-to-4",
   "max_shell_width": "1180px",
   "layout_columns": "1-mobile-2-tablet-desktop",
@@ -130,5 +130,8 @@
   "render_scheduler": "raf-batched-stable-order",
   "service_layout": "two-independent-normal-flow-columns",
   "desktop_positioning": "normal-flow-no-absolute",
-  "mobile_layout": "single-normal-flow-original-order"
+  "mobile_layout": "single-normal-flow-original-order",
+  "active_incident_model": "dedicated-unresolved-source-of-truth",
+  "cloudflare_unresolved": "official-api-explicit",
+  "recent_incidents": "history-excludes-active"
 }
