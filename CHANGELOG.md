@@ -2,18 +2,6 @@
 
 CloudStatus 版本更新記錄。
 
-## v78.0.0
-
-- 重構 Statuspage 事件生命週期資料模型：`activeEvents` 與 `historyEvents` 完全分離。
-- Cloudflare「目前事件」直接以官方 `/api/v2/incidents/unresolved.json` 為唯一真實來源。
-- 「未解決事件數量」與「目前事件清單」改由同一個 `activeEvents` 陣列生成，不再各自計算。
-- 官方 unresolved API 回傳幾筆，就保留幾筆；目前事件不做 3 筆限制。
-- Statuspage incident ID 全程保留，去重優先使用官方 incident ID。
-- 最近事件只收已結束生命週期狀態，並排除仍存在於 unresolved API 的 incident ID。
-- `identified` 繼續映射為「已確認」；缺少狀態時不捏造狀態標籤。
-- 備援來源只補歷史資料，不得覆蓋已由官方 unresolved API 確認的目前事件。
-- v77 雙欄自然流 Layout 保持不變。
-
 ## v77.0.0
 
 - 完全移除 JavaScript absolute Masonry Engine。
