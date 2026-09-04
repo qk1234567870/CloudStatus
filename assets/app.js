@@ -3,11 +3,11 @@
 
   function startApp() {
   var CONFIG = Object.freeze({
-    version: "77.0.0",
+    version: "78.0.0",
     expectedServiceCount: 23,
 
     refreshInterval: 5 * 60 * 1000,
-    cacheKey: "cloudstatus-cache-v77",
+    cacheKey: "cloudstatus-cache-v78",
     cacheMaxAge: 15 * 60 * 1000,
     staleCacheMaxAge: 24 * 60 * 60 * 1000,
     foregroundRefreshThreshold: 2 * 60 * 1000,
@@ -27,7 +27,7 @@
   var state = { services: [], filter: "all", search: "", activeOnly: false };
 
   var REFRESH_INTERVAL = CONFIG.refreshInterval || 5 * 60 * 1000;
-  var CACHE_KEY = CONFIG.cacheKey || "cloudstatus-cache-v77";
+  var CACHE_KEY = CONFIG.cacheKey || "cloudstatus-cache-v78";
   var CACHE_MAX_AGE = CONFIG.cacheMaxAge || 15 * 60 * 1000;
   var STALE_CACHE_MAX_AGE = CONFIG.staleCacheMaxAge || 24 * 60 * 60 * 1000;
   var FETCH_TIMEOUT = CONFIG.fetchTimeout || 6500;
@@ -169,6 +169,7 @@
     if (!status && event.statusRaw) status=explicitStatus(event.statusRaw);
 
     return {
+      id:event.id || event.incidentId || null,
       title:title,
       status:status || null,
       statusRaw:event.statusRaw || null,
@@ -181,18 +182,37 @@
 
   function normalizeResult(result, service, source) {
     result=result || {};
-    var events=(result.events || []).map(function(e){
-      return normalizeEvent(e,service,source);
-    }).filter(Boolean);
 
-    events=sortRecent(events);
+    function normalizeList(list){
+      return (list||[]).map(function(e){
+        return normalizeEvent(e,service,source);
+      }).filter(Boolean);
+    }
+
+    var activeEvents=normalizeList(result.activeEvents);
+    var historyEvents=normalizeList(result.historyEvents);
+    var events=normalizeList(result.events);
+
+    // If a parser provides authoritative active/history lanes, preserve them.
+    // Otherwise retain the legacy event classification path.
+    if(activeEvents.length || historyEvents.length || result.authoritativeLifecycle){
+      activeEvents=dedupe(activeEvents);
+      historyEvents=sortRecent(historyEvents.filter(function(e){
+        return !isActiveEvent(e);
+      }));
+      events=mergeEvents(activeEvents,historyEvents);
+    }else{
+      events=sortRecent(events);
+      activeEvents=events.filter(isActiveEvent);
+      historyEvents=events.filter(function(e){return !isActiveEvent(e);});
+    }
 
     var health=result.health || null;
     var healthText=result.healthText || null;
-    var activeCount=activeEventCount(events);
+    var activeCount=activeEvents.length;
 
-    // Only explicit source-provided lifecycle statuses may establish
-    // an active incident here. Never infer current state from prose/history.
+    // Only explicit lifecycle data or an authoritative unresolved endpoint
+    // may establish an active incident. Never infer from prose/history.
     if(activeCount>0){
       health="incident";
       if(!healthText) healthText=activeCount+" 個未解決事件";
@@ -200,6 +220,8 @@
 
     return {
       events:events,
+      activeEvents:activeEvents,
+      historyEvents:historyEvents,
       health:health,
       healthText:healthText
     };
@@ -207,6 +229,7 @@
 
 
   function fingerprint(e) {
+    if(e && e.id) return "id:"+String(e.id);
     return cleanText(e.title).toLowerCase().replace(/[^\p{L}\p{N}]+/gu," ").trim() +
       "|" + (e.start ? String(e.start).slice(0,10) : "");
   }
@@ -298,40 +321,61 @@
     return { start: ds[0] || null, end: ds[1] || null };
   }
 
+  function statuspageIncident(inc,service,source){
+    return {
+      id:inc.id || null,
+      title:cleanText(inc.name),
+      status:explicitStatus(inc.status),
+      statusRaw:inc.status || null,
+      impact:inc.impact || null,
+      start:inc.started_at || inc.created_at || null,
+      end:inc.resolved_at || null,
+      url:inc.shortlink || inc.url || service.page,
+      sourceLabel:source.label
+    };
+  }
+
   function statuspageAdapter(data, service, source) {
-    var incidents = Array.isArray(data && data.incidents) ? data.incidents : [];
-    var events = incidents.map(function(inc){
-      return {
-        title: cleanText(inc.name),
-        status: explicitStatus(inc.status),
-        statusRaw: inc.status || null,
-        impact: inc.impact || null,
-        start: inc.started_at || inc.created_at || null,
-        end: inc.resolved_at || null,
-        url: inc.shortlink || inc.url || service.page,
-        sourceLabel: source.label
-      };
+    data=data || {};
+    var unresolved=Array.isArray(data.unresolved) ? data.unresolved : [];
+    var history=Array.isArray(data.history) ? data.history : [];
+
+    var activeEvents=unresolved.map(function(inc){
+      return statuspageIncident(inc,service,source);
     });
 
-    var activeCount=activeEventCount(events);
-    var unresolvedChecked=!!(data && data._unresolvedChecked);
-    var unresolvedCount=(data && typeof data._unresolvedCount==="number")
-      ? data._unresolvedCount
-      : activeCount;
+    var activeIds={};
+    activeEvents.forEach(function(e){
+      if(e.id) activeIds[String(e.id)]=true;
+    });
+
+    // Recent history must be ended/closed incidents only and must never
+    // duplicate anything still returned by the official unresolved endpoint.
+    var historyEvents=history.map(function(inc){
+      return statuspageIncident(inc,service,source);
+    }).filter(function(e){
+      if(e.id && activeIds[String(e.id)]) return false;
+      return !!CLOSED_EVENT_STATUSES[e.status];
+    });
 
     var health=null, healthText=null;
-    if(unresolvedCount>0 || activeCount>0){
-      health="incident";
-      healthText=Math.max(unresolvedCount,activeCount)+" 個未解決事件";
-    }else if(unresolvedChecked){
-      health="normal";
-      healthText="目前沒有未解決事件";
+    if(data.unresolvedChecked){
+      if(activeEvents.length){
+        health="incident";
+        healthText=activeEvents.length+" 個未解決事件";
+      }else{
+        health="normal";
+        healthText="目前沒有未解決事件";
+      }
     }
 
     return {
-      events: sortRecent(events),
-      health: health,
-      healthText: healthText
+      authoritativeLifecycle:true,
+      activeEvents:activeEvents,
+      historyEvents:sortRecent(historyEvents),
+      events:mergeEvents(activeEvents,historyEvents),
+      health:health,
+      healthText:healthText
     };
   }
 
@@ -934,29 +978,14 @@
         throw new Error("Status API unavailable");
       }
 
-      var combined=[], seenIncident={};
-
-      function addIncidents(data){
-        var arr=data && Array.isArray(data.incidents) ? data.incidents : [];
-        arr.forEach(function(inc){
-          if(!inc) return;
-          var key=inc.id || (cleanText(inc.name)+"|"+String(inc.created_at||inc.started_at||""));
-          if(seenIncident[key]) return;
-          seenIncident[key]=true;
-          combined.push(inc);
-        });
-      }
-
-      // Add unresolved first so the current incident record wins on duplicates.
-      addIncidents(unresolvedData);
-      addIncidents(historyData);
-
       return normalizeResult(statuspageAdapter({
-        incidents:combined,
-        _unresolvedChecked:!!unresolvedData,
-        _unresolvedCount:unresolvedData && Array.isArray(unresolvedData.incidents)
-          ? unresolvedData.incidents.length
-          : null
+        unresolved:unresolvedData && Array.isArray(unresolvedData.incidents)
+          ? unresolvedData.incidents
+          : [],
+        history:historyData && Array.isArray(historyData.incidents)
+          ? historyData.incidents
+          : [],
+        unresolvedChecked:!!unresolvedData
       },service,source),service,source);
     }
     if (source.type==="apple-json") return normalizeResult(appleStructuredAdapter(await fetchAppleJson(source.url),service,source),service,source);
@@ -980,6 +1009,20 @@
       old.start=old.start||e.start; old.end=old.end||e.end; old.url=old.url||e.url;
     });
     return sortRecent(out);
+  }
+
+
+  function mergeActiveEvents(existing,newEvents){
+    var all=(existing||[]).concat(newEvents||[]);
+    var out=[], seen={};
+    all.forEach(function(e){
+      if(!e || looksNoise(e.title)) return;
+      var k=fingerprint(e);
+      if(!k || seen[k]) return;
+      seen[k]=true;
+      out.push(e);
+    });
+    return out;
   }
 
   var SOURCE_PRIORITY = {
@@ -1021,7 +1064,7 @@
     if(!source){
       return {
         id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,
-        events:[],health:null,healthText:null,sourceLabel:"官方頁",fallback:true,failures:["No source"],
+        events:[],activeEvents:[],historyEvents:[],health:null,healthText:null,sourceLabel:"官方頁",fallback:true,failures:["No source"],
         _remainingSources:[]
       };
     }
@@ -1029,13 +1072,16 @@
     try{
       var result=await runSource(source,service);
       var events=(result.events||[]).slice(0,20);
+      var activeEvents=(result.activeEvents||[]).slice();
+      var historyEvents=(result.historyEvents||[]).slice(0,20);
       var health=result.health||null;
       var healthText=result.healthText||null;
 
       return {
         id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,
-        events:events,health:health,healthText:healthText,
-        sourceLabel:(events.length||health)?source.label:"官方頁",
+        events:events,activeEvents:activeEvents,historyEvents:historyEvents,
+        health:health,healthText:healthText,
+        sourceLabel:(events.length||activeEvents.length||historyEvents.length||health)?source.label:"官方頁",
         fallback:!events.length&&!health,
         failures:[],
         _remainingSources:sources.slice(1)
@@ -1043,7 +1089,7 @@
     }catch(e){
       return {
         id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,
-        events:[],health:null,healthText:null,sourceLabel:"官方頁",fallback:true,
+        events:[],activeEvents:[],historyEvents:[],health:null,healthText:null,sourceLabel:"官方頁",fallback:true,
         failures:[source.label+": "+String(e)],
         _remainingSources:sources.slice(1)
       };
@@ -1052,6 +1098,8 @@
 
   async function completeService(service, partial) {
     var events=(partial.events||[]).slice();
+    var activeEvents=(partial.activeEvents||[]).slice();
+    var historyEvents=(partial.historyEvents||[]).slice();
     var health=partial.health||null;
     var healthText=partial.healthText||null;
     var labels=[];
@@ -1062,14 +1110,31 @@
     for(var i=0;i<sources.length;i++){
       var source=sources[i];
 
-      // 已取得完整官方資料時，不再啟動第三方來源。
-      if(isThirdPartySource(source) && health && events.length>=3 && activeEventCount(events)>0) break;
+      if(isThirdPartySource(source) && health && historyEvents.length>=3 && activeEvents.length>0) break;
 
       try{
         var result=await runSource(source,service);
 
-        if(result.events && result.events.length){
-          events=mergeEvents(events,result.events);
+        // The first official API's authoritative active lane wins.
+        // Fallback/history sources may supplement history, but cannot silently
+        // erase or replace current incidents already confirmed by unresolved API.
+        if(!activeEvents.length && result.activeEvents && result.activeEvents.length){
+          activeEvents=mergeActiveEvents(activeEvents,result.activeEvents);
+        }
+
+        if(result.historyEvents && result.historyEvents.length){
+          historyEvents=mergeEvents(historyEvents,result.historyEvents).filter(function(e){
+            return !isActiveEvent(e);
+          });
+        }else if(result.events && result.events.length){
+          historyEvents=mergeEvents(historyEvents,result.events.filter(function(e){
+            return !isActiveEvent(e);
+          }));
+        }
+
+        events=mergeEvents(activeEvents,historyEvents);
+
+        if((result.events&&result.events.length) || (result.activeEvents&&result.activeEvents.length) || (result.historyEvents&&result.historyEvents.length)){
           if(labels.indexOf(source.label)<0) labels.push(source.label);
         }
 
@@ -1079,17 +1144,25 @@
           if(labels.indexOf(source.label)<0) labels.push(source.label);
         }
 
-        if(events.length>=3 && health && (health==="normal" || activeEventCount(events)>0)) break;
+        if(historyEvents.length>=3 && health && (health==="normal" || activeEvents.length>0)) break;
       }catch(e){
         failures.push(source.label+": "+String(e));
       }
     }
 
+    if(activeEvents.length){
+      health="incident";
+      healthText=activeEvents.length+" 個未解決事件";
+    }
+
     return {
       id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,
-      events:events.slice(0,20),health:health,healthText:healthText,
+      events:mergeEvents(activeEvents,historyEvents).slice(0,20),
+      activeEvents:activeEvents,
+      historyEvents:historyEvents.slice(0,20),
+      health:health,healthText:healthText,
       sourceLabel:labels.length===1?labels[0]:(labels.length>1?"多來源":"官方頁"),
-      fallback:!events.length&&!health,
+      fallback:!activeEvents.length&&!historyEvents.length&&!health,
       failures:failures
     };
   }
@@ -1289,8 +1362,11 @@
       return [
         service.id,service.loading?"1":"0",service.health||"",service.healthText||"",
         service.sourceLabel||"",service.fallback?"1":"0",service.updatedAt||"",
-        (service.events||[]).map(function(e){
-          return [e.title||"",e.status||"",e.start||"",e.end||""].join("~");
+        (service.activeEvents||[]).map(function(e){
+          return [e.id||"",e.title||"",e.status||"",e.start||"",e.end||""].join("~");
+        }).join("¦"),
+        (service.historyEvents||service.events||[]).map(function(e){
+          return [e.id||"",e.title||"",e.status||"",e.start||"",e.end||""].join("~");
         }).join("¦")
       ].join("§");
     }).join("¶");
@@ -1347,7 +1423,7 @@
         state.services=SERVICES.map(function(service){
           return {
             id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,
-            events:[],health:null,healthText:null,sourceLabel:"載入中",fallback:false,failures:[],loading:true
+            events:[],activeEvents:[],historyEvents:[],health:null,healthText:null,sourceLabel:"載入中",fallback:false,failures:[],loading:true
           };
         });
         render();
@@ -1371,7 +1447,8 @@
       var needs=[];
       partials.forEach(function(p,index){
         if(!p) return;
-        if((p.events||[]).length<3 || !p.health){
+        var historyCount=(p.historyEvents||[]).length || (p.events||[]).filter(function(e){return !isActiveEvent(e);}).length;
+        if(historyCount<3 || !p.health){
           if(p._remainingSources && p._remainingSources.length){
             needs.push({index:index,partial:p,service:SERVICES[index]});
           }

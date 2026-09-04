@@ -73,10 +73,16 @@
   function render(service,ctx){
     var esc=ctx.escapeHtml;
     var events=service.events || [];
-    var activeEvents=service.loading ? [] : events.filter(ctx.isActiveEvent);
-    var recentEvents=service.loading ? [] : events.filter(function(e){
-      return !ctx.isActiveEvent(e);
-    }).slice(0,3);
+    var activeEvents=service.loading ? [] :
+      (Array.isArray(service.activeEvents)
+        ? service.activeEvents
+        : events.filter(ctx.isActiveEvent));
+
+    var recentEvents=service.loading ? [] :
+      (Array.isArray(service.historyEvents)
+        ? service.historyEvents
+        : events.filter(function(e){return !ctx.isActiveEvent(e);})
+      ).slice(0,3);
 
     var subtitle="";
     if(service.nameZh && service.desc){
