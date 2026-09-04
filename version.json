@@ -1,6 +1,6 @@
 {
   "name": "CloudStatus Pure Pages",
-  "version": "78.0.0",
+  "version": "77.0.0",
   "updated": "2026-08-27",
   "current_state_and_history_independent": true,
   "status_inference": false,
@@ -130,7 +130,5 @@
   "render_scheduler": "raf-batched-stable-order",
   "service_layout": "two-independent-normal-flow-columns",
   "desktop_positioning": "normal-flow-no-absolute",
-  "mobile_layout": "single-normal-flow-original-order",
-  "change_scope": "cloudflare-only",
-  "cloudflare_active_source": "official unresolved incidents API"
+  "mobile_layout": "single-normal-flow-original-order"
 }

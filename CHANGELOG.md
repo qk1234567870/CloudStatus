@@ -2,15 +2,6 @@
 
 CloudStatus 版本更新記錄。
 
-## v78.0.0
-
-- 僅修改 Cloudflare。
-- Cloudflare「目前事件」改以官方 `/api/v2/incidents/unresolved.json` 作為唯一現役事件來源。
-- 官方 unresolved 回傳幾筆，就完整保留幾筆現役事件；健康狀態與未解決事件數量由同一份資料產生。
-- `incidents.json` 只補入已結束的近期歷史事件，避免舊的 open/monitoring 紀錄誤進「目前事件」。
-- 以 Cloudflare incident ID 優先去重；歷史事件不會覆蓋 unresolved 的現役版本。
-- 其他 22 個服務模組、app.js、card-template.js、style.css 均未修改。
-
 ## v77.0.0
 
 - 完全移除 JavaScript absolute Masonry Engine。
