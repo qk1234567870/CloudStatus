@@ -13,6 +13,7 @@
     {
       "type": "statuspage",
       "url": "https://www.cloudflarestatus.com/api/v2/incidents.json",
+      "unresolvedUrl": "https://www.cloudflarestatus.com/api/v2/incidents/unresolved.json",
       "label": "官方 API",
       "tier": 10,
       "kind": "official-api",
