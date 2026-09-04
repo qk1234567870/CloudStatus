@@ -73,17 +73,8 @@
   function render(service,ctx){
     var esc=ctx.escapeHtml;
     var events=service.events || [];
-    var activeEvents=service.loading ? [] :
-      (Array.isArray(service.activeEvents) ? service.activeEvents : events.filter(ctx.isActiveEvent));
-
-    var activeKeys=Object.create(null);
-    activeEvents.forEach(function(e){
-      activeKeys[e && e.id ? "id:"+e.id : (e.title||"")+"|"+(e.start||"")]=true;
-    });
-
+    var activeEvents=service.loading ? [] : events.filter(ctx.isActiveEvent);
     var recentEvents=service.loading ? [] : events.filter(function(e){
-      var key=e && e.id ? "id:"+e.id : (e.title||"")+"|"+(e.start||"");
-      if(activeKeys[key]) return false;
       return !ctx.isActiveEvent(e);
     }).slice(0,3);
 

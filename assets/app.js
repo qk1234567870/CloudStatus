@@ -3,11 +3,11 @@
 
   function startApp() {
   var CONFIG = Object.freeze({
-    version: "78.0.0",
+    version: "77.0.0",
     expectedServiceCount: 23,
 
     refreshInterval: 5 * 60 * 1000,
-    cacheKey: "cloudstatus-cache-v78",
+    cacheKey: "cloudstatus-cache-v77",
     cacheMaxAge: 15 * 60 * 1000,
     staleCacheMaxAge: 24 * 60 * 60 * 1000,
     foregroundRefreshThreshold: 2 * 60 * 1000,
@@ -27,7 +27,7 @@
   var state = { services: [], filter: "all", search: "", activeOnly: false };
 
   var REFRESH_INTERVAL = CONFIG.refreshInterval || 5 * 60 * 1000;
-  var CACHE_KEY = CONFIG.cacheKey || "cloudstatus-cache-v78";
+  var CACHE_KEY = CONFIG.cacheKey || "cloudstatus-cache-v77";
   var CACHE_MAX_AGE = CONFIG.cacheMaxAge || 15 * 60 * 1000;
   var STALE_CACHE_MAX_AGE = CONFIG.staleCacheMaxAge || 24 * 60 * 60 * 1000;
   var FETCH_TIMEOUT = CONFIG.fetchTimeout || 6500;
@@ -169,7 +169,6 @@
     if (!status && event.statusRaw) status=explicitStatus(event.statusRaw);
 
     return {
-      id:event.id || null,
       title:title,
       status:status || null,
       statusRaw:event.statusRaw || null,
@@ -182,93 +181,157 @@
 
   function normalizeResult(result, service, source) {
     result=result || {};
-
-    var activeEvents=(result.activeEvents || []).map(function(e){
-      return normalizeEvent(e,service,source);
-    }).filter(Boolean);
-    activeEvents=dedupe(activeEvents);
-
-    var activeKeys=Object.create(null);
-    activeEvents.forEach(function(e){ activeKeys[fingerprint(e)]=true; });
-
     var events=(result.events || []).map(function(e){
       return normalizeEvent(e,service,source);
-    }).filter(Boolean).filter(function(e){
-      return !activeKeys[fingerprint(e)];
-    });
+    }).filter(Boolean);
+
     events=sortRecent(events);
 
     var health=result.health || null;
     var healthText=result.healthText || null;
+    var activeCount=activeEventCount(events);
 
-    if(activeEvents.length>0){
+    // Only explicit source-provided lifecycle statuses may establish
+    // an active incident here. Never infer current state from prose/history.
+    if(activeCount>0){
       health="incident";
-      healthText=activeEvents.length+" 個未解決事件";
+      if(!healthText) healthText=activeCount+" 個未解決事件";
     }
 
     return {
-      activeEvents:activeEvents,
       events:events,
       health:health,
       healthText:healthText
     };
   }
 
-  function statuspageIncidentToEvent(inc, service, source) {
-    if(!inc) return null;
-    return {
-      id:inc.id || null,
-      title:cleanText(inc.name),
-      status:explicitStatus(inc.status),
-      statusRaw:inc.status || null,
-      impact:inc.impact || null,
-      start:inc.started_at || inc.created_at || null,
-      end:inc.resolved_at || null,
-      url:inc.shortlink || inc.url || service.page,
-      sourceLabel:source.label
-    };
+
+  function fingerprint(e) {
+    return cleanText(e.title).toLowerCase().replace(/[^\p{L}\p{N}]+/gu," ").trim() +
+      "|" + (e.start ? String(e.start).slice(0,10) : "");
+  }
+
+  function dedupe(events) {
+    var out=[], seen={};
+    (events||[]).forEach(function(e){
+      if (!e || looksNoise(e.title)) return;
+      var k=fingerprint(e);
+      if (!k || seen[k]) return;
+      seen[k]=true; out.push(e);
+    });
+    return out;
+  }
+
+  function sortRecent(events) {
+    return dedupe(events).sort(function(a,b){
+      return timeValue(b.start || b.end) - timeValue(a.start || a.end);
+    }).slice(0,20);
+  }
+
+  async function fetchJson(url) {
+    var r = await fetch(url,{cache:"no-store"});
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return await r.json();
+  }
+
+  async function fetchText(url, timeoutMs) {
+    timeoutMs=timeoutMs || FETCH_TIMEOUT;
+    var controller = typeof AbortController!=="undefined" ? new AbortController() : null;
+    var timer = controller ? setTimeout(function(){ controller.abort(); }, timeoutMs) : null;
+
+    try {
+      var options={cache:"no-store"};
+      if(controller) options.signal=controller.signal;
+      var r = await fetch(url,options);
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return await r.text();
+    } finally {
+      if(timer) clearTimeout(timer);
+    }
+  }
+
+  async function fetchReader(url) {
+    return await fetchText("https://r.jina.ai/" + url, READER_TIMEOUT);
+  }
+
+  function lines(text) {
+    return String(text||"").split(/\n+/).map(cleanText).filter(Boolean);
+  }
+
+  function findDate(text) {
+    var m = String(text||"").match(
+      /(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{1,2},?\s+\d{4}(?:\s+(?:at\s+)?)?\d{1,2}:\d{2}\s*(?:AM|PM)?(?:\s*\([^)]+\)|\s+[A-Z]{2,5})?/i
+    );
+    if (!m) return null;
+    var d = new Date(m[0].replace(/\([^)]+\)/g,""));
+    return isNaN(d.getTime()) ? null : d.toISOString();
+  }
+
+  function findAnyDate(text) {
+    var raw=String(text||"");
+
+    // ISO / Telegram / common machine-readable forms.
+    var patterns=[
+      /\b\d{4}-\d{2}-\d{2}[T\s]\d{1,2}:\d{2}(?::\d{2})?(?:Z|[+-]\d{2}:?\d{2})?\b/,
+      /\b\d{4}\/\d{1,2}\/\d{1,2}\s+\d{1,2}:\d{2}\b/,
+      /\b(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{1,2},?\s+\d{4}(?:\s+(?:at\s+)?)?\d{1,2}:\d{2}\s*(?:AM|PM)?(?:\s+[A-Z]{2,5})?\b/i
+    ];
+
+    for(var i=0;i<patterns.length;i++){
+      var m=raw.match(patterns[i]);
+      if(!m) continue;
+      var d=new Date(m[0]);
+      if(!isNaN(d.getTime())) return d.toISOString();
+    }
+
+    return findDate(raw);
+  }
+
+  function findDateRange(text) {
+    var ds = [];
+    var re = /(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{1,2},?\s+\d{4}\s+\d{1,2}:\d{2}\s*(?:AM|PM)?(?:\s*\([^)]+\)|\s+[A-Z]{2,5})?/gi;
+    var m;
+    while ((m=re.exec(String(text||""))) !== null) {
+      var d=new Date(m[0].replace(/\([^)]+\)/g,""));
+      if (!isNaN(d.getTime())) ds.push(d.toISOString());
+    }
+    return { start: ds[0] || null, end: ds[1] || null };
   }
 
   function statuspageAdapter(data, service, source) {
-    var unresolved=Array.isArray(data && data.unresolvedIncidents)
-      ? data.unresolvedIncidents : [];
-    var incidents=Array.isArray(data && data.incidents)
-      ? data.incidents : [];
-
-    var activeEvents=unresolved.map(function(inc){
-      return statuspageIncidentToEvent(inc,service,source);
-    }).filter(Boolean);
-
-    var activeIds=Object.create(null);
-    var activeKeys=Object.create(null);
-    activeEvents.forEach(function(e){
-      if(e.id) activeIds[String(e.id)]=true;
-      activeKeys[fingerprint(e)]=true;
+    var incidents = Array.isArray(data && data.incidents) ? data.incidents : [];
+    var events = incidents.map(function(inc){
+      return {
+        title: cleanText(inc.name),
+        status: explicitStatus(inc.status),
+        statusRaw: inc.status || null,
+        impact: inc.impact || null,
+        start: inc.started_at || inc.created_at || null,
+        end: inc.resolved_at || null,
+        url: inc.shortlink || inc.url || service.page,
+        sourceLabel: source.label
+      };
     });
 
-    var historyEvents=incidents.map(function(inc){
-      return statuspageIncidentToEvent(inc,service,source);
-    }).filter(Boolean).filter(function(e){
-      if(e.id && activeIds[String(e.id)]) return false;
-      return !activeKeys[fingerprint(e)];
-    });
+    var activeCount=activeEventCount(events);
+    var unresolvedChecked=!!(data && data._unresolvedChecked);
+    var unresolvedCount=(data && typeof data._unresolvedCount==="number")
+      ? data._unresolvedCount
+      : activeCount;
 
-    var checked=!!(data && data._unresolvedChecked);
     var health=null, healthText=null;
-
-    if(checked && activeEvents.length>0){
+    if(unresolvedCount>0 || activeCount>0){
       health="incident";
-      healthText=activeEvents.length+" 個未解決事件";
-    }else if(checked){
+      healthText=Math.max(unresolvedCount,activeCount)+" 個未解決事件";
+    }else if(unresolvedChecked){
       health="normal";
       healthText="目前沒有未解決事件";
     }
 
     return {
-      activeEvents:activeEvents,
-      events:historyEvents,
-      health:health,
-      healthText:healthText
+      events: sortRecent(events),
+      health: health,
+      healthText: healthText
     };
   }
 
@@ -871,12 +934,29 @@
         throw new Error("Status API unavailable");
       }
 
+      var combined=[], seenIncident={};
+
+      function addIncidents(data){
+        var arr=data && Array.isArray(data.incidents) ? data.incidents : [];
+        arr.forEach(function(inc){
+          if(!inc) return;
+          var key=inc.id || (cleanText(inc.name)+"|"+String(inc.created_at||inc.started_at||""));
+          if(seenIncident[key]) return;
+          seenIncident[key]=true;
+          combined.push(inc);
+        });
+      }
+
+      // Add unresolved first so the current incident record wins on duplicates.
+      addIncidents(unresolvedData);
+      addIncidents(historyData);
+
       return normalizeResult(statuspageAdapter({
-        unresolvedIncidents:unresolvedData && Array.isArray(unresolvedData.incidents)
-          ? unresolvedData.incidents : [],
-        incidents:historyData && Array.isArray(historyData.incidents)
-          ? historyData.incidents : [],
-        _unresolvedChecked:!!unresolvedData
+        incidents:combined,
+        _unresolvedChecked:!!unresolvedData,
+        _unresolvedCount:unresolvedData && Array.isArray(unresolvedData.incidents)
+          ? unresolvedData.incidents.length
+          : null
       },service,source),service,source);
     }
     if (source.type==="apple-json") return normalizeResult(appleStructuredAdapter(await fetchAppleJson(source.url),service,source),service,source);
@@ -941,21 +1021,20 @@
     if(!source){
       return {
         id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,
-        activeEvents:[],events:[],health:null,healthText:null,sourceLabel:"官方頁",fallback:true,failures:["No source"],
+        events:[],health:null,healthText:null,sourceLabel:"官方頁",fallback:true,failures:["No source"],
         _remainingSources:[]
       };
     }
 
     try{
       var result=await runSource(source,service);
-      var activeEvents=(result.activeEvents||[]).slice();
       var events=(result.events||[]).slice(0,20);
       var health=result.health||null;
       var healthText=result.healthText||null;
 
       return {
         id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,
-        activeEvents:activeEvents,events:events,health:health,healthText:healthText,
+        events:events,health:health,healthText:healthText,
         sourceLabel:(events.length||health)?source.label:"官方頁",
         fallback:!events.length&&!health,
         failures:[],
@@ -964,7 +1043,7 @@
     }catch(e){
       return {
         id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,
-        activeEvents:[],events:[],health:null,healthText:null,sourceLabel:"官方頁",fallback:true,
+        events:[],health:null,healthText:null,sourceLabel:"官方頁",fallback:true,
         failures:[source.label+": "+String(e)],
         _remainingSources:sources.slice(1)
       };
@@ -972,7 +1051,6 @@
   }
 
   async function completeService(service, partial) {
-    var activeEvents=(partial.activeEvents||[]).slice();
     var events=(partial.events||[]).slice();
     var health=partial.health||null;
     var healthText=partial.healthText||null;
@@ -985,21 +1063,13 @@
       var source=sources[i];
 
       // 已取得完整官方資料時，不再啟動第三方來源。
-      if(isThirdPartySource(source) && health && events.length>=3 && activeEvents.length>0) break;
+      if(isThirdPartySource(source) && health && events.length>=3 && activeEventCount(events)>0) break;
 
       try{
         var result=await runSource(source,service);
 
-        if(result.activeEvents && result.activeEvents.length){
-          activeEvents=dedupe(activeEvents.concat(result.activeEvents));
-        }
-
         if(result.events && result.events.length){
-          var activeKeys=Object.create(null);
-          activeEvents.forEach(function(e){ activeKeys[fingerprint(e)]=true; });
-          events=mergeEvents(events,result.events).filter(function(e){
-            return !activeKeys[fingerprint(e)];
-          });
+          events=mergeEvents(events,result.events);
           if(labels.indexOf(source.label)<0) labels.push(source.label);
         }
 
@@ -1009,7 +1079,7 @@
           if(labels.indexOf(source.label)<0) labels.push(source.label);
         }
 
-        if(events.length>=3 && health && (health==="normal" || activeEvents.length>0)) break;
+        if(events.length>=3 && health && (health==="normal" || activeEventCount(events)>0)) break;
       }catch(e){
         failures.push(source.label+": "+String(e));
       }
@@ -1017,7 +1087,7 @@
 
     return {
       id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,
-      activeEvents:activeEvents,events:events.slice(0,20),health:health,healthText:healthText,
+      events:events.slice(0,20),health:health,healthText:healthText,
       sourceLabel:labels.length===1?labels[0]:(labels.length>1?"多來源":"官方頁"),
       fallback:!events.length&&!health,
       failures:failures
@@ -1219,9 +1289,6 @@
       return [
         service.id,service.loading?"1":"0",service.health||"",service.healthText||"",
         service.sourceLabel||"",service.fallback?"1":"0",service.updatedAt||"",
-        (service.activeEvents||[]).map(function(e){
-          return [e.id||"",e.title||"",e.status||"",e.start||"",e.end||""].join("~");
-        }).join("¦"),
         (service.events||[]).map(function(e){
           return [e.title||"",e.status||"",e.start||"",e.end||""].join("~");
         }).join("¦")
@@ -1280,7 +1347,7 @@
         state.services=SERVICES.map(function(service){
           return {
             id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,
-            activeEvents:[],events:[],health:null,healthText:null,sourceLabel:"載入中",fallback:false,failures:[],loading:true
+            events:[],health:null,healthText:null,sourceLabel:"載入中",fallback:false,failures:[],loading:true
           };
         });
         render();
