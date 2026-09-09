@@ -2,6 +2,29 @@
 
 CloudStatus 版本更新記錄。
 
+## v79.0.0
+
+- 重構 Statuspage 為真正雙通道資料模型。
+- `activeEvents` 直接來自官方 `incidents/unresolved.json`。
+- `recentEvents` 直接來自官方 `incidents.json`，排除 active incident ID 且只保留已結束事件。
+- Cloudflare / GitHub / OpenAI / Equinix 統一套用。
+- 卡片直接渲染 `service.activeEvents` / `service.recentEvents`。
+- 非 Statuspage 服務維持原邏輯。
+- 更新快取為 `cloudstatus-cache-v79`。
+- v77 雙欄自然流保持不變。
+
+## v78.0.0
+
+- 修正 Cloudflare「未解決事件數量」與「目前事件清單」不一致。
+- Cloudflare 明確指定官方 `incidents/unresolved.json` 作為目前事件權威來源。
+- Statuspage 目前事件以 unresolved endpoint 回傳的 incident ID 集合判定，不再只依賴 lifecycle status 是否可識別。
+- 未解決事件即使暫時缺少可解析 status，也仍會出現在「目前事件」，但不捏造狀態標籤。
+- 事件去重改為優先使用官方 incident ID，避免標題/日期指紋誤合併。
+- 合併來源時保留 incident ID 與 unresolved 權威標記。
+- 「異常 N 個未解決事件」與「目前事件 N」使用同一份官方 unresolved 資料集合。
+- 最近事件仍只顯示非 active 事件，最多 3 筆。
+- v77 雙欄自然流版面保持不變。
+
 ## v77.0.0
 
 - 完全移除 JavaScript absolute Masonry Engine。
