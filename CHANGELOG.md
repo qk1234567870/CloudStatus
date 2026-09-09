@@ -2,6 +2,17 @@
 
 CloudStatus 版本更新記錄。
 
+## v83.0.0
+
+- 移除 Telegram 全球監控中的 IsDown 與 StatusGator。
+- 不再使用使用者回報、推測 outage 或歷史事件文字作為 Telegram 全球狀態。
+- Telegram 卡片只保留 DC1–DC5 官方 WebSocket 端點的直接實測。
+- 本地狀態統一標示「目前網路」。
+- 在接入真正的多地機器探針前，不顯示 Telegram 全球狀態。
+- 移除 `globalChecks` 資料模型與相關 UI/CSS。
+- 保留 v81 GitHub Pages 自訂 Actions、v79 Statuspage 雙通道與 v77 雙欄自然流。
+- 快取更新為 `cloudstatus-cache-v83`。
+
 ## v82.0.0
 
 - Telegram DC 本機連線文字由「此瀏覽器」改為「目前網路」。

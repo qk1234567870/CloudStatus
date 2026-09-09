@@ -53,7 +53,7 @@
 
   function emptyBlock(service,activeEvents,recentEvents,ctx){
     var esc=ctx.escapeHtml;
-    if(service.loading || activeEvents.length || recentEvents.length || (service.checks && service.checks.length) || (service.globalChecks && service.globalChecks.length)) return "";
+    if(service.loading || activeEvents.length || recentEvents.length || (service.checks && service.checks.length)) return "";
 
     if(service.health && service.category==="crossborder"){
       return '<div class="history-empty">狀態依 Cloudflare Radar 公開 BGP 資料判定</div>';
@@ -100,35 +100,6 @@
       }).join("")+'</div>';
   }
 
-  function globalChecksBlock(service,ctx){
-    var esc=ctx.escapeHtml;
-    var checks=service.loading ? [] : (service.globalChecks || []);
-    if(!checks.length) return "";
-
-    var labels={
-      normal:"正常",
-      warning:"可能異常",
-      incident:"異常",
-      unknown:"未知"
-    };
-
-    return sectionHead("Telegram 全球監控",checks.length,false)+
-      '<div class="global-monitor-note">第三方全球監控訊號，不等同 Telegram 官方公告</div>'+
-      '<div class="global-check-list">'+checks.map(function(item){
-        var state=item.state || "unknown";
-        var label=labels[state] || "未知";
-        var href=item.url || service.page || "#";
-
-        return '<a class="global-check-row" href="'+esc(href)+'" target="_blank" rel="noopener">'+
-          '<span class="global-check-main">'+
-            '<span class="global-check-name">'+esc(item.name || "Monitor")+'</span>'+
-            '<span class="global-check-detail">'+esc(item.detail || "")+'</span>'+
-          '</span>'+
-          '<span class="global-check-state '+esc(state)+'">'+esc(label)+'</span>'+
-        '</a>';
-      }).join("")+'</div>';
-  }
-
   function render(service,ctx){
     var esc=ctx.escapeHtml;
     var events=service.events || [];
@@ -152,7 +123,6 @@
 
     var body=healthBlock(service,ctx);
     body+=checksBlock(service,ctx);
-    body+=globalChecksBlock(service,ctx);
 
     if(activeEvents.length){
       body+=sectionHead("目前事件",activeEvents.length,true);
