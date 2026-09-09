@@ -217,6 +217,7 @@ async function main(){
 
     const output={
       schema:1,
+      runStatus:"success",
       generatedAt,
       source:{
         name:"Check-Host",
@@ -248,6 +249,7 @@ async function main(){
   }catch(error){
     const output={
       schema:1,
+      runStatus:"failed",
       generatedAt,
       source:{
         name:"Check-Host",

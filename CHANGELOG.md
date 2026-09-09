@@ -2,6 +2,19 @@
 
 CloudStatus 版本更新記錄。
 
+## v86.0.0
+
+- Telegram 全球探針 UI 不再把所有空資料統一顯示成「等待資料」。
+- 新增明確狀態：尚未執行 / 探針失敗 / 無有效結果 / 資料過期 / 正常實測結果。
+- 探針失敗時直接顯示錯誤摘要與最後嘗試時間，並提示到 Actions 的 `Probe Telegram globally` 查看 Log。
+- 超過 20 分鐘未更新的全球實測資料標示「資料過期」。
+- 自訂 workflow 更名為 `CloudStatus Deploy + Telegram Probe`，與 GitHub 內建 `pages-build-deployment` 明確區分。
+- 仍支援 `workflow_dispatch` 手動執行。
+- 五分鐘排程改為每小時第 3、8、13…58 分鐘觸發，避開整點高峰。
+- Actions Log 新增 `Show Telegram probe result`，直接列出生成的 `data/telegram-global.json`。
+- 保留 v85 全球機器探針、v81 Pages Actions、v79 Statuspage 雙通道與 v77 雙欄自然流。
+- 快取更新為 `cloudstatus-cache-v86`。
+
 ## v85.0.0
 
 - Telegram 全球狀態由占位區塊重構為真正的全球多地機器探針。

@@ -1234,3 +1234,35 @@ footer{
     gap:3px;
   }
 }
+
+
+/* ============================================================
+   v86 Telegram probe diagnostics
+   ============================================================ */
+.global-probe-state.stale{
+  color:var(--orange);
+  background:rgba(255,159,10,.10);
+}
+.global-probe-error{
+  margin-top:8px;
+  padding:8px 10px;
+  border:1px solid rgba(255,159,10,.22);
+  border-radius:9px;
+  color:var(--orange);
+  background:rgba(255,159,10,.06);
+  font-size:11px;
+  line-height:1.45;
+  overflow-wrap:anywhere;
+}
+.global-probe-warning{
+  margin-top:8px;
+  color:var(--orange);
+  font-size:11px;
+  line-height:1.4;
+}
+.global-probe-meta-line{
+  margin-top:8px;
+  color:var(--muted);
+  font-size:11px;
+  line-height:1.35;
+}

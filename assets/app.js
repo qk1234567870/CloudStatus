@@ -3,11 +3,11 @@
 
   function startApp() {
   var CONFIG = Object.freeze({
-    version: "85.0.0",
+    version: "86.0.0",
     expectedServiceCount: 24,
 
     refreshInterval: 5 * 60 * 1000,
-    cacheKey: "cloudstatus-cache-v85",
+    cacheKey: "cloudstatus-cache-v86",
     cacheMaxAge: 15 * 60 * 1000,
     staleCacheMaxAge: 24 * 60 * 60 * 1000,
     foregroundRefreshThreshold: 2 * 60 * 1000,
@@ -27,7 +27,7 @@
   var state = { services: [], filter: "all", search: "", activeOnly: false };
 
   var REFRESH_INTERVAL = CONFIG.refreshInterval || 5 * 60 * 1000;
-  var CACHE_KEY = CONFIG.cacheKey || "cloudstatus-cache-v85";
+  var CACHE_KEY = CONFIG.cacheKey || "cloudstatus-cache-v86";
   var CACHE_MAX_AGE = CONFIG.cacheMaxAge || 15 * 60 * 1000;
   var STALE_CACHE_MAX_AGE = CONFIG.staleCacheMaxAge || 24 * 60 * 60 * 1000;
   var FETCH_TIMEOUT = CONFIG.fetchTimeout || 6500;
@@ -218,6 +218,7 @@
       var gpState=["normal","partial","failed","unknown"].indexOf(summary.state)>=0 ? summary.state : "unknown";
 
       globalProbe={
+        runStatus:["success","failed","not-run"].indexOf(gp.runStatus)>=0 ? gp.runStatus : null,
         generatedAt:gp.generatedAt || null,
         source:gp.source && typeof gp.source==="object" ? {
           name:cleanText(gp.source.name || ""),
@@ -1346,7 +1347,9 @@
           return [c.id||"",c.name||"",c.host||"",c.state||"",c.endpoint||""].join("~");
         }).join("¦"),
         service.globalProbe ? [
+          service.globalProbe.runStatus||"",
           service.globalProbe.generatedAt||"",
+          service.globalProbe.error||"",
           service.globalProbe.summary&&service.globalProbe.summary.state||"",
           service.globalProbe.summary&&service.globalProbe.summary.ok||0,
           service.globalProbe.summary&&service.globalProbe.summary.total||0,

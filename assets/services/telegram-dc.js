@@ -141,6 +141,7 @@
       var globalProbe=null;
       if(globalRaw && globalRaw.summary){
         globalProbe={
+          runStatus:globalRaw.runStatus || null,
           generatedAt:globalRaw.generatedAt || null,
           source:globalRaw.source || null,
           summary:globalRaw.summary || null,

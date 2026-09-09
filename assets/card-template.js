@@ -107,14 +107,48 @@
     var probe=service.globalProbe;
     var label=service.globalProbeLabel || "全球多地機器探針";
 
-    if(!probe || !probe.summary || !probe.summary.total){
-      return sectionHead("Telegram 全球狀態",1,false)+
+    function metaTime(value,prefix){
+      if(!value) return "";
+      var t=ctx.formatRange(value,null);
+      return t ? '<div class="global-probe-meta-line">'+esc(prefix)+esc(t)+'</div>' : "";
+    }
+
+    // Initial repository placeholder: the custom workflow has never produced data.
+    if(!probe || probe.runStatus==="not-run" || (!probe.generatedAt && (!probe.summary || !probe.summary.total))){
+      return sectionHead("Telegram 全球狀態",0,false)+
         '<div class="global-probe-card">'+
           '<div class="global-probe-row">'+
             '<span class="global-probe-name">'+esc(label)+'</span>'+
-            '<span class="global-probe-state unknown">等待資料</span>'+
+            '<span class="global-probe-state unknown">尚未執行</span>'+
           '</div>'+
-          '<div class="global-probe-text">尚未取得全球多地機器探針結果</div>'+
+          '<div class="global-probe-text">請先在 GitHub Actions 手動執行「CloudStatus Deploy + Telegram Probe」。完成後此處會顯示全球實測結果。</div>'+
+        '</div>';
+    }
+
+    // Probe job did run, but generator reported an error.
+    if(probe.runStatus==="failed" || probe.error){
+      return sectionHead("Telegram 全球狀態",0,false)+
+        '<div class="global-probe-card">'+
+          '<div class="global-probe-row">'+
+            '<span class="global-probe-name">'+esc(label)+'</span>'+
+            '<span class="global-probe-state failed">探針失敗</span>'+
+          '</div>'+
+          metaTime(probe.generatedAt,"最後嘗試：")+
+          '<div class="global-probe-error">'+esc(probe.error || "全球探針沒有成功產生結果")+'</div>'+
+          '<div class="global-probe-text">請到 Actions → CloudStatus Deploy + Telegram Probe → Probe Telegram globally 查看詳細 Log。</div>'+
+        '</div>';
+    }
+
+    // The job ran successfully but no usable machine-node result was returned.
+    if(!probe.summary || !probe.summary.total){
+      return sectionHead("Telegram 全球狀態",0,false)+
+        '<div class="global-probe-card">'+
+          '<div class="global-probe-row">'+
+            '<span class="global-probe-name">'+esc(label)+'</span>'+
+            '<span class="global-probe-state unknown">無有效結果</span>'+
+          '</div>'+
+          metaTime(probe.generatedAt,"最後實測：")+
+          '<div class="global-probe-text">工作流程已執行，但目前沒有可用的全球機器探針結果；不使用使用者回報作為替代。</div>'+
         '</div>';
     }
 
@@ -130,6 +164,9 @@
     var source=probe.source || {};
     var sourceUrl=source.url || "#";
     var time=probe.generatedAt ? ctx.formatRange(probe.generatedAt,null) : "";
+
+    var generatedMs=probe.generatedAt ? new Date(probe.generatedAt).getTime() : 0;
+    var stale=generatedMs && !isNaN(generatedMs) && Date.now()-generatedMs>20*60*1000;
 
     var regionHtml=(probe.regions||[]).map(function(region){
       var regionLabels={
@@ -163,13 +200,14 @@
       '<div class="global-probe-card">'+
         '<div class="global-probe-row">'+
           '<span class="global-probe-name">'+esc(label)+' · TCP 443</span>'+
-          '<span class="global-probe-state '+esc(state)+'">'+esc(summary.ok+"/"+summary.total+" "+stateLabel)+'</span>'+
+          '<span class="global-probe-state '+esc(stale?"stale":state)+'">'+esc(stale?"資料過期":summary.ok+"/"+summary.total+" "+stateLabel)+'</span>'+
         '</div>'+
         '<div class="global-probe-regions">'+regionHtml+'</div>'+
         '<div class="global-probe-meta">'+
           '<a href="'+esc(sourceUrl)+'" target="_blank" rel="noopener">'+esc(source.name || "機器探針")+'</a>'+
           (time?'<span>實測時間：'+esc(time)+'</span>':'')+
         '</div>'+
+        (stale?'<div class="global-probe-warning">此結果已超過 20 分鐘，請檢查排程是否仍正常執行。</div>':'')+
         '<div class="global-probe-text">機器探針直接測試 Telegram 官方 DC 端點 TCP/443；不使用使用者回報，也不將單次網路不可達推斷為 Telegram 官方故障。</div>'+
       '</div>';
   }

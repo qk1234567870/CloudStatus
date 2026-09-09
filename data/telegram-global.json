@@ -23,5 +23,7 @@
   },
   "regions": [],
   "reports": [],
-  "note": "Waiting for GitHub Actions to generate global machine-probe data."
+  "note": "Waiting for the custom GitHub Actions workflow to run the first global machine probe.",
+  "runStatus": "not-run",
+  "error": null
 }
