@@ -1,6 +1,6 @@
 {
   "name": "CloudStatus Pure Pages",
-  "version": "79.0.0",
+  "version": "80.0.0",
   "updated": "2026-08-27",
   "current_state_and_history_independent": true,
   "status_inference": false,
@@ -84,9 +84,9 @@
   "last_read_time_includes_year": true,
   "asset_cache_busting": true,
   "html_no_cache_meta": true,
-  "cache_key": "cloudstatus-cache-v79",
+  "cache_key": "cloudstatus-cache-v80",
   "page_max_width": "1360px",
-  "synchronized_asset_version": "79.0.0",
+  "synchronized_asset_version": "80.0.0",
   "masonry_columns": "dynamic-1-to-4",
   "max_shell_width": "1180px",
   "layout_columns": "1-mobile-2-tablet-desktop",
@@ -100,7 +100,7 @@
   "fetch_timeout_ms": 6500,
   "reader_timeout_ms": 7500,
   "stale_cache_max_age_hours": 24,
-  "service_count": 23,
+  "service_count": 24,
   "crossborder_routes": 7,
   "crossborder_status": "cloudflare-radar-public-bgp",
   "crossborder_classification": "carrier-grouped-order-fixed",
@@ -136,5 +136,7 @@
   "cloudflare_unresolved_consistency": "health-and-current-events-share-authoritative-unresolved-set",
   "statuspage_model": "dual-channel",
   "statuspage_active": "unresolved.json-direct",
-  "statuspage_recent": "incidents.json-resolved-only-minus-active-ids"
+  "statuspage_recent": "incidents.json-resolved-only-minus-active-ids",
+  "telegram_dc_monitor": "official-mtproto-websocket-browser-handshake",
+  "telegram_dc_count": 5
 }

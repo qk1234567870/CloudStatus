@@ -2,8 +2,8 @@
 (function () {
   "use strict";
 
-  var version = "79.0.0";
-  var expectedServiceCount = 23;
+  var version = "80.0.0";
+  var expectedServiceCount = 24;
 
   var manifest = [
   "cloudflare",
@@ -13,6 +13,7 @@
   "github",
   "openai",
   "apple",
+  "telegram-dc",
   "oracle",
   "bandwagonhost",
   "dmit",

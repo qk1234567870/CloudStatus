@@ -29,6 +29,11 @@
 
 若自動來源無法取得可靠事件，直接提供官方狀態頁入口，不把普通頁面正文、導航、說明文字偽裝成事件。
 
+## Telegram DC 連線狀態
+
+Telegram Data Centers 卡片直接由使用者瀏覽器連線 Telegram 官方 MTProto WebSocket 端點，顯示 DC1–DC5 是否可建立 WebSocket。這是「目前瀏覽器到官方 DC 端點的可連線性」，不把單一網路路徑失敗推斷成 Telegram 全球機房故障。
+
+
 ## 更新
 
 - 頁面開啟後直接向來源讀取資料。
@@ -72,4 +77,4 @@
 - `assets/app.js`：抓取、標準化、快取、篩選後直接將 Service Model 套入模板
 
 沒有額外 Renderer，也不再把卡片與事件拆成多層模板。
-修改 `assets/card-template.js` 即同步套用全部 23 個服務。
+修改 `assets/card-template.js` 即同步套用全部 24 個服務。

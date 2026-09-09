@@ -34,7 +34,7 @@
     if(service.loading) return '<div class="message">載入中…</div>';
 
     if(service.health==="normal"){
-      var label=service.category==="crossborder" ? "上游正常" : "正常";
+      var label=service.checks && service.checks.length ? "全可連線" : (service.category==="crossborder" ? "上游正常" : "正常");
       return '<div class="health-row good">'+
         '<span class="health-badge"><span class="health-icon">✓</span>'+esc(label)+'</span>'+
         (service.healthText?'<span class="health-text">'+esc(service.healthText)+'</span>':'')+
@@ -42,7 +42,7 @@
     }
 
     if(service.health==="incident"){
-      var label2=service.category==="crossborder" ? "上游異常" : "異常";
+      var label2=service.checks && service.checks.length ? "連線異常" : (service.category==="crossborder" ? "上游異常" : "異常");
       return '<div class="health-row warn">'+
         '<span class="health-badge"><span class="health-icon">!</span>'+esc(label2)+'</span>'+
         (service.healthText?'<span class="health-text">'+esc(service.healthText)+'</span>':'')+
@@ -53,7 +53,7 @@
 
   function emptyBlock(service,activeEvents,recentEvents,ctx){
     var esc=ctx.escapeHtml;
-    if(service.loading || activeEvents.length || recentEvents.length) return "";
+    if(service.loading || activeEvents.length || recentEvents.length || (service.checks && service.checks.length)) return "";
 
     if(service.health && service.category==="crossborder"){
       return '<div class="history-empty">狀態依 Cloudflare Radar 公開 BGP 資料判定</div>';
@@ -68,6 +68,36 @@
       return '<a class="message link" href="'+esc(service.page)+'" target="_blank" rel="noopener">[官方狀態頁] 自動來源未取得可靠事件資料，查看官方即時狀態 →</a>';
     }
     return '<div class="message">目前沒有可顯示的可靠事件資料</div>';
+  }
+
+  function checksBlock(service,ctx){
+    var esc=ctx.escapeHtml;
+    var checks=service.loading ? [] : (service.checks || []);
+    if(!checks.length) return "";
+
+    var labels={
+      ok:"可連線",
+      fail:"無法連線",
+      timeout:"逾時",
+      unknown:"未知"
+    };
+
+    return sectionHead("DC1–DC5",checks.length,false)+
+      '<div class="check-list">'+checks.map(function(item){
+        var state=item.state || "unknown";
+        var stateLabel=labels[state] || "未知";
+        var endpoint=item.endpoint==="backup" ? '<span class="check-endpoint">備援端點</span>' : "";
+        var href=item.url || service.page || "#";
+
+        return '<a class="check-row" href="'+esc(href)+'" target="_blank" rel="noopener">'+
+          '<span class="check-main">'+
+            '<span class="check-name">'+esc(item.name || item.id || "DC")+'</span>'+
+            '<span class="check-host">'+esc(item.host || "")+'</span>'+
+          '</span>'+
+          endpoint+
+          '<span class="check-state '+esc(state)+'">'+esc(stateLabel)+'</span>'+
+        '</a>';
+      }).join("")+'</div>';
   }
 
   function render(service,ctx){
@@ -92,6 +122,7 @@
       : '';
 
     var body=healthBlock(service,ctx);
+    body+=checksBlock(service,ctx);
 
     if(activeEvents.length){
       body+=sectionHead("目前事件",activeEvents.length,true);

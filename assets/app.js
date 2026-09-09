@@ -3,11 +3,11 @@
 
   function startApp() {
   var CONFIG = Object.freeze({
-    version: "79.0.0",
+    version: "80.0.0",
     expectedServiceCount: 23,
 
     refreshInterval: 5 * 60 * 1000,
-    cacheKey: "cloudstatus-cache-v79",
+    cacheKey: "cloudstatus-cache-v80",
     cacheMaxAge: 15 * 60 * 1000,
     staleCacheMaxAge: 24 * 60 * 60 * 1000,
     foregroundRefreshThreshold: 2 * 60 * 1000,
@@ -27,7 +27,7 @@
   var state = { services: [], filter: "all", search: "", activeOnly: false };
 
   var REFRESH_INTERVAL = CONFIG.refreshInterval || 5 * 60 * 1000;
-  var CACHE_KEY = CONFIG.cacheKey || "cloudstatus-cache-v79";
+  var CACHE_KEY = CONFIG.cacheKey || "cloudstatus-cache-v80";
   var CACHE_MAX_AGE = CONFIG.cacheMaxAge || 15 * 60 * 1000;
   var STALE_CACHE_MAX_AGE = CONFIG.staleCacheMaxAge || 24 * 60 * 60 * 1000;
   var FETCH_TIMEOUT = CONFIG.fetchTimeout || 6500;
@@ -198,11 +198,31 @@
     var explicitRecent=Array.isArray(result.recentEvents) ? sortRecent(normList(result.recentEvents)) : null;
     var events=sortRecent(normList(result.events || []));
     if(explicitActive || explicitRecent) events=sortRecent((explicitActive||[]).concat(explicitRecent||[]));
+    var checks=Array.isArray(result.checks) ? result.checks.map(function(item){
+      if(!item) return null;
+      var state=["ok","fail","timeout","unknown"].indexOf(item.state)>=0 ? item.state : "unknown";
+      return {
+        id:cleanText(item.id || ""),
+        name:cleanText(item.name || ""),
+        host:cleanText(item.host || ""),
+        state:state,
+        endpoint:item.endpoint || null,
+        url:item.url || null
+      };
+    }).filter(Boolean) : null;
+
     var health=result.health || null;
     var healthText=result.healthText || null;
     var activeCount=explicitActive ? explicitActive.length : activeEventCount(events);
     if(activeCount>0){ health="incident"; if(!healthText) healthText=activeCount+" 個未解決事件"; }
-    return { events:events, activeEvents:explicitActive, recentEvents:explicitRecent, health:health, healthText:healthText };
+    return {
+      events:events,
+      activeEvents:explicitActive,
+      recentEvents:explicitRecent,
+      checks:checks,
+      health:health,
+      healthText:healthText
+    };
   }
 
 
@@ -990,7 +1010,7 @@
     if(!source){
       return {
         id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,
-        events:[],health:null,healthText:null,sourceLabel:"官方頁",fallback:true,failures:["No source"],
+        events:[],activeEvents:null,recentEvents:null,checks:null,health:null,healthText:null,sourceLabel:"官方頁",fallback:true,failures:["No source"],
         _remainingSources:[]
       };
     }
@@ -1000,13 +1020,14 @@
       var events=(result.events||[]).slice(0,20);
       var activeEvents=Array.isArray(result.activeEvents) ? result.activeEvents.slice(0,20) : null;
       var recentEvents=Array.isArray(result.recentEvents) ? result.recentEvents.slice(0,20) : null;
+      var checks=Array.isArray(result.checks) ? result.checks.slice() : null;
       var health=result.health||null;
       var healthText=result.healthText||null;
 
       return {
         id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,
-        events:events,activeEvents:activeEvents,recentEvents:recentEvents,health:health,healthText:healthText,
-        sourceLabel:(events.length||health)?source.label:"官方頁",
+        events:events,activeEvents:activeEvents,recentEvents:recentEvents,checks:checks,health:health,healthText:healthText,
+        sourceLabel:(events.length||checks||health)?source.label:"官方頁",
         fallback:!events.length&&!health,
         failures:[],
         _remainingSources:sources.slice(1)
@@ -1014,7 +1035,7 @@
     }catch(e){
       return {
         id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,
-        events:[],health:null,healthText:null,sourceLabel:"官方頁",fallback:true,
+        events:[],activeEvents:null,recentEvents:null,checks:null,health:null,healthText:null,sourceLabel:"官方頁",fallback:true,
         failures:[source.label+": "+String(e)],
         _remainingSources:sources.slice(1)
       };
@@ -1025,6 +1046,7 @@
     var events=(partial.events||[]).slice();
     var activeEvents=Array.isArray(partial.activeEvents) ? partial.activeEvents.slice() : null;
     var recentEvents=Array.isArray(partial.recentEvents) ? partial.recentEvents.slice() : null;
+    var checks=Array.isArray(partial.checks) ? partial.checks.slice() : null;
     var health=partial.health||null, healthText=partial.healthText||null;
     var labels=[]; if(partial.sourceLabel && partial.sourceLabel!=="官方頁") labels.push(partial.sourceLabel);
     var failures=(partial.failures||[]).slice();
@@ -1037,6 +1059,7 @@
       try{
         var result=await runSource(source,service);
         if(result.events && result.events.length){ events=mergeEvents(events,result.events); if(labels.indexOf(source.label)<0) labels.push(source.label); }
+        if(!checks && Array.isArray(result.checks)){ checks=result.checks.slice(); if(labels.indexOf(source.label)<0) labels.push(source.label); }
         if(!hasStructuredChannels && Array.isArray(result.activeEvents) && Array.isArray(result.recentEvents)){
           activeEvents=result.activeEvents.slice(); recentEvents=result.recentEvents.slice(); hasStructuredChannels=true;
         }
@@ -1047,9 +1070,9 @@
     }
     return {
       id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,
-      events:events.slice(0,20),activeEvents:activeEvents,recentEvents:recentEvents,health:health,healthText:healthText,
+      events:events.slice(0,20),activeEvents:activeEvents,recentEvents:recentEvents,checks:checks,health:health,healthText:healthText,
       sourceLabel:labels.length===1?labels[0]:(labels.length>1?"多來源":"官方頁"),
-      fallback:!events.length&&!health,failures:failures
+      fallback:!events.length&&!checks&&!health,failures:failures
     };
   }
 
@@ -1120,7 +1143,10 @@
       if (state.filter!=="all" && s.category!==state.filter) return false;
       if (state.activeOnly && !isActive(s)) return false;
       if (n) {
-        var h=[s.name,s.nameZh,s.desc,s.carrierLabel,s.routeClassLabel].concat((s.events||[]).map(function(e){return e.title;})).join(" ").toLowerCase();
+        var h=[s.name,s.nameZh,s.desc,s.carrierLabel,s.routeClassLabel]
+          .concat((s.events||[]).map(function(e){return e.title;}))
+          .concat((s.checks||[]).map(function(c){return [c.name,c.host].join(" ");}))
+          .join(" ").toLowerCase();
         if (h.indexOf(n)===-1) return false;
       }
       return true;
@@ -1256,6 +1282,9 @@
         }).join("¦"),
         (service.recentEvents||[]).map(function(e){
           return [e.id||"",e.title||"",e.status||"",e.start||"",e.end||""].join("~");
+        }).join("¦"),
+        (service.checks||[]).map(function(c){
+          return [c.id||"",c.name||"",c.host||"",c.state||"",c.endpoint||""].join("~");
         }).join("¦")
       ].join("§");
     }).join("¶");
@@ -1312,7 +1341,7 @@
         state.services=SERVICES.map(function(service){
           return {
             id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,
-            events:[],health:null,healthText:null,sourceLabel:"載入中",fallback:false,failures:[],loading:true
+            events:[],activeEvents:null,recentEvents:null,checks:null,health:null,healthText:null,sourceLabel:"載入中",fallback:false,failures:[],loading:true
           };
         });
         render();

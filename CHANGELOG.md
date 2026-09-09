@@ -2,6 +2,24 @@
 
 CloudStatus 版本更新記錄。
 
+## v80.0.0
+
+- 新增 `Telegram Data Centers` 服務，總服務數由 23 增加至 24。
+- 同一卡片顯示 Telegram DC1–DC5：
+  - DC1 · Pluto
+  - DC2 · Venus
+  - DC3 · Aurora
+  - DC4 · Vesta
+  - DC5 · Flora
+- 直接測試 Telegram 官方 `wss://*.web.telegram.org/apiws` MTProto WebSocket 握手。
+- 主 hostname 失敗時才檢查官方 `-1` hostname 備援端點。
+- 每個 DC 顯示「可連線 / 無法連線 / 逾時 / 未知」。
+- 聚合狀態明確標示為「此瀏覽器」的 DC WebSocket 可連線數，不把單一路徑結果描述成全球 DC 故障。
+- 新增通用 `checks` Service Model 與卡片狀態列，可供後續其他直接端點檢查服務重用。
+- Telegram 歸類於「平台」。
+- 保留 v79 Statuspage 雙通道與 v77 雙欄自然流。
+- 快取更新為 `cloudstatus-cache-v80`。
+
 ## v79.0.0
 
 - 重構 Statuspage 為真正雙通道資料模型。

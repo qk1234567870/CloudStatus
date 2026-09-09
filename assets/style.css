@@ -1020,3 +1020,92 @@ footer{
     margin:0 0 14px !important;
   }
 }
+
+
+/* ============================================================
+   v80 Telegram DC connectivity checks
+   ============================================================ */
+.check-list{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  margin-top:10px;
+}
+.check-row{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto auto;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+  padding:10px 12px;
+  border:1px solid var(--hairline);
+  border-radius:12px;
+  background:rgba(255,255,255,.018);
+}
+.check-row:active{transform:scale(.997)}
+.check-main{
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+  min-width:0;
+}
+.check-name{
+  color:var(--text);
+  font-size:14px;
+  font-weight:650;
+  line-height:1.25;
+}
+.check-host{
+  min-width:0;
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.25;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.check-endpoint{
+  color:var(--muted);
+  font-size:11px;
+  white-space:nowrap;
+}
+.check-state{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:64px;
+  min-height:27px;
+  padding:4px 8px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:700;
+  white-space:nowrap;
+}
+.check-state.ok{
+  color:var(--green);
+  background:rgba(53,208,111,.10);
+}
+.check-state.fail,
+.check-state.timeout{
+  color:var(--orange);
+  background:rgba(255,159,10,.10);
+}
+.check-state.unknown{
+  color:var(--muted);
+  background:rgba(150,154,163,.10);
+}
+
+@media (max-width:520px){
+  .check-row{
+    grid-template-columns:minmax(0,1fr) auto;
+    gap:8px 10px;
+  }
+  .check-endpoint{
+    grid-column:1;
+    grid-row:2;
+  }
+  .check-state{
+    grid-column:2;
+    grid-row:1 / span 2;
+  }
+}
