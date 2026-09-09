@@ -1,6 +1,6 @@
 {
   "name": "CloudStatus Pure Pages",
-  "version": "83.0.0",
+  "version": "85.0.0",
   "updated": "2026-08-27",
   "current_state_and_history_independent": true,
   "status_inference": false,
@@ -84,9 +84,9 @@
   "last_read_time_includes_year": true,
   "asset_cache_busting": true,
   "html_no_cache_meta": true,
-  "cache_key": "cloudstatus-cache-v83",
+  "cache_key": "cloudstatus-cache-v85",
   "page_max_width": "1360px",
-  "synchronized_asset_version": "83.0.0",
+  "synchronized_asset_version": "85.0.0",
   "masonry_columns": "dynamic-1-to-4",
   "max_shell_width": "1180px",
   "layout_columns": "1-mobile-2-tablet-desktop",
@@ -144,5 +144,24 @@
   "telegram_local_label": "目前網路",
   "telegram_global_monitoring": "disabled-until-real-multipoint-probes",
   "telegram_global_aggregation": "none-source-authentic-only",
-  "telegram_global_sources": []
+  "telegram_global_sources": [],
+  "telegram_dc_labels": {
+    "DC1": "Pluto（冥王星）",
+    "DC2": "Venus（金星）",
+    "DC3": "Aurora（歐若拉）",
+    "DC4": "Vesta（灶神星）",
+    "DC5": "Flora（花神星）"
+  },
+  "telegram_global_status": "scheduled-machine-probes",
+  "telegram_global_probe_source": "Check-Host",
+  "telegram_global_probe_method": "TCP 443",
+  "telegram_global_probe_schedule": "GitHub Actions every 5 minutes",
+  "telegram_global_probe_regions": [
+    "亞洲",
+    "歐洲",
+    "北美",
+    "南美",
+    "大洋洲",
+    "非洲"
+  ]
 }

@@ -1109,3 +1109,128 @@ footer{
     grid-row:1 / span 2;
   }
 }
+
+
+/* ============================================================
+   v85 Telegram global machine probes
+   ============================================================ */
+.global-probe-card{
+  margin-top:10px;
+  padding:10px 12px;
+  border:1px solid var(--hairline);
+  border-radius:12px;
+  background:rgba(255,255,255,.018);
+}
+.global-probe-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  min-width:0;
+}
+.global-probe-name{
+  min-width:0;
+  color:var(--text);
+  font-size:14px;
+  font-weight:650;
+  line-height:1.25;
+}
+.global-probe-state,
+.global-probe-region-state{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:27px;
+  padding:4px 9px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:700;
+  white-space:nowrap;
+}
+.global-probe-state.normal,
+.global-probe-region-state.normal{
+  color:var(--green);
+  background:rgba(53,208,111,.10);
+}
+.global-probe-state.partial,
+.global-probe-state.failed,
+.global-probe-region-state.partial,
+.global-probe-region-state.failed{
+  color:var(--orange);
+  background:rgba(255,159,10,.10);
+}
+.global-probe-state.unknown,
+.global-probe-region-state.unknown,
+.global-probe-region-state.unavailable{
+  color:var(--muted);
+  background:rgba(150,154,163,.10);
+}
+.global-probe-regions{
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+  margin-top:10px;
+}
+.global-probe-region{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+  padding:8px 0;
+  border-top:1px solid var(--hairline);
+}
+.global-probe-region:first-child{
+  border-top:0;
+}
+.global-probe-region-main{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  min-width:0;
+}
+.global-probe-region-name{
+  color:var(--text);
+  font-size:13px;
+  font-weight:650;
+}
+.global-probe-location{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:var(--muted);
+  font-size:11px;
+}
+.global-probe-meta{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-top:8px;
+  padding-top:8px;
+  border-top:1px solid var(--hairline);
+  color:var(--muted);
+  font-size:11px;
+  line-height:1.35;
+}
+.global-probe-meta a{
+  color:inherit;
+  text-decoration:none;
+}
+.global-probe-text{
+  margin-top:7px;
+  color:var(--muted);
+  font-size:11px;
+  line-height:1.4;
+}
+@media (max-width:520px){
+  .global-probe-row{
+    align-items:flex-start;
+  }
+  .global-probe-meta{
+    align-items:flex-start;
+    flex-direction:column;
+    gap:3px;
+  }
+}

@@ -31,7 +31,7 @@
 
 ## Telegram DC 連線狀態
 
-Telegram Data Centers 卡片直接由使用者瀏覽器連線 Telegram 官方 MTProto WebSocket 端點，顯示 DC1–DC5 是否可建立 WebSocket。這是「目前網路到官方 DC 端點的可連線性」，不把單一網路路徑失敗推斷成 Telegram 全球機房故障。全球狀態不使用使用者回報或推測；在接入真正多地機器探針前不顯示全球狀態。
+Telegram Data Centers 卡片直接由使用者瀏覽器連線 Telegram 官方 MTProto WebSocket 端點，顯示 DC1–DC5 是否可建立 WebSocket。這是「目前網路到官方 DC 端點的可連線性」，不把單一網路路徑失敗推斷成 Telegram 全球機房故障。全球狀態使用 GitHub Actions 定時呼叫 Check-Host 的全球機器節點，直接測試 Telegram 官方 DC 端點 TCP/443；不使用使用者回報或推測。
 
 
 ## 更新

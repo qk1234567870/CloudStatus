@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "generatedAt": null,
+  "source": {
+    "name": "Check-Host",
+    "url": "https://check-host.net/",
+    "api": "https://check-host.net/about/api",
+    "type": "machine-probe",
+    "method": "TCP 443"
+  },
+  "target": {
+    "service": "Telegram",
+    "description": "Telegram official Web DC endpoints",
+    "port": 443
+  },
+  "summary": {
+    "state": "unknown",
+    "ok": 0,
+    "failed": 0,
+    "unknown": 0,
+    "total": 0,
+    "regions": 0
+  },
+  "regions": [],
+  "reports": [],
+  "note": "Waiting for GitHub Actions to generate global machine-probe data."
+}

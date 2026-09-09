@@ -100,6 +100,80 @@
       }).join("")+'</div>';
   }
 
+  function globalProbeBlock(service,ctx){
+    if(service.id!=="telegram-dc") return "";
+
+    var esc=ctx.escapeHtml;
+    var probe=service.globalProbe;
+    var label=service.globalProbeLabel || "全球多地機器探針";
+
+    if(!probe || !probe.summary || !probe.summary.total){
+      return sectionHead("Telegram 全球狀態",1,false)+
+        '<div class="global-probe-card">'+
+          '<div class="global-probe-row">'+
+            '<span class="global-probe-name">'+esc(label)+'</span>'+
+            '<span class="global-probe-state unknown">等待資料</span>'+
+          '</div>'+
+          '<div class="global-probe-text">尚未取得全球多地機器探針結果</div>'+
+        '</div>';
+    }
+
+    var summary=probe.summary;
+    var summaryLabels={
+      normal:"全部可達",
+      partial:"部分不可達",
+      failed:"全部不可達",
+      unknown:"資料不足"
+    };
+    var state=summary.state || "unknown";
+    var stateLabel=summaryLabels[state] || "資料不足";
+    var source=probe.source || {};
+    var sourceUrl=source.url || "#";
+    var time=probe.generatedAt ? ctx.formatRange(probe.generatedAt,null) : "";
+
+    var regionHtml=(probe.regions||[]).map(function(region){
+      var regionLabels={
+        normal:"可達",
+        partial:"部分不可達",
+        failed:"不可達",
+        unknown:"資料不足",
+        unavailable:"無探針"
+      };
+      var rs=region.state || "unknown";
+      var statusText=region.total
+        ? region.ok+"/"+region.total+" "+(regionLabels[rs] || "資料不足")
+        : (regionLabels[rs] || "無探針");
+
+      var location="";
+      if(region.node){
+        location=[region.node.country,region.node.city].filter(Boolean).join(" · ");
+        if(region.node.asn) location+=(location?" · ":"")+region.node.asn;
+      }
+
+      return '<div class="global-probe-region">'+
+        '<span class="global-probe-region-main">'+
+          '<span class="global-probe-region-name">'+esc(region.label || region.id || "區域")+'</span>'+
+          (location?'<span class="global-probe-location">'+esc(location)+'</span>':'')+
+        '</span>'+
+        '<span class="global-probe-region-state '+esc(rs)+'">'+esc(statusText)+'</span>'+
+      '</div>';
+    }).join("");
+
+    return sectionHead("Telegram 全球狀態",probe.regions ? probe.regions.length : 0,false)+
+      '<div class="global-probe-card">'+
+        '<div class="global-probe-row">'+
+          '<span class="global-probe-name">'+esc(label)+' · TCP 443</span>'+
+          '<span class="global-probe-state '+esc(state)+'">'+esc(summary.ok+"/"+summary.total+" "+stateLabel)+'</span>'+
+        '</div>'+
+        '<div class="global-probe-regions">'+regionHtml+'</div>'+
+        '<div class="global-probe-meta">'+
+          '<a href="'+esc(sourceUrl)+'" target="_blank" rel="noopener">'+esc(source.name || "機器探針")+'</a>'+
+          (time?'<span>實測時間：'+esc(time)+'</span>':'')+
+        '</div>'+
+        '<div class="global-probe-text">機器探針直接測試 Telegram 官方 DC 端點 TCP/443；不使用使用者回報，也不將單次網路不可達推斷為 Telegram 官方故障。</div>'+
+      '</div>';
+  }
+
   function render(service,ctx){
     var esc=ctx.escapeHtml;
     var events=service.events || [];
@@ -123,6 +197,7 @@
 
     var body=healthBlock(service,ctx);
     body+=checksBlock(service,ctx);
+    body+=globalProbeBlock(service,ctx);
 
     if(activeEvents.length){
       body+=sectionHead("目前事件",activeEvents.length,true);

@@ -2,6 +2,35 @@
 
 CloudStatus 版本更新記錄。
 
+## v85.0.0
+
+- Telegram 全球狀態由占位區塊重構為真正的全球多地機器探針。
+- 使用 Check-Host 公開機器節點，直接對 Telegram 官方 DC1–DC5 Web hostname 執行 TCP/443 連線測試。
+- 不使用使用者回報、不使用「可能 outage」文字、不從歷史事件推斷狀態。
+- GitHub Actions 每 5 分鐘生成 `data/telegram-global.json` 並重新部署 Pages。
+- 全球探針動態挑選亞洲、歐洲、北美、南美、大洋洲、非洲可用節點；某區沒有節點時明確顯示「無探針」。
+- Telegram 卡片顯示每區 `N/5 可達`、探針所在國家/城市/ASN、全球總計與實測時間。
+- 全球結果只表示機器探針到 Telegram 官方端點的 TCP/443 可達性，不冒充 Telegram 官方 outage status。
+- 目前網路 DC1–DC5 WebSocket 實測保留，與全球機器探針完全分離。
+- 保留 v81 GitHub Pages 自訂 Actions、v79 Statuspage 雙通道與 v77 雙欄自然流。
+- 快取更新為 `cloudstatus-cache-v85`。
+
+## v84.0.0
+
+- Telegram DC 名稱補上中文：
+  - DC1 · Pluto（冥王星）
+  - DC2 · Venus（金星）
+  - DC3 · Aurora（歐若拉）
+  - DC4 · Vesta（灶神星）
+  - DC5 · Flora（花神星）
+- 保留「Telegram 全球狀態」區塊。
+- 全球狀態目前顯示「全球多地探針 · 尚未配置」。
+- 明確提示「目前沒有可靠的全球實測資料」。
+- 不使用使用者回報或第三方推測狀態填補全球監控。
+- 未來接入真實多地探針後，可直接替換此占位區塊。
+- 保留 v83 Telegram 官方 DC 端點實測、v81 GitHub Pages Actions、v79 Statuspage 雙通道與 v77 雙欄自然流。
+- 快取更新為 `cloudstatus-cache-v84`。
+
 ## v83.0.0
 
 - 移除 Telegram 全球監控中的 IsDown 與 StatusGator。
