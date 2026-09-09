@@ -2,6 +2,19 @@
 
 CloudStatus 版本更新記錄。
 
+## v82.0.0
+
+- Telegram DC 本機連線文字由「此瀏覽器」改為「目前網路」。
+- Telegram 卡片新增「Telegram 全球監控」區塊。
+- 全球監控來源：IsDown、StatusGator。
+- 全球監控只顯示各來源自己公開的目前狀態，不合成、不推斷 Telegram 官方狀態。
+- 狀態顯示：正常 / 可能異常 / 異常 / 未知，並保留來源原始狀態文字。
+- 全球監控資料透過既有 Reader 機制取得；單一來源失敗只顯示未知，不影響 DC1–DC5 目前網路檢查。
+- 即使瀏覽器不支援 WebSocket，全球監控仍會獨立讀取。
+- 修正 app CONFIG 的服務總數為 24。
+- 保留 v81 GitHub Pages 自訂 Actions、v79 Statuspage 雙通道與 v77 雙欄自然流。
+- 快取更新為 `cloudstatus-cache-v82`。
+
 ## v81.0.0
 
 - 新增自訂 GitHub Pages 部署工作流程：`.github/workflows/pages.yml`。

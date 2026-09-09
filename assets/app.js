@@ -3,11 +3,11 @@
 
   function startApp() {
   var CONFIG = Object.freeze({
-    version: "81.0.0",
-    expectedServiceCount: 23,
+    version: "82.0.0",
+    expectedServiceCount: 24,
 
     refreshInterval: 5 * 60 * 1000,
-    cacheKey: "cloudstatus-cache-v81",
+    cacheKey: "cloudstatus-cache-v82",
     cacheMaxAge: 15 * 60 * 1000,
     staleCacheMaxAge: 24 * 60 * 60 * 1000,
     foregroundRefreshThreshold: 2 * 60 * 1000,
@@ -27,7 +27,7 @@
   var state = { services: [], filter: "all", search: "", activeOnly: false };
 
   var REFRESH_INTERVAL = CONFIG.refreshInterval || 5 * 60 * 1000;
-  var CACHE_KEY = CONFIG.cacheKey || "cloudstatus-cache-v81";
+  var CACHE_KEY = CONFIG.cacheKey || "cloudstatus-cache-v82";
   var CACHE_MAX_AGE = CONFIG.cacheMaxAge || 15 * 60 * 1000;
   var STALE_CACHE_MAX_AGE = CONFIG.staleCacheMaxAge || 24 * 60 * 60 * 1000;
   var FETCH_TIMEOUT = CONFIG.fetchTimeout || 6500;
@@ -211,6 +211,18 @@
       };
     }).filter(Boolean) : null;
 
+    var globalChecks=Array.isArray(result.globalChecks) ? result.globalChecks.map(function(item){
+      if(!item) return null;
+      var state=["normal","warning","incident","unknown"].indexOf(item.state)>=0 ? item.state : "unknown";
+      return {
+        id:cleanText(item.id || ""),
+        name:cleanText(item.name || ""),
+        detail:cleanText(item.detail || ""),
+        state:state,
+        url:item.url || null
+      };
+    }).filter(Boolean) : null;
+
     var health=result.health || null;
     var healthText=result.healthText || null;
     var activeCount=explicitActive ? explicitActive.length : activeEventCount(events);
@@ -220,6 +232,7 @@
       activeEvents:explicitActive,
       recentEvents:explicitRecent,
       checks:checks,
+      globalChecks:globalChecks,
       health:health,
       healthText:healthText
     };
@@ -1010,7 +1023,7 @@
     if(!source){
       return {
         id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,
-        events:[],activeEvents:null,recentEvents:null,checks:null,health:null,healthText:null,sourceLabel:"官方頁",fallback:true,failures:["No source"],
+        events:[],activeEvents:null,recentEvents:null,checks:null,globalChecks:null,health:null,healthText:null,sourceLabel:"官方頁",fallback:true,failures:["No source"],
         _remainingSources:[]
       };
     }
@@ -1021,13 +1034,14 @@
       var activeEvents=Array.isArray(result.activeEvents) ? result.activeEvents.slice(0,20) : null;
       var recentEvents=Array.isArray(result.recentEvents) ? result.recentEvents.slice(0,20) : null;
       var checks=Array.isArray(result.checks) ? result.checks.slice() : null;
+      var globalChecks=Array.isArray(result.globalChecks) ? result.globalChecks.slice() : null;
       var health=result.health||null;
       var healthText=result.healthText||null;
 
       return {
         id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,
-        events:events,activeEvents:activeEvents,recentEvents:recentEvents,checks:checks,health:health,healthText:healthText,
-        sourceLabel:(events.length||checks||health)?source.label:"官方頁",
+        events:events,activeEvents:activeEvents,recentEvents:recentEvents,checks:checks,globalChecks:globalChecks,health:health,healthText:healthText,
+        sourceLabel:(events.length||checks||globalChecks||health)?source.label:"官方頁",
         fallback:!events.length&&!health,
         failures:[],
         _remainingSources:sources.slice(1)
@@ -1035,7 +1049,7 @@
     }catch(e){
       return {
         id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,
-        events:[],activeEvents:null,recentEvents:null,checks:null,health:null,healthText:null,sourceLabel:"官方頁",fallback:true,
+        events:[],activeEvents:null,recentEvents:null,checks:null,globalChecks:null,health:null,healthText:null,sourceLabel:"官方頁",fallback:true,
         failures:[source.label+": "+String(e)],
         _remainingSources:sources.slice(1)
       };
@@ -1047,6 +1061,7 @@
     var activeEvents=Array.isArray(partial.activeEvents) ? partial.activeEvents.slice() : null;
     var recentEvents=Array.isArray(partial.recentEvents) ? partial.recentEvents.slice() : null;
     var checks=Array.isArray(partial.checks) ? partial.checks.slice() : null;
+    var globalChecks=Array.isArray(partial.globalChecks) ? partial.globalChecks.slice() : null;
     var health=partial.health||null, healthText=partial.healthText||null;
     var labels=[]; if(partial.sourceLabel && partial.sourceLabel!=="官方頁") labels.push(partial.sourceLabel);
     var failures=(partial.failures||[]).slice();
@@ -1060,6 +1075,7 @@
         var result=await runSource(source,service);
         if(result.events && result.events.length){ events=mergeEvents(events,result.events); if(labels.indexOf(source.label)<0) labels.push(source.label); }
         if(!checks && Array.isArray(result.checks)){ checks=result.checks.slice(); if(labels.indexOf(source.label)<0) labels.push(source.label); }
+        if(!globalChecks && Array.isArray(result.globalChecks)){ globalChecks=result.globalChecks.slice(); if(labels.indexOf(source.label)<0) labels.push(source.label); }
         if(!hasStructuredChannels && Array.isArray(result.activeEvents) && Array.isArray(result.recentEvents)){
           activeEvents=result.activeEvents.slice(); recentEvents=result.recentEvents.slice(); hasStructuredChannels=true;
         }
@@ -1070,9 +1086,9 @@
     }
     return {
       id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,
-      events:events.slice(0,20),activeEvents:activeEvents,recentEvents:recentEvents,checks:checks,health:health,healthText:healthText,
+      events:events.slice(0,20),activeEvents:activeEvents,recentEvents:recentEvents,checks:checks,globalChecks:globalChecks,health:health,healthText:healthText,
       sourceLabel:labels.length===1?labels[0]:(labels.length>1?"多來源":"官方頁"),
-      fallback:!events.length&&!checks&&!health,failures:failures
+      fallback:!events.length&&!checks&&!globalChecks&&!health,failures:failures
     };
   }
 
@@ -1146,6 +1162,7 @@
         var h=[s.name,s.nameZh,s.desc,s.carrierLabel,s.routeClassLabel]
           .concat((s.events||[]).map(function(e){return e.title;}))
           .concat((s.checks||[]).map(function(c){return [c.name,c.host].join(" ");}))
+          .concat((s.globalChecks||[]).map(function(c){return [c.name,c.detail].join(" ");}))
           .join(" ").toLowerCase();
         if (h.indexOf(n)===-1) return false;
       }
@@ -1285,6 +1302,9 @@
         }).join("¦"),
         (service.checks||[]).map(function(c){
           return [c.id||"",c.name||"",c.host||"",c.state||"",c.endpoint||""].join("~");
+        }).join("¦"),
+        (service.globalChecks||[]).map(function(c){
+          return [c.id||"",c.name||"",c.detail||"",c.state||""].join("~");
         }).join("¦")
       ].join("§");
     }).join("¶");
@@ -1341,7 +1361,7 @@
         state.services=SERVICES.map(function(service){
           return {
             id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,
-            events:[],activeEvents:null,recentEvents:null,checks:null,health:null,healthText:null,sourceLabel:"載入中",fallback:false,failures:[],loading:true
+            events:[],activeEvents:null,recentEvents:null,checks:null,globalChecks:null,health:null,healthText:null,sourceLabel:"載入中",fallback:false,failures:[],loading:true
           };
         });
         render();

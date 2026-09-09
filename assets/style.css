@@ -1109,3 +1109,77 @@ footer{
     grid-row:1 / span 2;
   }
 }
+
+
+/* ============================================================
+   v82 Telegram global monitoring
+   ============================================================ */
+.global-monitor-note{
+  padding:8px 12px 0;
+  color:var(--muted);
+  font-size:11px;
+  line-height:1.4;
+}
+.global-check-list{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  margin-top:10px;
+}
+.global-check-row{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+  padding:10px 12px;
+  border:1px solid var(--hairline);
+  border-radius:12px;
+  background:rgba(255,255,255,.018);
+}
+.global-check-main{
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+  min-width:0;
+}
+.global-check-name{
+  color:var(--text);
+  font-size:14px;
+  font-weight:650;
+  line-height:1.25;
+}
+.global-check-detail{
+  min-width:0;
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.35;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.global-check-state{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:64px;
+  min-height:27px;
+  padding:4px 8px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:700;
+  white-space:nowrap;
+}
+.global-check-state.normal{
+  color:var(--green);
+  background:rgba(53,208,111,.10);
+}
+.global-check-state.warning,
+.global-check-state.incident{
+  color:var(--orange);
+  background:rgba(255,159,10,.10);
+}
+.global-check-state.unknown{
+  color:var(--muted);
+  background:rgba(150,154,163,.10);
+}

@@ -10,6 +10,86 @@
     { id:5, name:"Flora",  host:"flora.web.telegram.org"  }
   ];
 
+  var GLOBAL_MONITORS = [
+    {
+      id:"isdown",
+      name:"IsDown",
+      url:"https://isdown.app/status/telegram"
+    },
+    {
+      id:"statusgator",
+      name:"StatusGator",
+      url:"https://statusgator.com/services/telegram"
+    }
+  ];
+
+  function parseIsDown(text) {
+    var raw=String(text||"");
+
+    if(/Telegram is working normally/i.test(raw)){
+      return {state:"normal",detail:"Telegram is working normally"};
+    }
+    if(/Confirmed Outage/i.test(raw)){
+      return {state:"incident",detail:"Confirmed Outage"};
+    }
+    if(/Telegram is down/i.test(raw)){
+      return {state:"incident",detail:"Telegram is down"};
+    }
+    if(/Possible Incident/i.test(raw)){
+      return {state:"warning",detail:"Possible Incident"};
+    }
+    if(/Possible Outage/i.test(raw)){
+      return {state:"warning",detail:"Possible Outage"};
+    }
+
+    return {state:"unknown",detail:"Current status not identified"};
+  }
+
+  function parseStatusGator(text) {
+    var raw=String(text||"");
+
+    // Specific "possible" wording wins over generic outage prose elsewhere on the page.
+    if(/Possible Telegram outage/i.test(raw)){
+      return {state:"warning",detail:"Possible Telegram outage"};
+    }
+    if(/Likely outage/i.test(raw)){
+      return {state:"incident",detail:"Likely outage"};
+    }
+    if(/Telegram is down/i.test(raw)){
+      return {state:"incident",detail:"Telegram is down"};
+    }
+    if(/Telegram is up/i.test(raw)){
+      return {state:"normal",detail:"Telegram is up"};
+    }
+    if(/Telegram is working normally/i.test(raw)){
+      return {state:"normal",detail:"Telegram is working normally"};
+    }
+
+    return {state:"unknown",detail:"Current status not identified"};
+  }
+
+  async function fetchGlobalMonitor(monitor,fetchReader) {
+    try {
+      var text=await fetchReader(monitor.url);
+      var parsed=monitor.id==="isdown" ? parseIsDown(text) : parseStatusGator(text);
+      return {
+        id:monitor.id,
+        name:monitor.name,
+        state:parsed.state,
+        detail:parsed.detail,
+        url:monitor.url
+      };
+    } catch(e) {
+      return {
+        id:monitor.id,
+        name:monitor.name,
+        state:"unknown",
+        detail:"Monitor temporarily unavailable",
+        url:monitor.url
+      };
+    }
+  }
+
   function probeUrl(url, timeoutMs) {
     return new Promise(function (resolve) {
       var ws=null;
@@ -100,7 +180,7 @@
       {
         type:"telegram-dc",
         url:"https://core.telegram.org/mtproto/transports",
-        label:"Telegram 官方 WebSocket",
+        label:"多來源監控",
         kind:"official-direct",
         priority:10,
         tier:10
@@ -109,32 +189,43 @@
   });
 
   window.CloudStatusServices.registerParser("telegram-dc",{
-    runSource:async function(source,service){
+    runSource:async function(source,service,tools){
+      var localPromise;
+
       if(!window.WebSocket) {
-        return {
-          events:[],
-          checks:DCS.map(function(dc){
-            return {
-              id:"dc"+dc.id,
-              name:"DC"+dc.id+" · "+dc.name,
-              host:dc.host,
-              state:"unknown",
-              url:"https://"+dc.host+"/"
-            };
-          }),
-          health:null,
-          healthText:"此瀏覽器不支援 WebSocket，無法直接檢查"
-        };
+        localPromise=Promise.resolve(DCS.map(function(dc){
+          return {
+            id:"dc"+dc.id,
+            name:"DC"+dc.id+" · "+dc.name,
+            host:dc.host,
+            state:"unknown",
+            endpoint:null,
+            url:"https://"+dc.host+"/"
+          };
+        }));
+      } else {
+        localPromise=Promise.all(DCS.map(probeDc));
       }
 
-      var checks=await Promise.all(DCS.map(probeDc));
+      var globalPromise=Promise.all(GLOBAL_MONITORS.map(function(monitor){
+        return fetchGlobalMonitor(monitor,tools.fetchReader);
+      }));
+
+      var settled=await Promise.all([localPromise,globalPromise]);
+      var checks=settled[0];
+      var globalChecks=settled[1];
+
       var okCount=checks.filter(function(item){ return item.state==="ok"; }).length;
+      var knownLocal=checks.some(function(item){ return item.state!=="unknown"; });
 
       return {
         events:[],
         checks:checks,
-        health:okCount===5 ? "normal" : "incident",
-        healthText:"DC WebSocket："+okCount+"/5 可連線（此瀏覽器）"
+        globalChecks:globalChecks,
+        health:knownLocal ? (okCount===5 ? "normal" : "incident") : null,
+        healthText:knownLocal
+          ? "DC WebSocket："+okCount+"/5 可連線（目前網路）"
+          : "目前網路無法執行 WebSocket 檢查"
       };
     }
   });
