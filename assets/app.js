@@ -3,11 +3,11 @@
 
   function startApp() {
   var CONFIG = Object.freeze({
-    version: "86.0.0",
+    version: "88.0.0",
     expectedServiceCount: 24,
 
     refreshInterval: 5 * 60 * 1000,
-    cacheKey: "cloudstatus-cache-v86",
+    cacheKey: "cloudstatus-cache-v88",
     cacheMaxAge: 15 * 60 * 1000,
     staleCacheMaxAge: 24 * 60 * 60 * 1000,
     foregroundRefreshThreshold: 2 * 60 * 1000,
@@ -27,7 +27,7 @@
   var state = { services: [], filter: "all", search: "", activeOnly: false };
 
   var REFRESH_INTERVAL = CONFIG.refreshInterval || 5 * 60 * 1000;
-  var CACHE_KEY = CONFIG.cacheKey || "cloudstatus-cache-v86";
+  var CACHE_KEY = CONFIG.cacheKey || "cloudstatus-cache-v88";
   var CACHE_MAX_AGE = CONFIG.cacheMaxAge || 15 * 60 * 1000;
   var STALE_CACHE_MAX_AGE = CONFIG.staleCacheMaxAge || 24 * 60 * 60 * 1000;
   var FETCH_TIMEOUT = CONFIG.fetchTimeout || 6500;
@@ -205,6 +205,8 @@
         id:cleanText(item.id || ""),
         name:cleanText(item.name || ""),
         host:cleanText(item.host || ""),
+        location:cleanText(item.location || ""),
+        continent:cleanText(item.continent || ""),
         state:state,
         endpoint:item.endpoint || null,
         url:item.url || null
@@ -243,9 +245,12 @@
           return {
             id:cleanText(region.id || ""),
             label:cleanText(region.label || ""),
+            dcGroup:cleanText(region.dcGroup || ""),
             state:regionState,
             ok:Number(region.ok)||0,
             total:Number(region.total)||0,
+            availableNodes:Number(region.availableNodes)||0,
+            unavailableReason:cleanText(region.unavailableReason || ""),
             node:region.node && typeof region.node==="object" ? {
               host:cleanText(region.node.host || ""),
               countryCode:cleanText(region.node.countryCode || ""),
@@ -1201,9 +1206,9 @@
       if (n) {
         var h=[s.name,s.nameZh,s.desc,s.carrierLabel,s.routeClassLabel,s.globalProbeLabel]
           .concat((s.events||[]).map(function(e){return e.title;}))
-          .concat((s.checks||[]).map(function(c){return [c.name,c.host].join(" ");}))
+          .concat((s.checks||[]).map(function(c){return [c.name,c.host,c.location,c.continent].join(" ");}))
           .concat((s.globalProbe && s.globalProbe.regions || []).map(function(r){
-            return [r.label,r.node&&r.node.country,r.node&&r.node.city,r.node&&r.node.asn].join(" ");
+            return [r.label,r.dcGroup,r.node&&r.node.country,r.node&&r.node.city,r.node&&r.node.asn].join(" ");
           }))
           .join(" ").toLowerCase();
         if (h.indexOf(n)===-1) return false;
@@ -1344,7 +1349,7 @@
           return [e.id||"",e.title||"",e.status||"",e.start||"",e.end||""].join("~");
         }).join("¦"),
         (service.checks||[]).map(function(c){
-          return [c.id||"",c.name||"",c.host||"",c.state||"",c.endpoint||""].join("~");
+          return [c.id||"",c.name||"",c.host||"",c.location||"",c.continent||"",c.state||"",c.endpoint||""].join("~");
         }).join("¦"),
         service.globalProbe ? [
           service.globalProbe.runStatus||"",
@@ -1354,7 +1359,7 @@
           service.globalProbe.summary&&service.globalProbe.summary.ok||0,
           service.globalProbe.summary&&service.globalProbe.summary.total||0,
           (service.globalProbe.regions||[]).map(function(r){
-            return [r.id||"",r.state||"",r.ok||0,r.total||0,r.node&&r.node.host||""].join("~");
+            return [r.id||"",r.dcGroup||"",r.state||"",r.ok||0,r.total||0,r.availableNodes||0,r.unavailableReason||"",r.node&&r.node.host||""].join("~");
           }).join("¦")
         ].join("§") : ""
       ].join("§");

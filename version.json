@@ -1,6 +1,6 @@
 {
   "name": "CloudStatus Pure Pages",
-  "version": "86.0.0",
+  "version": "88.0.0",
   "updated": "2026-08-27",
   "current_state_and_history_independent": true,
   "status_inference": false,
@@ -84,9 +84,9 @@
   "last_read_time_includes_year": true,
   "asset_cache_busting": true,
   "html_no_cache_meta": true,
-  "cache_key": "cloudstatus-cache-v86",
+  "cache_key": "cloudstatus-cache-v88",
   "page_max_width": "1360px",
-  "synchronized_asset_version": "86.0.0",
+  "synchronized_asset_version": "88.0.0",
   "masonry_columns": "dynamic-1-to-4",
   "max_shell_width": "1180px",
   "layout_columns": "1-mobile-2-tablet-desktop",
@@ -172,5 +172,15 @@
     "資料過期",
     "有效結果"
   ],
-  "telegram_probe_schedule": "every 5 minutes, offset at minute 3"
+  "telegram_probe_schedule": "every 5 minutes, offset at minute 3",
+  "telegram_probe_region_selection": "continent-wide-any-available-node",
+  "telegram_probe_unavailable_label": "本輪無可用節點",
+  "telegram_dc_physical_regions": {
+    "北美": "DC1 / DC3 · Miami",
+    "歐洲": "DC2 / DC4 · Amsterdam",
+    "亞洲": "DC5 · Singapore",
+    "南美": "無主 DC",
+    "大洋洲": "無主 DC",
+    "非洲": "無主 DC"
+  }
 }

@@ -92,7 +92,7 @@
         return '<a class="check-row" href="'+esc(href)+'" target="_blank" rel="noopener">'+
           '<span class="check-main">'+
             '<span class="check-name">'+esc(item.name || item.id || "DC")+'</span>'+
-            '<span class="check-host">'+esc(item.host || "")+'</span>'+
+            '<span class="check-host">'+esc(item.host || "")+(item.location?' · '+esc(item.location):'')+'</span>'+
           '</span>'+
           endpoint+
           '<span class="check-state '+esc(state)+'">'+esc(stateLabel)+'</span>'+
@@ -174,22 +174,26 @@
         partial:"部分不可達",
         failed:"不可達",
         unknown:"資料不足",
-        unavailable:"無探針"
+        unavailable:"本輪無可用節點"
       };
       var rs=region.state || "unknown";
       var statusText=region.total
         ? region.ok+"/"+region.total+" "+(regionLabels[rs] || "資料不足")
-        : (regionLabels[rs] || "無探針");
+        : (regionLabels[rs] || "本輪無可用節點");
 
       var location="";
       if(region.node){
         location=[region.node.country,region.node.city].filter(Boolean).join(" · ");
         if(region.node.asn) location+=(location?" · ":"")+region.node.asn;
+        if(region.availableNodes>1) location+=(location?" · ":"")+"候選 "+region.availableNodes+" 節點";
+      }else if(region.unavailableReason){
+        location=region.unavailableReason;
       }
 
       return '<div class="global-probe-region">'+
         '<span class="global-probe-region-main">'+
-          '<span class="global-probe-region-name">'+esc(region.label || region.id || "區域")+'</span>'+
+          '<span class="global-probe-region-name">'+esc(region.label || region.id || "區域")+
+            (region.dcGroup?' · '+esc(region.dcGroup):'')+'</span>'+
           (location?'<span class="global-probe-location">'+esc(location)+'</span>':'')+
         '</span>'+
         '<span class="global-probe-region-state '+esc(rs)+'">'+esc(statusText)+'</span>'+
@@ -208,7 +212,8 @@
           (time?'<span>實測時間：'+esc(time)+'</span>':'')+
         '</div>'+
         (stale?'<div class="global-probe-warning">此結果已超過 20 分鐘，請檢查排程是否仍正常執行。</div>':'')+
-        '<div class="global-probe-text">機器探針直接測試 Telegram 官方 DC 端點 TCP/443；不使用使用者回報，也不將單次網路不可達推斷為 Telegram 官方故障。</div>'+
+        '<div class="global-probe-text">DC 所在洲：北美＝DC1/DC3（邁阿密），歐洲＝DC2/DC4（阿姆斯特丹），亞洲＝DC5（新加坡）；南美、大洋洲、非洲目前沒有這 5 個主 DC 的所在地。</div>'+
+        '<div class="global-probe-text">每個洲的機器探針仍會實測 DC1–DC5 全部 5 個端點；上面的 DC 標示是主 DC 實體所在地，不代表該洲使用者固定只使用該 DC。</div>'+
       '</div>';
   }
 

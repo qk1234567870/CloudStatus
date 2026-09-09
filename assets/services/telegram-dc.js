@@ -3,11 +3,11 @@
   "use strict";
 
   var DCS = [
-    { id:1, name:"Pluto",  nameZh:"冥王星", host:"pluto.web.telegram.org"  },
-    { id:2, name:"Venus",  nameZh:"金星",   host:"venus.web.telegram.org"  },
-    { id:3, name:"Aurora", nameZh:"歐若拉", host:"aurora.web.telegram.org" },
-    { id:4, name:"Vesta",  nameZh:"灶神星", host:"vesta.web.telegram.org"  },
-    { id:5, name:"Flora",  nameZh:"花神星", host:"flora.web.telegram.org"  }
+    { id:1, name:"Pluto",  nameZh:"冥王星", host:"pluto.web.telegram.org",  location:"美國 · 邁阿密", continent:"北美" },
+    { id:2, name:"Venus",  nameZh:"金星",   host:"venus.web.telegram.org",  location:"荷蘭 · 阿姆斯特丹", continent:"歐洲" },
+    { id:3, name:"Aurora", nameZh:"歐若拉", host:"aurora.web.telegram.org", location:"美國 · 邁阿密", continent:"北美" },
+    { id:4, name:"Vesta",  nameZh:"灶神星", host:"vesta.web.telegram.org",  location:"荷蘭 · 阿姆斯特丹", continent:"歐洲" },
+    { id:5, name:"Flora",  nameZh:"花神星", host:"flora.web.telegram.org",  location:"新加坡", continent:"亞洲" }
   ];
 
 
@@ -60,6 +60,8 @@
         id:"dc"+dc.id,
         name:"DC"+dc.id+" · "+dc.name+"（"+dc.nameZh+"）",
         host:dc.host,
+        location:dc.location,
+        continent:dc.continent,
         state:"ok",
         endpoint:"primary",
         url:"https://"+dc.host+"/"
@@ -73,6 +75,8 @@
         id:"dc"+dc.id,
         name:"DC"+dc.id+" · "+dc.name+"（"+dc.nameZh+"）",
         host:dc.host,
+        location:dc.location,
+        continent:dc.continent,
         state:"ok",
         endpoint:"backup",
         url:"https://"+backupHost+"/"
@@ -83,6 +87,8 @@
       id:"dc"+dc.id,
       name:"DC"+dc.id+" · "+dc.name+"（"+dc.nameZh+"）",
       host:dc.host,
+      location:dc.location,
+      continent:dc.continent,
       state:(primaryState==="timeout" && backupState==="timeout") ? "timeout" : "fail",
       endpoint:null,
       url:"https://"+dc.host+"/"
@@ -120,6 +126,8 @@
             id:"dc"+dc.id,
             name:"DC"+dc.id+" · "+dc.name+"（"+dc.nameZh+"）",
             host:dc.host,
+            location:dc.location,
+            continent:dc.continent,
             state:"unknown",
             endpoint:null,
             url:"https://"+dc.host+"/"

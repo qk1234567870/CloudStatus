@@ -12,12 +12,53 @@ const DCS = [
 ];
 
 const REGIONS = [
-  { id:"asia", label:"亞洲", candidates:["sg","jp","hk","in","kr"] },
-  { id:"europe", label:"歐洲", candidates:["de","nl","ch","fr","gb","se"] },
-  { id:"north-america", label:"北美", candidates:["us","ca"] },
-  { id:"south-america", label:"南美", candidates:["br","cl","ar"] },
-  { id:"oceania", label:"大洋洲", candidates:["au","nz"] },
-  { id:"africa", label:"非洲", candidates:["za","ng","ke"] }
+  {
+    id:"asia", label:"亞洲", dcGroup:"DC5",
+    preferred:["sg","jp","hk","tw","kr","my","th","ph","id","vn","in","ae"],
+    countries:new Set([
+      "af","am","az","bh","bd","bt","bn","kh","cn","cy","ge","hk","in","id","ir","iq",
+      "il","jp","jo","kz","kw","kg","la","lb","mo","my","mv","mn","mm","np","kp","om",
+      "pk","ps","ph","qa","sa","sg","kr","lk","sy","tw","tj","th","tl","tm","ae","uz","vn","ye"
+    ])
+  },
+  {
+    id:"europe", label:"歐洲", dcGroup:"DC2 / DC4",
+    preferred:["de","nl","ch","fr","gb","se","pl","fi","no","dk","it","es","at","be"],
+    countries:new Set([
+      "al","ad","at","by","be","ba","bg","hr","cz","dk","ee","fi","fr","de","gr","hu",
+      "is","ie","it","lv","li","lt","lu","mt","md","mc","me","nl","mk","no","pl","pt",
+      "ro","ru","sm","rs","sk","si","es","se","ch","tr","ua","gb","va","xk"
+    ])
+  },
+  {
+    id:"north-america", label:"北美", dcGroup:"DC1 / DC3",
+    preferred:["us","ca","mx","cr","pa","do","pr"],
+    countries:new Set([
+      "ag","bs","bb","bz","ca","cr","cu","dm","do","sv","gd","gt","ht","hn","jm","mx",
+      "ni","pa","kn","lc","vc","tt","us","pr","bm","gl","pm","aw","cw","sx","bq","ky",
+      "tc","vg","vi","mq","gp","bl","mf"
+    ])
+  },
+  {
+    id:"south-america", label:"南美", dcGroup:"無主 DC",
+    preferred:["br","cl","ar","co","pe","uy"],
+    countries:new Set(["ar","bo","br","cl","co","ec","fk","gf","gy","py","pe","sr","uy","ve"])
+  },
+  {
+    id:"oceania", label:"大洋洲", dcGroup:"無主 DC",
+    preferred:["au","nz","fj","pg"],
+    countries:new Set(["au","nz","fj","pg","sb","vu","ws","to","tv","nr","ki","fm","mh","pw","nc","pf","gu","mp","as","ck","nu","tk","wf","nf"])
+  },
+  {
+    id:"africa", label:"非洲", dcGroup:"無主 DC",
+    preferred:["za","ng","ke","eg","ma","tn","gh","mu"],
+    countries:new Set([
+      "dz","ao","bj","bw","bf","bi","cv","cm","cf","td","km","cg","cd","ci","dj","eg",
+      "gq","er","sz","et","ga","gm","gh","gn","gw","ke","ls","lr","ly","mg","mw","ml",
+      "mr","mu","ma","mz","na","ne","ng","rw","st","sn","sc","sl","so","za","ss","sd",
+      "tz","tg","tn","ug","zm","zw","re","yt","sh"
+    ])
+  }
 ];
 
 const API="https://check-host.net";
@@ -28,7 +69,7 @@ async function json(url){
   const res=await fetch(url,{
     headers:{
       "Accept":"application/json",
-      "User-Agent":"CloudStatus-Telegram-Probe/1.0"
+      "User-Agent":"CloudStatus-Telegram-Probe/2.0"
     }
   });
   if(!res.ok) throw new Error(`HTTP ${res.status} ${url}`);
@@ -47,17 +88,31 @@ function nodeInfo(raw){
 }
 
 function chooseNodes(nodes){
-  const entries=Object.entries(nodes||{}).map(([host,raw])=>({host,...nodeInfo(raw)}));
-  const used=new Set();
+  const entries=Object.entries(nodes||{})
+    .map(([host,raw])=>({host,...nodeInfo(raw)}))
+    .filter(node=>node.countryCode);
 
   return REGIONS.map(region=>{
-    let chosen=null;
-    for(const cc of region.candidates){
-      chosen=entries.find(n=>n.countryCode===cc && !used.has(n.host));
-      if(chosen) break;
-    }
-    if(chosen) used.add(chosen.host);
-    return {...region,node:chosen};
+    const regional=entries.filter(node=>region.countries.has(node.countryCode));
+
+    regional.sort((a,b)=>{
+      const ai=region.preferred.indexOf(a.countryCode);
+      const bi=region.preferred.indexOf(b.countryCode);
+      const ar=ai===-1 ? 9999 : ai;
+      const br=bi===-1 ? 9999 : bi;
+      if(ar!==br) return ar-br;
+      if(a.countryCode!==b.countryCode) return a.countryCode.localeCompare(b.countryCode);
+      return a.host.localeCompare(b.host);
+    });
+
+    return {
+      id:region.id,
+      label:region.label,
+      dcGroup:region.dcGroup,
+      preferred:region.preferred,
+      availableNodes:regional.length,
+      node:regional[0] || null
+    };
   });
 }
 
@@ -154,9 +209,12 @@ async function main(){
         return {
           id:region.id,
           label:region.label,
+          dcGroup:region.dcGroup,
           state:"unavailable",
           ok:0,
           total:0,
+          availableNodes:region.availableNodes || 0,
+          unavailableReason:"本輪 Check-Host 節點清單中沒有該洲可用機器節點",
           node:null,
           checks:[]
         };
@@ -188,9 +246,12 @@ async function main(){
       return {
         id:region.id,
         label:region.label,
+        dcGroup:region.dcGroup,
         state,
         ok,
         total:5,
+        availableNodes:region.availableNodes || 0,
+        unavailableReason:null,
         node:{
           host:region.node.host,
           countryCode:region.node.countryCode,
