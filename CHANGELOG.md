@@ -2,6 +2,18 @@
 
 CloudStatus 版本更新記錄。
 
+## v81.0.0
+
+- 新增自訂 GitHub Pages 部署工作流程：`.github/workflows/pages.yml`。
+- `main` 分支 push 時自動部署，也支援 `workflow_dispatch` 手動部署。
+- 使用 `actions/checkout@v7`。
+- 使用 `actions/configure-pages@v6`。
+- Pages artifact 使用 `actions/upload-pages-artifact@v5`。
+- 正式部署使用 `actions/deploy-pages@v5`。
+- 網站來源目錄為倉庫根目錄 `.`。
+- GitHub Pages 的 Source 需設為 `GitHub Actions`。
+- 保留 v80 Telegram DC1–DC5、v79 Statuspage 雙通道與 v77 雙欄自然流。
+
 ## v80.0.0
 
 - 新增 `Telegram Data Centers` 服務，總服務數由 23 增加至 24。
