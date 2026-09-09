@@ -1,11 +1,11 @@
-name: Deploy GitHub Pages
+name: CloudStatus Deploy + Telegram Probe
 
 on:
   push:
     branches:
       - main
   schedule:
-    - cron: "*/5 * * * *"
+    - cron: "3-58/5 * * * *"
   workflow_dispatch:
 
 permissions:
@@ -14,7 +14,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  group: cloudstatus-pages
   cancel-in-progress: true
 
 jobs:
@@ -24,6 +24,7 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
 
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: Checkout
@@ -31,6 +32,12 @@ jobs:
 
       - name: Probe Telegram globally
         run: node scripts/telegram-global-probe.mjs
+
+      - name: Show Telegram probe result
+        if: always()
+        run: |
+          echo "===== data/telegram-global.json ====="
+          cat data/telegram-global.json
 
       - name: Configure Pages
         uses: actions/configure-pages@v6
