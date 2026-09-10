@@ -2,6 +2,16 @@
 
 CloudStatus 版本更新記錄。
 
+## v89.0.0
+
+- Telegram 全球完整巡檢由每 5 分鐘降為每 15 分鐘，錯峰於每小時 07/22/37/52 分。
+- DC1–DC5 的 Check-Host 工作建立之間加入 6.5 秒間隔。
+- Check-Host HTTP 429 / 5xx 加入 Retry-After、指數退避與隨機抖動，最多重試 4 次。
+- HTTP 429 在介面明確顯示「來源限流」，絕不判定為 Telegram 異常。
+- Telegram DC 本身仍由官方 WebSocket 直連結果獨立判定。
+- 保留 v88 洲別 DC 標示與 v87 全洲自動選探針。
+- 快取更新為 `cloudstatus-cache-v89`。
+
 ## v88.0.0
 
 - Telegram 全球洲級探針新增 DC 所在地標示。

@@ -125,7 +125,22 @@
         '</div>';
     }
 
-    // Probe job did run, but generator reported an error.
+    // Provider-side HTTP 429 is rate limiting, never a Telegram outage.
+    var sourceRateLimited=probe.error && /HTTP\s+429\b/i.test(probe.error);
+    if(sourceRateLimited){
+      return sectionHead("Telegram 全球狀態",0,false)+
+        '<div class="global-probe-card">'+
+          '<div class="global-probe-row">'+
+            '<span class="global-probe-name">'+esc(label)+'</span>'+
+            '<span class="global-probe-state stale">來源限流</span>'+
+          '</div>'+
+          metaTime(probe.generatedAt,"最後嘗試：")+
+          '<div class="global-probe-warning">Check-Host 回傳 HTTP 429；這是探針來源限流，不代表 Telegram 異常。系統已降低巡檢頻率並加入退避重試。</div>'+
+          '<div class="global-probe-text">下一輪會自動重試；Telegram DC 本身仍以官方 WebSocket 直連結果為準。</div>'+
+        '</div>';
+    }
+
+    // Probe job did run, but generator reported another error.
     if(probe.runStatus==="failed" || probe.error){
       return sectionHead("Telegram 全球狀態",0,false)+
         '<div class="global-probe-card">'+

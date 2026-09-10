@@ -1,6 +1,6 @@
 {
   "name": "CloudStatus Pure Pages",
-  "version": "88.0.0",
+  "version": "89.0.0",
   "updated": "2026-08-27",
   "current_state_and_history_independent": true,
   "status_inference": false,
@@ -84,9 +84,9 @@
   "last_read_time_includes_year": true,
   "asset_cache_busting": true,
   "html_no_cache_meta": true,
-  "cache_key": "cloudstatus-cache-v88",
+  "cache_key": "cloudstatus-cache-v89",
   "page_max_width": "1360px",
-  "synchronized_asset_version": "88.0.0",
+  "synchronized_asset_version": "89.0.0",
   "masonry_columns": "dynamic-1-to-4",
   "max_shell_width": "1180px",
   "layout_columns": "1-mobile-2-tablet-desktop",
@@ -155,7 +155,7 @@
   "telegram_global_status": "scheduled-machine-probes",
   "telegram_global_probe_source": "Check-Host",
   "telegram_global_probe_method": "TCP 443",
-  "telegram_global_probe_schedule": "GitHub Actions every 5 minutes",
+  "telegram_global_probe_schedule": "07/22/37/52 each hour",
   "telegram_global_probe_regions": [
     "亞洲",
     "歐洲",
@@ -182,5 +182,6 @@
     "南美": "無主 DC",
     "大洋洲": "無主 DC",
     "非洲": "無主 DC"
-  }
+  },
+  "telegram_probe_rate_limit": "Retry-After + exponential backoff + jitter"
 }

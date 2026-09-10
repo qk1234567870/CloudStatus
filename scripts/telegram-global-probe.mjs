@@ -65,15 +65,41 @@ const API="https://check-host.net";
 const OUT=new URL("../data/telegram-global.json", import.meta.url);
 const sleep=(ms)=>new Promise(r=>setTimeout(r,ms));
 
-async function json(url){
-  const res=await fetch(url,{
-    headers:{
-      "Accept":"application/json",
-      "User-Agent":"CloudStatus-Telegram-Probe/2.0"
+class HttpError extends Error{
+  constructor(status,url,retryAfter){
+    super(`HTTP ${status} ${url}`);
+    this.status=status;
+    this.retryAfter=retryAfter;
+  }
+}
+function retryAfterMs(value){
+  if(!value) return 0;
+  if(/^\d+$/.test(value.trim())) return Number(value.trim())*1000;
+  const when=Date.parse(value);
+  return Number.isFinite(when) ? Math.max(0,when-Date.now()) : 0;
+}
+async function json(url,{attempts=4,baseDelay=5000}={}){
+  let lastError=null;
+  for(let attempt=0;attempt<attempts;attempt++){
+    const res=await fetch(url,{
+      headers:{
+        "Accept":"application/json",
+        "User-Agent":"CloudStatus-Telegram-Probe/3.0"
+      }
+    });
+    if(res.ok) return await res.json();
+
+    lastError=new HttpError(res.status,url,res.headers.get("retry-after"));
+    if(![429,500,502,503,504].includes(res.status) || attempt===attempts-1){
+      throw lastError;
     }
-  });
-  if(!res.ok) throw new Error(`HTTP ${res.status} ${url}`);
-  return await res.json();
+
+    const serverDelay=retryAfterMs(lastError.retryAfter);
+    const backoff=baseDelay*Math.pow(2,attempt);
+    const jitter=Math.floor(Math.random()*1500);
+    await sleep(Math.max(serverDelay,backoff)+jitter);
+  }
+  throw lastError;
 }
 
 function nodeInfo(raw){
@@ -202,6 +228,7 @@ async function main(){
       const started=await startTcpCheck(dc,selected);
       if(started.report) reports.push({dc:dc.id,url:started.report});
       perDc[dc.id]=await waitTcpResults(started.requestId,selected);
+      if(dc.id!==DCS[DCS.length-1].id) await sleep(6500);
     }
 
     const regions=selected.map(region=>{
