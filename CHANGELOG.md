@@ -2,6 +2,17 @@
 
 CloudStatus 版本更新記錄。
 
+## v98.0.0
+
+- 修正「DMIT 服務面板程式已存在但網站仍完全不顯示」的根因：**ES Module 子模組沒有版本 query，瀏覽器可能持續載入舊 `card-template.js` / `events.js` / `renderer.js`。**
+- 過去只有 `app.js?v=...` 被 cache-bust；原生 ES Module 不會把入口 query 自動傳遞給其 import，因此模組化後會出現新舊模組混用。
+- 現在 Core / Parsers / UI 的所有相對 ES Module import 都同步附加 `?v=98.0.0`。
+- `assets/style.css` 的所有 CSS `@import` 也同步附加 `?v=98.0.0`，避免 DMIT / Telegram 新樣式仍讀到舊 CSS。
+- Service Plugin loader 繼續使用同一版本 query。
+- 保留 v97 的 DMIT Services 官方頁 Reader → `/api/v1/services` fallback 與服務面板 Parser。
+- README / ARCHITECTURE / version.json 新增完整 cache-busting invariant。
+- cache key 更新為 `cloudstatus-cache-v98`。
+
 ## v97.0.0
 
 - 修正 v96 DMIT「服務」面板可能完全不出現的問題。

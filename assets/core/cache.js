@@ -1,8 +1,8 @@
 /* localStorage cache module */
-import {CONFIG} from "./config.js";
-import {state,runtime} from "./state.js";
-import {$} from "./utils.js";
-import {render} from "../ui/renderer.js";
+import {CONFIG} from "./config.js?v=98.0.0";
+import {state,runtime} from "./state.js?v=98.0.0";
+import {$} from "./utils.js?v=98.0.0";
+import {render} from "../ui/renderer.js?v=98.0.0";
 
 export function saveCache(){
   try{

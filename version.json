@@ -1,6 +1,6 @@
 {
   "name": "CloudStatus Pure Pages",
-  "version": "97.0.0",
+  "version": "98.0.0",
   "ui_language": "zh-TW",
   "architecture": "native-es-modules-plus-service-plugin-registry",
   "build_tool_required": false,
@@ -34,7 +34,7 @@
   ],
   "frontend_refresh_minutes": 5,
   "foreground_refresh_threshold_minutes": 2,
-  "cache_key": "cloudstatus-cache-v97",
+  "cache_key": "cloudstatus-cache-v98",
   "cache_fresh_minutes": 15,
   "cache_stale_hours": 24,
   "responsive_layout": "single-column-under-760px / natural-flow-two-columns-at-760px-plus",
@@ -110,5 +110,12 @@
     "DEPLOYMENT.md",
     "CHANGELOG.md"
   ],
-  "synchronized_asset_version": "97.0.0"
+  "synchronized_asset_version": "98.0.0",
+  "asset_cache_busting": {
+    "html_entry_assets": true,
+    "service_plugin_loader": true,
+    "all_es_module_imports": true,
+    "all_css_imports": true,
+    "reason": "Prevent stale transitive modules/styles after modularization"
+  }
 }

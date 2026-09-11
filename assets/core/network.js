@@ -1,5 +1,5 @@
 /* Network transport helpers */
-import {CONFIG} from "./config.js";
+import {CONFIG} from "./config.js?v=98.0.0";
 
 const FETCH_TIMEOUT=CONFIG.fetchTimeout;
 const READER_TIMEOUT=CONFIG.readerTimeout;

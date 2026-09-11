@@ -1,6 +1,6 @@
 /* Visibility/focus-aware refresh scheduler */
-import {CONFIG} from "./config.js";
-import {refresh,shouldForegroundRefresh} from "./refresh.js";
+import {CONFIG} from "./config.js?v=98.0.0";
+import {refresh,shouldForegroundRefresh} from "./refresh.js?v=98.0.0";
 
 export function startAutoRefresh(){
   setInterval(function(){if(document.visibilityState==="visible") refresh();},CONFIG.refreshInterval);

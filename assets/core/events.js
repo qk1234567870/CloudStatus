@@ -1,5 +1,5 @@
 /* Event/status normalization and deduplication */
-import {cleanText,timeValue} from "./utils.js";
+import {cleanText,timeValue} from "./utils.js?v=98.0.0";
 
 export const STATUS_LABELS = {
     investigating: "調查中",

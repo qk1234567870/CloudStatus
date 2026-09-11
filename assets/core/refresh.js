@@ -1,10 +1,10 @@
 /* Incremental refresh pipeline */
-import {CONFIG} from "./config.js";
-import {state,runtime,catalog} from "./state.js";
-import {$} from "./utils.js";
-import {loadPrimarySource,completeService,runWithConcurrency} from "./source-engine.js";
-import {saveCache} from "./cache.js";
-import {render} from "../ui/renderer.js";
+import {CONFIG} from "./config.js?v=98.0.0";
+import {state,runtime,catalog} from "./state.js?v=98.0.0";
+import {$} from "./utils.js?v=98.0.0";
+import {loadPrimarySource,completeService,runWithConcurrency} from "./source-engine.js?v=98.0.0";
+import {saveCache} from "./cache.js?v=98.0.0";
+import {render} from "../ui/renderer.js?v=98.0.0";
 
 export async function refresh(options) {
     options=options||{};

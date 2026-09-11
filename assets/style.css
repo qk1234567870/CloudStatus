@@ -1,8 +1,8 @@
 /* CloudStatus CSS module manifest */
-@import url("./styles/base.css");
-@import url("./styles/toolbar.css");
-@import url("./styles/cards.css");
-@import url("./styles/responsive.css");
-@import url("./styles/layout.css");
-@import url("./styles/telegram.css");
-@import url("./styles/dmit.css");
+@import url("./styles/base.css?v=98.0.0");
+@import url("./styles/toolbar.css?v=98.0.0");
+@import url("./styles/cards.css?v=98.0.0");
+@import url("./styles/responsive.css?v=98.0.0");
+@import url("./styles/layout.css?v=98.0.0");
+@import url("./styles/telegram.css?v=98.0.0");
+@import url("./styles/dmit.css?v=98.0.0");

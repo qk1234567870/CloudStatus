@@ -374,3 +374,20 @@ DMIT / Telegram 的特殊呈現可由通用 channel（`details`、`checks`、`gl
 原因是 CloudStatus 本身是 GitHub Pages 靜態站，原生 ES Modules 已足夠。
 
 因此部署 artifact 仍是可以直接託管的原始檔案，而不是編譯後 bundle。
+
+
+## 12. Transitive module cache busting
+
+原生 ES Modules 的入口 `app.js?v=...` **不會自動把版本參數傳給它 import 的子模組**。因此所有相對 ES import 都必須同步附帶版本 query：
+
+```js
+import {render} from "../ui/renderer.js?v=98.0.0";
+```
+
+CSS manifest 的 `@import` 亦同：
+
+```css
+@import url("./styles/cards.css?v=98.0.0");
+```
+
+Service Registry 的動態 Plugin loader 本來就有版本 query，現在 Core / Parsers / UI / CSS 全部統一。這是模組化架構的 cache invariant。

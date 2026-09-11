@@ -138,6 +138,21 @@ GitHub Actions 定時執行 `scripts/telegram-global-probe.mjs`，透過 Check-H
 
 Telegram 全球探針由 GitHub Actions 的排程獨立執行。
 
+
+
+## 模組快取版本
+
+完全模組化後不只入口檔需要版本號。CloudStatus 會對：
+
+- `index.html` 載入的 `style.css` / `registry.js` / `app.js`
+- 所有 ES Module 的相對 `import`
+- Service Plugin 動態載入 URL
+- `style.css` 的所有 `@import`
+
+全部同步附加相同 `?v=<版本>`。
+
+這可避免 Safari / CDN 保留舊的 `ui/card-template.js`、`core/events.js` 或 CSS 子模組，造成「已部署新版本但畫面仍像舊版本」。
+
 ## 部署
 
 建議使用內附的 GitHub Pages workflow：

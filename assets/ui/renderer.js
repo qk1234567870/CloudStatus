@@ -1,9 +1,9 @@
 /* Rendering engine and responsive service-flow layout */
-import {$,escapeHtml,formatRange} from "../core/utils.js";
-import {STATUS_LABELS,isActiveEvent} from "../core/events.js";
-import {state,runtime,catalog} from "../core/state.js";
-import {visibleServices} from "../core/query.js";
-import {render as renderCard} from "./card-template.js";
+import {$,escapeHtml,formatRange} from "../core/utils.js?v=98.0.0";
+import {STATUS_LABELS,isActiveEvent} from "../core/events.js?v=98.0.0";
+import {state,runtime,catalog} from "../core/state.js?v=98.0.0";
+import {visibleServices} from "../core/query.js?v=98.0.0";
+import {render as renderCard} from "./card-template.js?v=98.0.0";
 
 export function renderSummary() {
     var loaded=state.services.filter(function(s){return !s.loading;});

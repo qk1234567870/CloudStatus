@@ -1,7 +1,7 @@
 /* Category filter and dynamic overflow menu */
-import {$} from "../core/utils.js";
-import {state} from "../core/state.js";
-import {render} from "./renderer.js";
+import {$} from "../core/utils.js?v=98.0.0";
+import {state} from "../core/state.js?v=98.0.0";
+import {render} from "./renderer.js?v=98.0.0";
 
 export const FILTER_ORDER=[
     {value:"all",label:"全部"},

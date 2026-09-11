@@ -1,5 +1,5 @@
-import {cleanText,lines,findDate,findAnyDate,findDateRange} from "../core/utils.js";
-import {explicitStatus,looksNoise,sortRecent,activeEventCount} from "../core/events.js";
+import {cleanText,lines,findDate,findAnyDate,findDateRange} from "../core/utils.js?v=98.0.0";
+import {explicitStatus,looksNoise,sortRecent,activeEventCount} from "../core/events.js?v=98.0.0";
 
 export function rssAdapter(xml, service, source) {
     var doc = new DOMParser().parseFromString(xml,"text/xml");
