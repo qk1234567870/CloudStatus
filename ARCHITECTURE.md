@@ -391,3 +391,24 @@ CSS manifest 的 `@import` 亦同：
 ```
 
 Service Registry 的動態 Plugin loader 本來就有版本 query，現在 Core / Parsers / UI / CSS 全部統一。這是模組化架構的 cache invariant。
+
+
+### DMIT Services same-origin projection
+
+`DOES DMIT FAIL?` 的 Services inventory 會在部署期正規化：
+
+```text
+official /api/v1/services
+        ↓
+scripts/dmit-services.mjs
+        ↓
+data/dmit-services.json
+        ↓
+DMIT Service Plugin
+        ↓
+details[]
+        ↓
+DMIT Services Panel
+```
+
+這讓瀏覽器不必依賴第三方 CORS / Reader 才能看到 Services 面板。直接 API 與 Reader 仍保留為 runtime fallback。

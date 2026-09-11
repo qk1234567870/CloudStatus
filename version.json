@@ -1,6 +1,6 @@
 {
   "name": "CloudStatus Pure Pages",
-  "version": "99.0.0",
+  "version": "100.0.0",
   "ui_language": "zh-TW",
   "architecture": "native-es-modules-plus-service-plugin-registry",
   "build_tool_required": false,
@@ -34,7 +34,7 @@
   ],
   "frontend_refresh_minutes": 5,
   "foreground_refresh_threshold_minutes": 2,
-  "cache_key": "cloudstatus-cache-v99",
+  "cache_key": "cloudstatus-cache-v100",
   "cache_fresh_minutes": 15,
   "cache_stale_hours": 24,
   "responsive_layout": "single-column-under-760px / natural-flow-two-columns-at-760px-plus",
@@ -102,7 +102,15 @@
       "no-event message",
       "服務"
     ],
-    "recent_history_display_limit": 3
+    "recent_history_display_limit": 3,
+    "services_deployment_generator": "scripts/dmit-services.mjs",
+    "services_deployment_data": "data/dmit-services.json",
+    "services_runtime_priority": [
+      "same-origin data/dmit-services.json",
+      "direct /api/v1/services",
+      "Reader /services"
+    ],
+    "services_seed_count": 37
   },
   "github_pages": {
     "workflow": ".github/workflows/pages.yml",
@@ -118,7 +126,7 @@
     "DEPLOYMENT.md",
     "CHANGELOG.md"
   ],
-  "synchronized_asset_version": "99.0.0",
+  "synchronized_asset_version": "100.0.0",
   "asset_cache_busting": {
     "html_entry_assets": true,
     "service_plugin_loader": true,

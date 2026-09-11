@@ -226,3 +226,29 @@ https://does.dmit.fail/api-docs
 API 不需要 Key；官方文件目前標示 60 requests/min。CloudStatus 的正常 5 分鐘刷新遠低於此限制。
 
 若 DMIT API 無法由瀏覽器取得，DMIT 卡片保持未知／無可靠資料，不再回退到舊 Server Status 或 Telegram 公告。
+
+
+## DMIT Services 產生流程
+
+自訂 workflow 在 Pages artifact 上傳前執行：
+
+```text
+Build DMIT services
+Show DMIT services result
+```
+
+產生：
+
+```text
+data/dmit-services.json
+```
+
+如果網站健康狀態正常、但「服務」顯示無資料，直接查看：
+
+```text
+Actions
+→ CloudStatus Deploy + Telegram Probe
+→ Show DMIT services result
+```
+
+正常結果應包含 `details`，目前官方 Services 結構約 37 個項目。

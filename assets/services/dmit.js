@@ -34,6 +34,7 @@
         simpleStatusUrl:SITE+"/status.json",
         servicesUrl:API+"/services?locale=en",
         servicesPageUrl:SITE+"/services",
+        localServicesUrl:"./data/dmit-services.json",
         incidentsUrl:API+"/incidents?locale=en",
         docsUrl:SITE+"/api-docs",
         link:SITE+"/api-docs",
@@ -470,27 +471,35 @@
   }
 
   async function runApi(source,service,ctx){
-    // Structured API remains the main current-status / incident source.
-    // The official Services page is fetched through the existing Reader path
-    // because its hierarchy is exactly what the UI needs and is stable on static Pages.
+    // Current health / incidents can be read directly from the public API.
+    // Services inventory is deployment-generated into a same-origin JSON file
+    // so Safari/GitHub Pages never depends on cross-origin Reader/API behavior.
     var settled=await Promise.allSettled([
       ctx.fetchJson(source.url),
-      ctx.fetchJson(source.servicesUrl),
       ctx.fetchJson(source.incidentsUrl),
+      ctx.fetchJson(source.localServicesUrl),
+      ctx.fetchJson(source.servicesUrl),
       ctx.fetchReader(source.servicesPageUrl)
     ]);
 
     var statusData=settled[0].status==="fulfilled" ? settled[0].value : null;
-    var servicesData=settled[1].status==="fulfilled" ? settled[1].value : null;
-    var incidentsData=settled[2].status==="fulfilled" ? settled[2].value : null;
-    var servicesPageText=settled[3].status==="fulfilled" ? settled[3].value : "";
+    var incidentsData=settled[1].status==="fulfilled" ? settled[1].value : null;
+    var localServices=settled[2].status==="fulfilled" ? settled[2].value : null;
+    var servicesData=settled[3].status==="fulfilled" ? settled[3].value : null;
+    var servicesPageText=settled[4].status==="fulfilled" ? settled[4].value : "";
 
     var simpleStatusData=null;
     if(!statusData) simpleStatusData=await optionalJson(ctx,source.simpleStatusUrl);
 
-    var pageDetails=parseServicesPage(servicesPageText);
+    var localDetails=localServices && Array.isArray(localServices.details) ? localServices.details : [];
     var apiDetails=flattenServices(servicesData || statusData || {});
-    var details=pageDetails.length ? pageDetails : apiDetails;
+    var pageDetails=parseServicesPage(servicesPageText);
+
+    // Same-origin generated data first; then live direct API; then Reader.
+    var details=localDetails.length ? localDetails : (apiDetails.length ? apiDetails : pageDetails);
+    var detailSource=localDetails.length
+      ? "Services · DOES DMIT FAIL?"
+      : (apiDetails.length ? "API · DOES DMIT FAIL?" : "Services · DOES DMIT FAIL?");
 
     if(!statusData && !simpleStatusData && !incidentsData && !details.length){
       throw new Error("DOES DMIT FAIL? public sources unavailable");
@@ -515,7 +524,7 @@
       events:active.concat(recent),
       details:details,
       detailsTitle:"服務",
-      detailsSource:pageDetails.length ? "Services · DOES DMIT FAIL?" : "API · DOES DMIT FAIL?"
+      detailsSource:detailSource
     };
   }
 

@@ -1,11 +1,11 @@
 /* Reader dispatcher */
-import {normalizeResult} from "../core/events.js?v=99.0.0";
-import {PARSER_UTILS} from "./utils.js?v=99.0.0";
-import {parseGooglePage} from "./google.js?v=99.0.0";
-import {parseAzure} from "./azure.js?v=99.0.0";
-import {parseApple,parseAppleBackup} from "./apple.js?v=99.0.0";
-import {parseOracle,parseBandwagon,parseDMIT} from "./hosting.js?v=99.0.0";
-import {parseInfrastructure,parseCloudflareRadarBGP} from "./network.js?v=99.0.0";
+import {normalizeResult} from "../core/events.js?v=100.0.0";
+import {PARSER_UTILS} from "./utils.js?v=100.0.0";
+import {parseGooglePage} from "./google.js?v=100.0.0";
+import {parseAzure} from "./azure.js?v=100.0.0";
+import {parseApple,parseAppleBackup} from "./apple.js?v=100.0.0";
+import {parseOracle,parseBandwagon,parseDMIT} from "./hosting.js?v=100.0.0";
+import {parseInfrastructure,parseCloudflareRadarBGP} from "./network.js?v=100.0.0";
 
 export function parseReader(text, service, source) {
     var moduleParser=(window.CloudStatusServiceParsers||{})[service.id];

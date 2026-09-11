@@ -2,6 +2,18 @@
 
 CloudStatus 版本更新記錄。
 
+## v100.0.0
+
+- 徹底修正 DMIT「健康狀態正常，但服務面板完全消失」。
+- 新增 `scripts/dmit-services.mjs`，在 GitHub Actions 部署階段從 DOES DMIT FAIL? 官方 Services API / Services 頁產生同源 `data/dmit-services.json`。
+- DMIT 瀏覽器 Services 資料優先級改為：`data/dmit-services.json` → `/api/v1/services` → `/services` Reader。
+- 通用套件內附 37 個官方 Services 結構 seed，首次部署前也有服務面板；Actions 成功後會立即以最新官方資料覆寫。
+- 產生器驗證 Los Angeles / Tokyo / Hong Kong 與 LAX/TYO/HKG Pro 結構；資料不完整時不覆蓋上一份有效結果。
+- Workflow 新增 `Build DMIT services` 與 `Show DMIT services result`，可直接在 Actions Log 看實際部署資料。
+- Card Template 改為：DMIT `details` 為空時也不能靜默隱藏「服務」，而是顯示 `服務 0` 與明確診斷。
+- 保留目前事件 → 最近 3 筆事件 → 服務的固定順序。
+- 所有 ES Module / CSS 子模組同步到 `100.0.0`，cache key 更新為 `cloudstatus-cache-v100`。
+
 ## v99.0.0
 
 - 調整 DMIT 卡片資訊順序，符合官方頁用途：`目前事件` → `最近 3 筆事件` → `服務`。

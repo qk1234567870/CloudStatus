@@ -110,9 +110,17 @@
   function detailsBlock(service,ctx){
     var esc=ctx.escapeHtml;
     var items=service.loading ? [] : (service.details || []);
-    if(!items.length) return "";
-
     var detailsLink=service.sectionLinks && service.sectionLinks.services || null;
+
+    if(!items.length){
+      if(service.id==="dmit" && !service.loading){
+        return sectionHead("服務",0,false,detailsLink,ctx)+
+          '<div class="dmit-services-unavailable">'+
+            '目前未取得服務清單；請檢查部署產生的 <code>data/dmit-services.json</code>。'+
+          '</div>';
+      }
+      return "";
+    }
 
     // DMIT: reproduce the Services page information hierarchy inside the status card.
     if(service.id==="dmit"){

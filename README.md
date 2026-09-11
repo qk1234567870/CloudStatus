@@ -113,6 +113,27 @@ DMIT 卡片固定顯示順序：
 
 「最近 3 筆事件」是固定區塊名稱，右側數字顯示實際取得筆數；例如沒有歷史事件時顯示 `最近 3 筆事件  0`，而不是把標題改成「最近 0 筆事件」。
 
+
+
+### DMIT Services 部署資料
+
+為避免 Safari / GitHub Pages 的跨來源限制讓「服務」面板消失，DMIT Services 現在另外由 GitHub Actions 產生同源檔案：
+
+```text
+scripts/dmit-services.mjs
+→ data/dmit-services.json
+```
+
+瀏覽器的優先級：
+
+```text
+data/dmit-services.json（同源、首選）
+→ /api/v1/services（直接 API）
+→ /services（Reader）
+```
+
+通用套件內附一份官方 Services 頁結構的 seed；每次 Actions 部署都會重新從 DOES DMIT FAIL? 官方來源更新。若更新失敗，腳本保留上一份有效資料，不會把面板清空。
+
 ## Telegram Data Centers
 
 Telegram 卡片有兩個互相獨立的測量層。

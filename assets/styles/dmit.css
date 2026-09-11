@@ -134,3 +134,19 @@
     margin-top:1px;
   }
 }
+
+
+.dmit-services-unavailable{
+  margin:10px 12px 12px;
+  padding:10px 12px;
+  border:1px solid var(--hairline);
+  border-radius:12px;
+  color:var(--muted);
+  background:rgba(255,255,255,.018);
+  font-size:11px;
+  line-height:1.45;
+  overflow-wrap:anywhere;
+}
+.dmit-services-unavailable code{
+  color:var(--text);
+}
