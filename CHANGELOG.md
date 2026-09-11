@@ -2,6 +2,18 @@
 
 CloudStatus 版本更新記錄。
 
+## v91.0.0
+
+- 前端核心完成全層模組化；`assets/app.js` 現在只負責啟動，不再承載抓取、解析、快取、渲染或 UI 業務邏輯。
+- 新增 `assets/core/`：config、state、utils、events、network、source-engine、query、cache、refresh、scheduler。
+- 新增 `assets/parsers/`：Statuspage、Google、RSS、Azure、Apple、Hosting、Network、Reader dispatcher 與 Parser Utils 分離。
+- 新增 `assets/ui/`：card-template、renderer、filters、bindings。
+- 服務 Plugin Registry 移至 `assets/services/registry.js`；24 個服務仍維持一服務一模組與專屬 Parser Plugin。
+- CSS 拆分為 base、toolbar、cards、responsive、layout、telegram、dmit 七個模組；`style.css` 僅作 CSS manifest。
+- 採瀏覽器原生 ES Modules，GitHub Pages 不需要 Node/npm build。
+- 保留 v90 DMIT 官方 API、v89 Telegram 429 韌性、v88 洲別 DC 標示與既有快取/雙欄/過濾行為。
+- 快取更新為 `cloudstatus-cache-v91`。
+
 ## v90.0.0
 
 - DMIT 主資料源升級為 DOES DMIT FAIL? 官方 JSON API。

@@ -1,6 +1,6 @@
 {
   "name": "CloudStatus Pure Pages",
-  "version": "90.0.0",
+  "version": "91.0.0",
   "updated": "2026-08-27",
   "current_state_and_history_independent": true,
   "status_inference": false,
@@ -84,9 +84,9 @@
   "last_read_time_includes_year": true,
   "asset_cache_busting": true,
   "html_no_cache_meta": true,
-  "cache_key": "cloudstatus-cache-v90",
+  "cache_key": "cloudstatus-cache-v91",
   "page_max_width": "1360px",
-  "synchronized_asset_version": "90.0.0",
+  "synchronized_asset_version": "91.0.0",
   "masonry_columns": "dynamic-1-to-4",
   "max_shell_width": "1180px",
   "layout_columns": "1-mobile-2-tablet-desktop",
@@ -108,7 +108,7 @@
   "subtitle_layout": "forced-full-width-second-row",
   "incident_model": "active-separated-from-recent-history",
   "statuspage_strategy": "unresolved-plus-history",
-  "architecture": "service-modules + flat-single-card-template + app",
+  "architecture": "fully-modular-native-esm-plus-service-plugin-registry",
   "service_loader": "parallel-manifest",
   "card_template": "assets/card-template.js",
   "card_responsive": "unchanged-from-v71",
@@ -186,5 +186,46 @@
   "telegram_probe_rate_limit": "Retry-After + exponential backoff + jitter",
   "dmit_primary_source": "https://does.dmit.fail/api/v1/status",
   "dmit_services_source": "https://does.dmit.fail/api/v1/services",
-  "dmit_incidents_source": "https://does.dmit.fail/api/v1/incidents"
+  "dmit_incidents_source": "https://does.dmit.fail/api/v1/incidents",
+  "modules": {
+    "core": [
+      "config",
+      "state",
+      "utils",
+      "events",
+      "network",
+      "source-engine",
+      "query",
+      "cache",
+      "refresh",
+      "scheduler"
+    ],
+    "parsers": [
+      "utils",
+      "statuspage",
+      "google",
+      "rss",
+      "azure",
+      "apple",
+      "hosting",
+      "network",
+      "reader"
+    ],
+    "ui": [
+      "card-template",
+      "renderer",
+      "filters",
+      "bindings"
+    ],
+    "services": 24,
+    "styles": [
+      "base",
+      "toolbar",
+      "cards",
+      "responsive",
+      "layout",
+      "telegram",
+      "dmit"
+    ]
+  }
 }

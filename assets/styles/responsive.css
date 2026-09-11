@@ -1,0 +1,301 @@
+/* Container/page adaptation and safe areas */
+/* ==================== Card container adaptation ==================== */
+@container (max-width:520px){
+  .service-head{padding:16px 16px 13px}
+  .service-name{font-size:18px}
+  .service-desc,.service-desc-second-row{font-size:12px}
+  .health-row,.section-head{padding-left:16px;padding-right:16px}
+  .event{padding:14px 16px 13px}
+  .event-title{font-size:14px}
+  .card-footer{padding-left:12px;padding-right:12px}
+}
+@container (max-width:420px){
+  .event-main{
+    grid-template-columns:minmax(0,1fr);
+    gap:3px;
+  }
+  .tag,.event-title{grid-column:1}
+  .card-footer{
+    gap:5px;
+    padding-left:9px;
+    padding-right:9px;
+    font-size:8.5px;
+  }
+}
+@container (max-width:340px){
+  .service-name{font-size:17px}
+  .event-title{font-size:13px}
+  .section-label{font-size:14px}
+  .card-footer{font-size:8px}
+}
+
+/* ==================== Page adaptation ==================== */
+
+/* Desktop / tablet */
+@media (min-width:760px){
+  .shell{width:100%}
+}
+
+/* Phone portrait / narrow tablet */
+@media (max-width:759px){
+  .shell{
+    width:100%;
+    padding-top:16px;
+  }
+
+  .topbar{
+    column-gap:10px;
+    row-gap:7px;
+    margin-bottom:16px;
+  }
+
+  h1{
+    font-size:clamp(24px,6.2vw,33px);
+    line-height:1.18;
+  }
+
+  .updated{
+    font-size:13px;
+  }
+
+  .refresh{
+    width:48px;
+    height:48px;
+    font-size:24px;
+  }
+
+  .filters{
+    gap:8px;
+    margin-bottom:12px;
+  }
+
+  .filter{
+    min-height:40px;
+    padding:0 14px;
+    font-size:14px;
+  }
+
+  .search-row{
+    gap:10px;
+  }
+
+  .search{
+    height:46px;
+    font-size:15px;
+  }
+
+  .summary{
+    gap:10px;
+    margin:20px 0 42px;
+  }
+
+  .stat{
+    padding:15px 8px;
+    border-radius:16px;
+  }
+
+  .stat-value,.stat strong,.stat .value{
+    font-size:24px;
+  }
+
+  .stat-label,.stat span{
+    font-size:12px;
+  }
+
+  #services{display:block}
+  .service-card,.service{
+    position:relative!important;
+    left:auto!important;
+    top:auto!important;
+    width:100%!important;
+    margin-bottom:14px;
+  }
+}
+
+/* Small phone portrait */
+@media (max-width:460px){
+  .shell{
+    width:100%;
+  }
+
+  .topbar{
+    grid-template-columns:minmax(0,1fr) 46px;
+  }
+
+  h1{
+    font-size:clamp(23px,6.8vw,30px);
+    word-break:keep-all;
+  }
+
+  .refresh{
+    width:46px;
+    height:46px;
+  }
+
+  .search-row{
+    grid-template-columns:minmax(0,1fr) max-content;
+    gap:8px;
+  }
+
+  .summary{
+    gap:8px;
+  }
+
+  .stat{
+    padding:14px 6px;
+  }
+
+  .stat-value,.stat strong,.stat .value{
+    font-size:22px;
+  }
+}
+
+/* Very narrow phone: summary remains three cards, but compact */
+@media (max-width:360px){
+  .shell{width:100%}
+
+  h1{font-size:22px}
+
+  .filter{
+    min-height:38px;
+    padding:0 12px;
+    font-size:13px;
+  }
+
+  .summary{
+    gap:6px;
+  }
+
+  .stat{
+    padding:12px 4px;
+  }
+
+  .stat-value,.stat strong,.stat .value{
+    font-size:20px;
+  }
+
+  .stat-label,.stat span{
+    font-size:11px;
+  }
+}
+
+/* Phone landscape / device rotation */
+@media (orientation:landscape) and (max-height:560px){
+  .shell{
+    width:100%;
+    max-width:1180px;
+    padding-top:10px;
+  }
+
+  .topbar{
+    grid-template-columns:minmax(0,1fr) 44px;
+    grid-template-areas:
+      "title refresh"
+      "updated updated";
+    row-gap:4px;
+    margin-bottom:10px;
+  }
+
+  h1{
+    font-size:clamp(22px,3.4vw,30px);
+    line-height:1.1;
+    white-space:nowrap;
+    word-break:normal;
+  }
+
+  .updated{
+    font-size:12px;
+  }
+
+  .refresh{
+    width:44px;
+    height:44px;
+    font-size:22px;
+  }
+
+  .filters{
+    gap:8px;
+    margin-bottom:10px;
+  }
+
+  .filter{
+    min-height:36px;
+    padding:0 13px;
+    border-radius:999px;
+    font-size:13px;
+    white-space:nowrap;
+    writing-mode:horizontal-tb;
+  }
+
+  .search-row{
+    gap:10px;
+  }
+
+  .search{
+    height:42px;
+  }
+
+  .summary{
+    margin:15px 0 26px;
+    gap:10px;
+  }
+
+  .stat{
+    padding:10px 8px;
+  }
+
+  .stat-value,.stat strong,.stat .value{
+    font-size:21px;
+  }
+
+  .stat-label,.stat span{
+    font-size:11px;
+  }
+}
+
+/* Wide screens */
+@media (min-width:1600px){
+  .shell{
+    width:1180px;
+    max-width:1180px;
+  }
+}
+
+/* Safe-area support */
+@supports (padding:max(0px)){
+  body{
+    padding-left:env(safe-area-inset-left);
+    padding-right:env(safe-area-inset-right);
+  }
+}
+
+@media (prefers-reduced-motion:reduce){
+  *{
+    scroll-behavior:auto!important;
+    transition:none!important;
+    animation:none!important;
+  }
+}
+
+
+/* v76 Layout Engine invariants */
+.topbar,.toolbar,.filter-shell,.tools,.summary,#services,footer{
+  width:100%;max-width:100%;min-width:0;
+}
+.filters,.search-box,#search,.metric{max-width:100%;min-width:0}
+.summary{overflow:hidden}
+
+@media (max-width:759px){
+  body{
+    padding-left:max(10px,env(safe-area-inset-left));
+    padding-right:max(10px,env(safe-area-inset-right));
+  }
+}
+@media (orientation:landscape) and (max-height:560px){
+  body{
+    padding-left:max(14px,env(safe-area-inset-left));
+    padding-right:max(14px,env(safe-area-inset-right));
+  }
+}
+
+

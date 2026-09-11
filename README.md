@@ -78,3 +78,17 @@ Telegram Data Centers 卡片直接由使用者瀏覽器連線 Telegram 官方 MT
 
 沒有額外 Renderer，也不再把卡片與事件拆成多層模板。
 修改 `assets/card-template.js` 即同步套用全部 24 個服務。
+
+
+## 模組架構
+
+- `assets/app.js`：純啟動器
+- `assets/core/`：資料、網路、快取、刷新、事件與來源引擎
+- `assets/parsers/`：通用來源 Parser
+- `assets/ui/`：卡片、渲染、篩選與 UI 綁定
+- `assets/services/registry.js` + `assets/services/*.js`：服務 Plugin 系統
+- `assets/styles/`：分層 CSS
+- `scripts/`：GitHub Actions 機器探針
+- `data/`：部署時產生的探針資料
+
+前端使用瀏覽器原生 ES Modules，不需要建置步驟。
