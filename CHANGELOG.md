@@ -2,6 +2,16 @@
 
 CloudStatus 版本更新記錄。
 
+## v101.0.0
+
+- 修正 BandwagonHost 官方狀態頁明確顯示 `All systems operational`，CloudStatus 卻仍落入「自動來源未取得可靠事件資料」的問題。
+- 根因是舊 Parser 只認 `N active` 計數；目前 `bwhstatus.com` 首頁實際使用 `All systems operational` + `Operational`。
+- BandwagonHost 改為 Service-local Parser Plugin，從通用 `parsers/hosting.js` 移除具名服務邏輯。
+- 明確辨識 `All systems operational / Operational` 為正常；`Degraded Performance / Partial Outage / Major Outage / Outage` 為異常。
+- `Recent incidents` 解析最近 5 天及 ongoing incident；事件狀態仍只接受官方頁明示 lifecycle。
+- Footer 資料來源改為可點擊的 `BandwagonHost Status`。
+- 所有 ES Module / CSS 子模組同步到 `101.0.0`；cache key 更新為 `cloudstatus-cache-v101`。
+
 ## v100.0.0
 
 - 徹底修正 DMIT「健康狀態正常，但服務面板完全消失」。

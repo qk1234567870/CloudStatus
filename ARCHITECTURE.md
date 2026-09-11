@@ -412,3 +412,19 @@ DMIT Services Panel
 ```
 
 這讓瀏覽器不必依賴第三方 CORS / Reader 才能看到 Services 面板。直接 API 與 Reader 仍保留為 runtime fallback。
+
+
+### BandwagonHost service-local parser
+
+BandwagonHost 的官方狀態頁格式屬服務專屬邏輯，因此 parser 已從 `parsers/hosting.js` 移回 `services/bandwagonhost.js`。
+
+```text
+bwhstatus.com
+→ Reader
+→ BandwagonHost parseReader Plugin
+→ health + activeEvents + recentEvents
+→ generic normalize
+→ Card
+```
+
+這符合「服務特殊格式留在自己的 Plugin，通用 Parser 不累積具名服務條件」的模組化規則。

@@ -134,6 +134,22 @@ data/dmit-services.json（同源、首選）
 
 通用套件內附一份官方 Services 頁結構的 seed；每次 Actions 部署都會重新從 DOES DMIT FAIL? 官方來源更新。若更新失敗，腳本保留上一份有效資料，不會把面板清空。
 
+
+
+## BandwagonHost
+
+BandwagonHost 使用官方 [`bwhstatus.com`](https://bwhstatus.com/) 狀態頁。
+
+Service Plugin 直接辨識官方頁面的明示狀態：
+
+- `All systems operational` / `Operational` → 目前正常
+- `Degraded Performance` / `Partial Outage` / `Major Outage` / `Outage` → 目前異常
+- `Recent incidents` → 最近 5 天加上任何仍在進行的事件
+
+事件 lifecycle 只接受頁面明示的 `Investigating / Identified / Monitoring / Resolved / Maintenance / Scheduled / Completed / Closed`；沒有明示就不自行補狀態。
+
+BandwagonHost 專屬 Parser 位於 `assets/services/bandwagonhost.js`，不再混在通用 Hosting Parser。
+
 ## Telegram Data Centers
 
 Telegram 卡片有兩個互相獨立的測量層。

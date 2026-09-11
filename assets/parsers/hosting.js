@@ -1,29 +1,5 @@
-import {cleanText,lines,findDate,findAnyDate,findDateRange} from "../core/utils.js?v=100.0.0";
-import {explicitStatus,looksNoise,sortRecent,activeEventCount} from "../core/events.js?v=100.0.0";
-
-export function parseBandwagon(text, service, source) {
-    var t=String(text||"");
-    var ls=lines(t), events=[];
-    var activeCount = null;
-    var mc=t.match(/(\d+)\s+active/i); if (mc) activeCount=parseInt(mc[1],10);
-    var status=/^(Maintenance|Incident|Outage|Resolved|Monitoring)$/i;
-    for (var i=0;i<ls.length;i++) {
-      if (!status.test(ls[i])) continue;
-      var title=i>0?ls[i-1]:"";
-      if (!title || /recent incidents|active incident/i.test(title) || looksNoise(title)) continue;
-      var block=ls.slice(i-1,i+16).join(" ");
-      var range=findDateRange(block);
-      events.push({
-        title:title,status:explicitStatus(ls[i]),statusRaw:ls[i],
-        start:range.start,end:range.end,url:service.page,sourceLabel:source.label
-      });
-    }
-    return {
-      events:sortRecent(events),
-      health:activeCount===0?"normal":(activeCount>0?"incident":null),
-      healthText:activeCount===0?"目前沒有啟用事件":(activeCount>0?activeCount+" 個啟用事件":null)
-    };
-  }
+import {cleanText,lines,findDate,findAnyDate,findDateRange} from "../core/utils.js?v=101.0.0";
+import {explicitStatus,looksNoise,sortRecent,activeEventCount} from "../core/events.js?v=101.0.0";
 
 export function parseOracle(text, service, source) {
     var t=String(text||""), ls=lines(t), events=[];

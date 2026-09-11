@@ -1,6 +1,6 @@
 {
   "name": "CloudStatus Pure Pages",
-  "version": "100.0.0",
+  "version": "101.0.0",
   "ui_language": "zh-TW",
   "architecture": "native-es-modules-plus-service-plugin-registry",
   "build_tool_required": false,
@@ -34,7 +34,7 @@
   ],
   "frontend_refresh_minutes": 5,
   "foreground_refresh_threshold_minutes": 2,
-  "cache_key": "cloudstatus-cache-v100",
+  "cache_key": "cloudstatus-cache-v101",
   "cache_fresh_minutes": 15,
   "cache_stale_hours": 24,
   "responsive_layout": "single-column-under-760px / natural-flow-two-columns-at-760px-plus",
@@ -126,12 +126,27 @@
     "DEPLOYMENT.md",
     "CHANGELOG.md"
   ],
-  "synchronized_asset_version": "100.0.0",
+  "synchronized_asset_version": "101.0.0",
   "asset_cache_busting": {
     "html_entry_assets": true,
     "service_plugin_loader": true,
     "all_es_module_imports": true,
     "all_css_imports": true,
     "reason": "Prevent stale transitive modules/styles after modularization"
+  },
+  "bandwagonhost": {
+    "page": "https://bwhstatus.com/",
+    "parser": "service-local parseReader plugin",
+    "current_health_signals": [
+      "All systems operational",
+      "Operational",
+      "Degraded Performance",
+      "Partial Outage",
+      "Major Outage",
+      "Outage"
+    ],
+    "recent_window": "official page last 5 days plus ongoing incidents",
+    "status_inference": false,
+    "module": "assets/services/bandwagonhost.js"
   }
 }
