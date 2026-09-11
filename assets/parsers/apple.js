@@ -1,7 +1,7 @@
 /* Apple structured and Reader parsers */
-import {cleanText,lines,findDate,findAnyDate,findDateRange} from "../core/utils.js?v=101.0.0";
-import {explicitStatus,looksNoise,sortRecent,activeEventCount} from "../core/events.js?v=101.0.0";
-import {fetchText} from "../core/network.js?v=101.0.0";
+import {cleanText,lines,findDate,findAnyDate,findDateRange} from "../core/utils.js?v=102.0.0";
+import {explicitStatus,looksNoise,sortRecent,activeEventCount} from "../core/events.js?v=102.0.0";
+import {fetchText} from "../core/network.js?v=102.0.0";
 
 export function appleStructuredAdapter(data, service, source) {
     var services = data && Array.isArray(data.services) ? data.services : [];

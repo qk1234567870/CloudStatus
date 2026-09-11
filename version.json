@@ -1,6 +1,6 @@
 {
   "name": "CloudStatus Pure Pages",
-  "version": "101.0.0",
+  "version": "102.0.0",
   "ui_language": "zh-TW",
   "architecture": "native-es-modules-plus-service-plugin-registry",
   "build_tool_required": false,
@@ -34,7 +34,7 @@
   ],
   "frontend_refresh_minutes": 5,
   "foreground_refresh_threshold_minutes": 2,
-  "cache_key": "cloudstatus-cache-v101",
+  "cache_key": "cloudstatus-cache-v102",
   "cache_fresh_minutes": 15,
   "cache_stale_hours": 24,
   "responsive_layout": "single-column-under-760px / natural-flow-two-columns-at-760px-plus",
@@ -126,7 +126,7 @@
     "DEPLOYMENT.md",
     "CHANGELOG.md"
   ],
-  "synchronized_asset_version": "101.0.0",
+  "synchronized_asset_version": "102.0.0",
   "asset_cache_busting": {
     "html_entry_assets": true,
     "service_plugin_loader": true,
@@ -148,5 +148,14 @@
     "recent_window": "official page last 5 days plus ongoing incidents",
     "status_inference": false,
     "module": "assets/services/bandwagonhost.js"
+  },
+  "oracle_oci": {
+    "current_page": "https://ocistatus.oraclecloud.com/#/",
+    "history_page": "https://ocistatus.oraclecloud.com/#/history",
+    "current_status_json": "https://ocistatus.oraclecloud.com/api/v2/status.json",
+    "incident_rss": "https://ocistatus.oraclecloud.com/api/v2/incident-summary.rss",
+    "parser": "service-local",
+    "recent_history_display_limit": 3,
+    "status_inference": false
   }
 }

@@ -429,7 +429,7 @@
     }
 
     if(recentEvents.length){
-      var recentTitle=service.id==="dmit" ? "最近 3 筆事件" : "最近 "+recentEvents.length+" 筆事件";
+      var recentTitle=(service.id==="dmit" || service.id==="oracle") ? "最近 3 筆事件" : "最近 "+recentEvents.length+" 筆事件";
       body+=sectionHead(recentTitle,recentEvents.length,false,historyLink,ctx);
       body+='<div class="event-list recent-events">'+recentEvents.map(function(e){
         return eventItem(e,service,ctx);

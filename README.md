@@ -136,6 +136,26 @@ data/dmit-services.json（同源、首選）
 
 
 
+
+
+## Oracle Cloud Infrastructure
+
+OCI 使用官方可程式化 Status Report + 官方 Incident RSS：
+
+```text
+現況
+https://ocistatus.oraclecloud.com/#/
+→ /api/v2/status.json
+
+歷史
+https://ocistatus.oraclecloud.com/#/history
+→ /api/v2/incident-summary.rss
+```
+
+`status.json` 只負責目前整體健康狀態；Incident RSS 負責目前事件與最近 3 筆事故歷史。RSS 每個事件只採用 description 最新一筆 `<strong>` lifecycle（Investigating / Identified / Monitoring / Resolved 等），不從正文推斷狀態。
+
+OCI 專屬 Parser 位於 `assets/services/oracle.js`。
+
 ## BandwagonHost
 
 BandwagonHost 使用官方 [`bwhstatus.com`](https://bwhstatus.com/) 狀態頁。

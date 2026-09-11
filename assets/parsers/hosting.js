@@ -1,18 +1,5 @@
-import {cleanText,lines,findDate,findAnyDate,findDateRange} from "../core/utils.js?v=101.0.0";
-import {explicitStatus,looksNoise,sortRecent,activeEventCount} from "../core/events.js?v=101.0.0";
-
-export function parseOracle(text, service, source) {
-    var t=String(text||""), ls=lines(t), events=[];
-    var normal=/All Systems Operational|No incidents reported|No incidents/i.test(t);
-    var status=/^(Investigating|Identified|Monitoring|Resolved|Maintenance|Completed|Closed)$/i;
-    for (var i=0;i<ls.length;i++) {
-      if (!status.test(ls[i])) continue;
-      var title=i>0?ls[i-1]:"";
-      if (!title || looksNoise(title)) continue;
-      events.push({title:title,status:explicitStatus(ls[i]),statusRaw:ls[i],start:findDate(ls.slice(i,i+8).join(" ")),end:null,url:service.page,sourceLabel:source.label});
-    }
-    return {events:sortRecent(events),health:normal?"normal":null,healthText:normal?"所有系統正常":null};
-  }
+import {cleanText,lines,findDate,findAnyDate,findDateRange} from "../core/utils.js?v=102.0.0";
+import {explicitStatus,looksNoise,sortRecent,activeEventCount} from "../core/events.js?v=102.0.0";
 
 export function parseDMITSecurity(text, service, source) {
     var ls=lines(text), events=[];

@@ -2,6 +2,19 @@
 
 CloudStatus 版本更新記錄。
 
+## v102.0.0
+
+- 重構 Oracle Cloud Infrastructure 狀態來源。
+- 現況入口固定為 `https://ocistatus.oraclecloud.com/#/`。
+- 目前整體健康狀態改用 Oracle 官方 `https://ocistatus.oraclecloud.com/api/v2/status.json`。
+- 歷史入口固定為 `https://ocistatus.oraclecloud.com/#/history`。
+- 事件資料改用官方 `https://ocistatus.oraclecloud.com/api/v2/incident-summary.rss`。
+- RSS parser 讀取事件標題、官方 incident URL、Start Time、End Time，以及 description 最新一筆明示 lifecycle status。
+- `Resolved / Completed / Closed` 歸最近事件；`Investigating / Identified / Monitoring / Maintenance` 歸目前事件；沒有明示 status 不自行推斷。
+- OCI 歷史區塊固定顯示「最近 3 筆事件」，右側顯示實際筆數。
+- Oracle 專屬 Parser 從通用 Hosting Parser 移回 `assets/services/oracle.js`。
+- 所有 ES Module / CSS 子模組同步到 `102.0.0`；cache key 更新為 `cloudstatus-cache-v102`。
+
 ## v101.0.0
 
 - 修正 BandwagonHost 官方狀態頁明確顯示 `All systems operational`，CloudStatus 卻仍落入「自動來源未取得可靠事件資料」的問題。

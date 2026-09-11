@@ -428,3 +428,18 @@ bwhstatus.com
 ```
 
 這符合「服務特殊格式留在自己的 Plugin，通用 Parser 不累積具名服務條件」的模組化規則。
+
+
+### Oracle OCI service-local parser
+
+OCI 使用兩條獨立官方 channel：
+
+```text
+/api/v2/status.json
+→ current health
+
+/api/v2/incident-summary.rss
+→ activeEvents + recentEvents
+```
+
+Status JSON 與 Incident RSS 不互相推斷。RSS parser 只以每個 item description 最前面的明示 lifecycle status 判斷目前事件是否仍 unresolved；Start Time / End Time 只從 RSS 明示欄位解析。

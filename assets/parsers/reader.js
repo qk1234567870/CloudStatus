@@ -1,11 +1,11 @@
 /* Reader dispatcher */
-import {normalizeResult} from "../core/events.js?v=101.0.0";
-import {PARSER_UTILS} from "./utils.js?v=101.0.0";
-import {parseGooglePage} from "./google.js?v=101.0.0";
-import {parseAzure} from "./azure.js?v=101.0.0";
-import {parseApple,parseAppleBackup} from "./apple.js?v=101.0.0";
-import {parseOracle,parseDMIT} from "./hosting.js?v=101.0.0";
-import {parseInfrastructure,parseCloudflareRadarBGP} from "./network.js?v=101.0.0";
+import {normalizeResult} from "../core/events.js?v=102.0.0";
+import {PARSER_UTILS} from "./utils.js?v=102.0.0";
+import {parseGooglePage} from "./google.js?v=102.0.0";
+import {parseAzure} from "./azure.js?v=102.0.0";
+import {parseApple,parseAppleBackup} from "./apple.js?v=102.0.0";
+import {parseDMIT} from "./hosting.js?v=102.0.0";
+import {parseInfrastructure,parseCloudflareRadarBGP} from "./network.js?v=102.0.0";
 
 export function parseReader(text, service, source) {
     var moduleParser=(window.CloudStatusServiceParsers||{})[service.id];
@@ -18,7 +18,6 @@ export function parseReader(text, service, source) {
       case "azure": return normalizeResult(parseAzure(text,service,source),service,source);
       case "apple": return normalizeResult(parseApple(text,service,source),service,source);
       case "apple-backup": return normalizeResult(parseAppleBackup(text,service,source),service,source);
-      case "oracle": return normalizeResult(parseOracle(text,service,source),service,source);
       case "dmit": return normalizeResult(parseDMIT(text,service,source),service,source);
       case "equinix":
       case "digital-realty":
