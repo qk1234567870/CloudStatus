@@ -1,5 +1,5 @@
-import {cleanText,lines,findDate,findAnyDate,findDateRange} from "../core/utils.js?v=103.0.0";
-import {explicitStatus,looksNoise,sortRecent,activeEventCount} from "../core/events.js?v=103.0.0";
+import {cleanText,lines,findDate,findAnyDate,findDateRange} from "../core/utils.js?v=105.0.0";
+import {explicitStatus,looksNoise,sortRecent,activeEventCount} from "../core/events.js?v=105.0.0";
 
 export function parseCloudflareRadarBGP(text, service, source) {
     var t=String(text||"");

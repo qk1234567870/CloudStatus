@@ -2,6 +2,27 @@
 
 CloudStatus 版本更新記錄。
 
+## v105.0.0
+
+- 進一步整理事件區塊責任：**事件區塊排列完全由 `assets/ui/card-template.js` 統一管理**。
+- 移除 Card Template 內對 `dmit / oracle / aws` 的具名排序判斷。
+- 卡片層固定順序：`目前事件` → `最近 3 筆事件`。
+- `recentEvents` 本來就只渲染最多 3 筆，因此歷史標題統一固定為 `最近 3 筆事件`。
+- 需要保留 0 筆入口時，卡片只依通用 `sectionLinks.current/history` capability 判斷，不依服務 ID。
+- `core/events.js` 只負責事件 normalize / 去重 / 時間排序 / active-recent 資料語意。
+- `assets/services/*.js` 只負責來源與服務專屬解析，不控制事件區塊先後。
+- README / ARCHITECTURE / version.json 同步更新。
+- 所有 ES Module / CSS 子模組同步到 `105.0.0`；cache key 更新為 `cloudstatus-cache-v105`。
+
+## v104.0.0
+
+- 修正 AWS 事件區塊順序顛倒。
+- 根因：`activeEvents = 0` 時，程式先渲染「最近 3 筆事件」，最後才補上「目前事件 0」，所以畫面看起來反了。
+- 現在固定先處理 `目前事件`，再處理 `最近 3 筆事件`。
+- 即使目前事件為 0，也會先顯示 `目前事件 0`，之後才是歷史。
+- 同步將 DMIT / OCI / AWS 三個有固定現況/歷史入口的服務統一成相同順序。
+- 所有 ES Module / CSS 子模組同步到 `104.0.0`；cache key 更新為 `cloudstatus-cache-v104`。
+
 ## v103.0.0
 
 - 重構 AWS 為專屬 Service Plugin Parser。

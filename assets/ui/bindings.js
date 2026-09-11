@@ -1,9 +1,9 @@
 /* DOM event bindings and viewport lifecycle */
-import {$} from "../core/utils.js?v=103.0.0";
-import {state} from "../core/state.js?v=103.0.0";
-import {refresh} from "../core/refresh.js?v=103.0.0";
-import {render,relayoutForViewport,startResponsiveLayoutObserver} from "./renderer.js?v=103.0.0";
-import {bindFilterEvents,startFilterLayout,scheduleFilterLayout} from "./filters.js?v=103.0.0";
+import {$} from "../core/utils.js?v=105.0.0";
+import {state} from "../core/state.js?v=105.0.0";
+import {refresh} from "../core/refresh.js?v=105.0.0";
+import {render,relayoutForViewport,startResponsiveLayoutObserver} from "./renderer.js?v=105.0.0";
+import {bindFilterEvents,startFilterLayout,scheduleFilterLayout} from "./filters.js?v=105.0.0";
 
 export function bindUI(){
   bindFilterEvents();

@@ -179,6 +179,43 @@ https://ocistatus.oraclecloud.com/#/history
 
 OCI 專屬 Parser 位於 `assets/services/oracle.js`。
 
+
+
+事件區塊有固定入口的服務（目前 DMIT / OCI / AWS）會維持一致順序：
+
+```text
+目前事件
+→ 最近 3 筆事件
+```
+
+即使 `目前事件 = 0`，也會留在歷史事件上方，不會因為零筆而跑到卡片底部。
+
+
+
+## 事件卡片分工
+
+事件資料與事件呈現嚴格分層：
+
+```text
+assets/core/events.js
+→ normalize / 去重 / 時間排序 / active-recent 分類
+
+assets/ui/card-template.js
+→ 區塊顯示順序 / 標題 / 0 筆區塊 / 每筆事件呈現
+
+assets/services/*.js
+→ 來源與解析；不控制「目前事件 / 最近事件」先後
+```
+
+卡片模組是事件區塊順序的唯一來源：
+
+```text
+目前事件
+→ 最近 3 筆事件
+```
+
+`recentEvents` 在卡片層最多顯示 3 筆，所以標題固定為「最近 3 筆事件」。若服務提供 `sectionLinks.current/history`，即使 0 筆也保留對應入口；此行為由卡片模組通用判斷，不使用 AWS / OCI / DMIT 等具名服務條件。
+
 ## BandwagonHost
 
 BandwagonHost 使用官方 [`bwhstatus.com`](https://bwhstatus.com/) 狀態頁。

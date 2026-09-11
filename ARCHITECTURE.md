@@ -461,3 +461,14 @@ status.aws.amazon.com/rss/all.rss
 ```
 
 Dashboard history 優先於 RSS。AWS 官方明確提醒 RSS 格式可能變更，因此 RSS 不作唯一資料源。Current health 不以空事件清單推斷正常。
+
+
+### Event presentation ownership
+
+事件資料與事件 UI 不混用責任：
+
+- `core/events.js`：normalize、dedupe、sort、active/recent data semantics。
+- `ui/card-template.js`：section order、section title、zero-state section、event row rendering。
+- `services/*.js`：source acquisition / service-specific parsing only。
+
+Card Template 不再出現 `service.id === "aws" / "oracle" / "dmit"` 這類排序條件。是否保留 0 筆 section 只看通用 `sectionLinks` capability；事件區塊固定 `目前事件 → 最近 3 筆事件`。

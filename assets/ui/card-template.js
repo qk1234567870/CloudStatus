@@ -421,26 +421,32 @@
     var currentLink=service.sectionLinks && service.sectionLinks.current || null;
     var historyLink=service.sectionLinks && service.sectionLinks.history || null;
 
+    // Card-level event policy:
+    // 1) current incidents always precede history
+    // 2) cards that expose explicit current/history destinations keep both section headers,
+    //    even when the count is zero
+    // 3) recent history always renders at most three items, so the heading is fixed
+    var keepIncidentSections=!!(currentLink || historyLink);
+    var recentTitle="最近 3 筆事件";
+
+    // Current incidents always come first.
     if(activeEvents.length){
       body+=sectionHead("目前事件",activeEvents.length,true,currentLink,ctx);
       body+='<div class="event-list active-events">'+activeEvents.map(function(e){
         return eventItem(e,service,ctx);
       }).join("")+'</div>';
+    }else if(keepIncidentSections){
+      body+=sectionHead("目前事件",0,true,currentLink,ctx);
     }
 
+    // Recent history always follows current incidents.
     if(recentEvents.length){
-      var recentTitle=(service.id==="dmit" || service.id==="oracle" || service.id==="aws") ? "最近 3 筆事件" : "最近 "+recentEvents.length+" 筆事件";
       body+=sectionHead(recentTitle,recentEvents.length,false,historyLink,ctx);
       body+='<div class="event-list recent-events">'+recentEvents.map(function(e){
         return eventItem(e,service,ctx);
       }).join("")+'</div>';
-    }
-
-    if((service.id==="dmit" || service.id==="aws") && !activeEvents.length){
-      body+=sectionHead("目前事件",0,true,currentLink,ctx);
-    }
-    if((service.id==="dmit" || service.id==="aws") && !recentEvents.length){
-      body+=sectionHead("最近 3 筆事件",0,false,historyLink,ctx);
+    }else if(keepIncidentSections){
+      body+=sectionHead(recentTitle,0,false,historyLink,ctx);
     }
 
     body+=emptyBlock(service,activeEvents,recentEvents,ctx);

@@ -1,6 +1,6 @@
 {
   "name": "CloudStatus Pure Pages",
-  "version": "103.0.0",
+  "version": "105.0.0",
   "ui_language": "zh-TW",
   "architecture": "native-es-modules-plus-service-plugin-registry",
   "build_tool_required": false,
@@ -34,7 +34,7 @@
   ],
   "frontend_refresh_minutes": 5,
   "foreground_refresh_threshold_minutes": 2,
-  "cache_key": "cloudstatus-cache-v103",
+  "cache_key": "cloudstatus-cache-v105",
   "cache_fresh_minutes": 15,
   "cache_stale_hours": 24,
   "responsive_layout": "single-column-under-760px / natural-flow-two-columns-at-760px-plus",
@@ -126,7 +126,7 @@
     "DEPLOYMENT.md",
     "CHANGELOG.md"
   ],
-  "synchronized_asset_version": "103.0.0",
+  "synchronized_asset_version": "105.0.0",
   "asset_cache_busting": {
     "html_entry_assets": true,
     "service_plugin_loader": true,
@@ -166,5 +166,27 @@
     "recent_history_display_limit": 3,
     "current_health_requires_explicit_source_text": true,
     "status_inference": false
+  },
+  "incident_section_order": {
+    "services": [
+      "dmit",
+      "oracle",
+      "aws"
+    ],
+    "order": [
+      "目前事件",
+      "最近 3 筆事件"
+    ],
+    "zero_current_keeps_position": true
+  },
+  "event_render_policy": {
+    "owner": "assets/ui/card-template.js",
+    "order": [
+      "目前事件",
+      "最近 3 筆事件"
+    ],
+    "max_recent_events": 3,
+    "keep_zero_sections_when_section_links_exist": true,
+    "named_service_conditions": false
   }
 }

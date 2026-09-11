@@ -1,9 +1,9 @@
 /* CloudStatus bootstrap only. Business logic lives in modules. */
-import {initializeCatalog} from "./core/state.js?v=103.0.0";
-import {loadCache} from "./core/cache.js?v=103.0.0";
-import {refresh} from "./core/refresh.js?v=103.0.0";
-import {startAutoRefresh} from "./core/scheduler.js?v=103.0.0";
-import {bindUI} from "./ui/bindings.js?v=103.0.0";
+import {initializeCatalog} from "./core/state.js?v=105.0.0";
+import {loadCache} from "./core/cache.js?v=105.0.0";
+import {refresh} from "./core/refresh.js?v=105.0.0";
+import {startAutoRefresh} from "./core/scheduler.js?v=105.0.0";
+import {bindUI} from "./ui/bindings.js?v=105.0.0";
 
 async function boot(){
   var registry=window.CloudStatusServices;
