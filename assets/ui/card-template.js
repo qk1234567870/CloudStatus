@@ -307,7 +307,10 @@
 
     body+=emptyBlock(service,activeEvents,recentEvents,ctx);
 
-    var source=esc(service.sourceLabel || "官方頁");
+    var sourceLabel=service.sourceLabel || "官方頁";
+    var source=service.sourceUrl
+      ? '<a class="source-link" href="'+esc(service.sourceUrl)+'" target="_blank" rel="noopener">'+esc(sourceLabel)+'</a>'
+      : esc(sourceLabel);
     var updated=service.loading ? "" : ctx.formatReadTime(service.updatedAt || ctx.lastRefresh);
 
     return '<article class="service service-card" data-service-id="'+esc(service.id || "")+'">'+

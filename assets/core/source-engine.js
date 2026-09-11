@@ -92,7 +92,7 @@ export async function loadPrimarySource(service) {
     if(!source){
       return {
         id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,globalProbeLabel:service.globalProbeLabel||null,
-        events:[],activeEvents:null,recentEvents:null,checks:null,globalProbe:null,details:null,detailsTitle:null,detailsSource:null,health:null,healthText:null,sourceLabel:"官方頁",fallback:true,failures:["No source"],
+        events:[],activeEvents:null,recentEvents:null,checks:null,globalProbe:null,details:null,detailsTitle:null,detailsSource:null,health:null,healthText:null,sourceLabel:"官方頁",sourceUrl:null,fallback:true,failures:["No source"],
         _remainingSources:[]
       };
     }
@@ -114,6 +114,7 @@ export async function loadPrimarySource(service) {
         id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,globalProbeLabel:service.globalProbeLabel||null,
         events:events,activeEvents:activeEvents,recentEvents:recentEvents,checks:checks,globalProbe:globalProbe,details:details,detailsTitle:detailsTitle,detailsSource:detailsSource,health:health,healthText:healthText,
         sourceLabel:(events.length||checks||globalProbe||(details&&details.length)||health)?source.label:"官方頁",
+        sourceUrl:(events.length||checks||globalProbe||(details&&details.length)||health)?(source.link||source.docsUrl||null):null,
         fallback:!events.length&&!(details&&details.length)&&!health,
         failures:[],
         _remainingSources:sources.slice(1)
@@ -121,7 +122,7 @@ export async function loadPrimarySource(service) {
     }catch(e){
       return {
         id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,globalProbeLabel:service.globalProbeLabel||null,
-        events:[],activeEvents:null,recentEvents:null,checks:null,globalProbe:null,details:null,detailsTitle:null,detailsSource:null,health:null,healthText:null,sourceLabel:"官方頁",fallback:true,
+        events:[],activeEvents:null,recentEvents:null,checks:null,globalProbe:null,details:null,detailsTitle:null,detailsSource:null,health:null,healthText:null,sourceLabel:"官方頁",sourceUrl:null,fallback:true,
         failures:[source.label+": "+String(e)],
         _remainingSources:sources.slice(1)
       };
@@ -139,6 +140,8 @@ export async function completeService(service, partial) {
     var detailsSource=partial.detailsSource||null;
     var health=partial.health||null, healthText=partial.healthText||null;
     var labels=[]; if(partial.sourceLabel && partial.sourceLabel!=="官方頁") labels.push(partial.sourceLabel);
+    var sourceLinks={};
+    if(partial.sourceLabel && partial.sourceUrl) sourceLinks[partial.sourceLabel]=partial.sourceUrl;
     var failures=(partial.failures||[]).slice();
     var sources=(partial._remainingSources||[]).slice();
     var hasStructuredChannels=Array.isArray(activeEvents) && Array.isArray(recentEvents);
@@ -148,14 +151,14 @@ export async function completeService(service, partial) {
       if(isThirdPartySource(source) && health && events.length>=3 && activeEventCount(events)>0) break;
       try{
         var result=await runSource(source,service);
-        if(result.events && result.events.length){ events=mergeEvents(events,result.events); if(labels.indexOf(source.label)<0) labels.push(source.label); }
-        if(!checks && Array.isArray(result.checks)){ checks=result.checks.slice(); if(labels.indexOf(source.label)<0) labels.push(source.label); }
-        if(!globalProbe && result.globalProbe && typeof result.globalProbe==="object"){ globalProbe=result.globalProbe; if(labels.indexOf(source.label)<0) labels.push(source.label); }
-        if(!details && Array.isArray(result.details)){ details=result.details.slice(); detailsTitle=result.detailsTitle||null; detailsSource=result.detailsSource||null; if(labels.indexOf(source.label)<0) labels.push(source.label); }
+        if(result.events && result.events.length){ events=mergeEvents(events,result.events); if(labels.indexOf(source.label)<0) labels.push(source.label); if(source.link||source.docsUrl) sourceLinks[source.label]=source.link||source.docsUrl; }
+        if(!checks && Array.isArray(result.checks)){ checks=result.checks.slice(); if(labels.indexOf(source.label)<0) labels.push(source.label); if(source.link||source.docsUrl) sourceLinks[source.label]=source.link||source.docsUrl; }
+        if(!globalProbe && result.globalProbe && typeof result.globalProbe==="object"){ globalProbe=result.globalProbe; if(labels.indexOf(source.label)<0) labels.push(source.label); if(source.link||source.docsUrl) sourceLinks[source.label]=source.link||source.docsUrl; }
+        if(!details && Array.isArray(result.details)){ details=result.details.slice(); detailsTitle=result.detailsTitle||null; detailsSource=result.detailsSource||null; if(labels.indexOf(source.label)<0) labels.push(source.label); if(source.link||source.docsUrl) sourceLinks[source.label]=source.link||source.docsUrl; }
         if(!hasStructuredChannels && Array.isArray(result.activeEvents) && Array.isArray(result.recentEvents)){
           activeEvents=result.activeEvents.slice(); recentEvents=result.recentEvents.slice(); hasStructuredChannels=true;
         }
-        if(result.health && !health){ health=result.health; healthText=result.healthText||null; if(labels.indexOf(source.label)<0) labels.push(source.label); }
+        if(result.health && !health){ health=result.health; healthText=result.healthText||null; if(labels.indexOf(source.label)<0) labels.push(source.label); if(source.link||source.docsUrl) sourceLinks[source.label]=source.link||source.docsUrl; }
         if(hasStructuredChannels && health) break;
         if(events.length>=3 && health && (health==="normal" || activeEventCount(events)>0)) break;
       }catch(e){ failures.push(source.label+": "+String(e)); }
@@ -164,6 +167,7 @@ export async function completeService(service, partial) {
       id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,globalProbeLabel:service.globalProbeLabel||null,
       events:events.slice(0,20),activeEvents:activeEvents,recentEvents:recentEvents,checks:checks,globalProbe:globalProbe,details:details,detailsTitle:detailsTitle,detailsSource:detailsSource,health:health,healthText:healthText,
       sourceLabel:labels.length===1?labels[0]:(labels.length>1?"多來源":"官方頁"),
+      sourceUrl:labels.length===1?(sourceLinks[labels[0]]||null):null,
       fallback:!events.length&&!checks&&!globalProbe&&!(details&&details.length)&&!health,failures:failures
     };
   }

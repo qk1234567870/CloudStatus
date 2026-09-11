@@ -211,3 +211,18 @@ node --check scripts/telegram-global-probe.mjs
 - Service Plugin 數量符合 Registry
 - `CONFIG.version`、Registry loader version、HTML asset query、`version.json` 同步
 - Cache key 隨版本更新
+
+
+## DMIT API
+
+DMIT 前端直接讀取 `https://does.dmit.fail/api/v1/*` 公開 JSON API。
+
+官方 API 文件：
+
+```text
+https://does.dmit.fail/api-docs
+```
+
+API 不需要 Key；官方文件目前標示 60 requests/min。CloudStatus 的正常 5 分鐘刷新遠低於此限制。
+
+若 DMIT API 無法由瀏覽器取得，Service Plugin 會回退至 DMIT 官方 Server Status，再回退官方 Telegram 公告。

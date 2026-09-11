@@ -2,7 +2,8 @@
 (function () {
   "use strict";
 
-  var API="https://does.dmit.fail/api/v1";
+  var SITE="https://does.dmit.fail";
+  var API=SITE+"/api/v1";
 
   var service = {
     id:"dmit",
@@ -10,15 +11,18 @@
     nameZh:"雲端主機",
     desc:"全球高階網路與雲端服務",
     category:"hosting",
-    page:"https://does.dmit.fail/",
+    page:SITE+"/",
     parser:"dmit",
     sources:[
       {
         type:"dmit-api",
         url:API+"/status?locale=en",
+        simpleStatusUrl:SITE+"/status.json",
         servicesUrl:API+"/services?locale=en",
         incidentsUrl:API+"/incidents?locale=en",
-        label:"DOES DMIT FAIL? API",
+        docsUrl:SITE+"/api-docs",
+        link:SITE+"/api-docs",
+        label:"API · DOES DMIT FAIL?",
         tier:10,
         kind:"official-api",
         priority:10
@@ -44,89 +48,228 @@
 
   window.CloudStatusServices.register(service);
 
-  function str(v){
+  function scalar(v){
     if(v==null) return "";
     if(typeof v==="string" || typeof v==="number" || typeof v==="boolean") return String(v);
     if(typeof v==="object"){
-      return str(v.en || v.name || v.title || v.label || v.status || "");
+      return scalar(v.en ?? v.name ?? v.title ?? v.label ?? v.status ?? v.value ?? "");
     }
     return "";
   }
 
-  function arrayFrom(value){
+  function text(v){
+    return scalar(v).replace(/\s+/g," ").trim();
+  }
+
+  function collection(value){
     if(Array.isArray(value)) return value;
-    if(value && typeof value==="object") return Object.keys(value).map(function(k){
-      var v=value[k];
-      if(v && typeof v==="object" && !Array.isArray(v) && !v.id && !v.slug && !v.name){
-        return Object.assign({id:k},v);
-      }
-      return v;
-    });
+    if(value && typeof value==="object"){
+      return Object.keys(value).map(function(k){
+        var v=value[k];
+        if(v && typeof v==="object" && !Array.isArray(v)){
+          if(!("id" in v) && !("slug" in v) && !("name" in v) && !("title" in v)){
+            return Object.assign({id:k},v);
+          }
+        }
+        return v;
+      });
+    }
     return [];
   }
 
+  function normalizeToken(v){
+    return text(v).toLowerCase().replace(/[_-]+/g," ").replace(/\s+/g," ").trim();
+  }
+
   function statusToken(v){
-    var s=str(v).trim().toLowerCase().replace(/[\s_-]+/g," ");
+    if(v===true) return "ok";
+    if(v===false) return "fail";
+
+    var s=normalizeToken(v);
     if(!s) return null;
-    if(/operational|available|healthy|normal|up|ok/.test(s)) return "ok";
-    if(/major|outage|down|critical|failed|unavailable/.test(s)) return "fail";
-    if(/partial|degraded|minor|maintenance|limited|issue|incident/.test(s)) return "fail";
+
+    var OK=new Set([
+      "operational","available","healthy","normal","up","ok","okay",
+      "all systems operational","all operational","nope"
+    ]);
+    var FAIL=new Set([
+      "outage","major outage","partial outage","degraded","degraded performance",
+      "down","critical","failed","unavailable","maintenance","under maintenance",
+      "minor","major","incident","issue","limited"
+    ]);
+
+    if(OK.has(s)) return "ok";
+    if(FAIL.has(s)) return "fail";
+
+    if(/\boperational\b/.test(s) && !/\bnon[- ]?operational\b/.test(s)) return "ok";
+    if(/\b(all systems operational|healthy|available)\b/.test(s)) return "ok";
+    if(/\b(outage|degraded|critical|unavailable|maintenance|incident|issue)\b/.test(s)) return "fail";
+
     return "unknown";
   }
 
-  function healthFromStatus(data){
-    var candidates=[
-      data && data.status,
-      data && data.state,
-      data && data.overall,
-      data && data.overall_status,
-      data && data.indicator
+  function statusCandidates(data){
+    if(!data || typeof data!=="object") return [];
+    var out=[
+      data.status,
+      data.state,
+      data.overall,
+      data.overall_status,
+      data.overallStatus,
+      data.indicator,
+      data.summary
     ];
-    for(var i=0;i<candidates.length;i++){
-      var token=statusToken(candidates[i]);
-      if(token==="ok") return {health:"normal",healthText:"DOES DMIT FAIL? 顯示目前服務正常"};
-      if(token==="fail") return {health:"incident",healthText:"DOES DMIT FAIL? 顯示目前有服務異常"};
-    }
 
-    var services=arrayFrom(data && (data.services || data.components || data.items));
-    if(services.length){
-      var bad=services.filter(function(x){
-        return statusToken(x && (x.status || x.state || x.indicator))==="fail";
-      });
-      var known=services.filter(function(x){
-        var t=statusToken(x && (x.status || x.state || x.indicator));
-        return t==="ok" || t==="fail";
-      });
-      if(bad.length) return {health:"incident",healthText:bad.length+" 個服務項目異常"};
-      if(known.length) return {health:"normal",healthText:"DOES DMIT FAIL? 顯示目前服務正常"};
+    if(typeof data.ok==="boolean") out.push(data.ok);
+    if(typeof data.operational==="boolean") out.push(data.operational);
+    if(typeof data.healthy==="boolean") out.push(data.healthy);
+    if(typeof data.has_issues==="boolean") out.push(!data.has_issues);
+    if(typeof data.hasIssues==="boolean") out.push(!data.hasIssues);
+
+    if(data.status && typeof data.status==="object"){
+      out.push(
+        data.status.status,
+        data.status.state,
+        data.status.overall,
+        data.status.indicator,
+        typeof data.status.ok==="boolean" ? data.status.ok : null
+      );
     }
-    return {health:null,healthText:null};
+    return out;
   }
 
-  function flattenServices(data){
-    var out=[], seen={};
+  function collectStatusObjects(data){
+    var out=[], seen=new Set();
 
-    function walk(value,path,depth){
+    function walk(value,depth){
       if(depth>7 || value==null) return;
       if(Array.isArray(value)){
-        value.forEach(function(v){ walk(v,path,depth+1); });
+        value.forEach(function(v){walk(v,depth+1);});
         return;
       }
       if(typeof value!=="object") return;
 
-      var name=str(value.name || value.title || value.label || value.service || value.product);
-      var rawStatus=str(value.status || value.state || value.indicator);
-      var token=statusToken(rawStatus);
-      var id=str(value.id || value.slug || "");
-      var location=str(value.location || value.region || value.city || "");
-      var category=str(value.category || value.type || "");
-      var group=str(value.group || value.datacenter || value.datacentre || value.product_line || "");
-      var route=str(value.route || value.network || value.provider || "");
+      var name=text(value.name || value.title || value.label || value.service || value.product);
+      var raw=value.status ?? value.state ?? value.indicator ?? value.health ?? null;
+      if(name && raw!=null){
+        var key=(text(value.id||value.slug||"") || (name+"|"+text(raw))).toLowerCase();
+        if(!seen.has(key)){seen.add(key);out.push(value);}
+      }
 
-      if(name && rawStatus && (token==="ok" || token==="fail" || token==="unknown")){
-        var key=(id||path.concat(name).join("/")).toLowerCase();
-        if(!seen[key]){
-          seen[key]=true;
+      Object.keys(value).forEach(function(k){
+        if(["translations","locale","description","updates","metadata"].includes(k)) return;
+        var child=value[k];
+        if(child && typeof child==="object") walk(child,depth+1);
+      });
+    }
+
+    walk(data,0);
+    return out;
+  }
+
+  function healthFromStatus(data){
+    var candidates=statusCandidates(data);
+    for(var i=0;i<candidates.length;i++){
+      var token=statusToken(candidates[i]);
+      if(token==="ok") return {health:"normal",healthText:"DOES DMIT FAIL? 顯示 All systems operational"};
+      if(token==="fail") return {health:"incident",healthText:"DOES DMIT FAIL? 顯示目前有服務異常"};
+    }
+
+    var items=collectStatusObjects(data);
+    if(items.length){
+      var known=0,bad=0;
+      items.forEach(function(item){
+        var t=statusToken(item.status ?? item.state ?? item.indicator ?? item.health);
+        if(t==="ok" || t==="fail"){
+          known++;
+          if(t==="fail") bad++;
+        }
+      });
+
+      if(bad>0) return {health:"incident",healthText:bad+" 個服務項目異常"};
+      if(known>0) return {health:"normal",healthText:"DOES DMIT FAIL? 顯示目前服務正常"};
+    }
+
+    return {health:null,healthText:null};
+  }
+
+  function pathName(entry){
+    return entry && entry.name ? entry.name : "";
+  }
+
+  function detectLocation(path,value){
+    var explicit=text(value.location || value.region || value.city || value.datacenter || value.datacentre);
+    if(explicit) return explicit;
+
+    var joined=path.map(pathName).join(" ");
+    if(/\bLAX\b|Los Angeles/i.test(joined)) return "Los Angeles";
+    if(/\bTYO\b|Tokyo/i.test(joined)) return "Tokyo";
+    if(/\bHKG\b|Hong Kong/i.test(joined)) return "Hong Kong";
+    if(/Applications?/i.test(joined)) return "Applications";
+    return "";
+  }
+
+  function detectGroup(path,value,name){
+    var explicit=text(value.group || value.product_line || value.productLine || value.product || value.service_group);
+    if(explicit && explicit!==name) return explicit;
+
+    for(var i=path.length-1;i>=0;i--){
+      var n=path[i] && path[i].name || "";
+      if(!n || n===name) continue;
+      if(/\b(?:LAX|TYO|HKG)\s+(?:Pro|EB|T1)\b/i.test(n)) return n;
+      if(/^Applications?$/i.test(n)) return n;
+    }
+
+    for(var j=path.length-1;j>=0;j--){
+      var fallback=path[j] && path[j].name || "";
+      if(fallback && fallback!==name && !/^(Services?|Routes?|Datacenter|Application)$/i.test(fallback)) return fallback;
+    }
+    return "";
+  }
+
+  function detectRoute(value,name){
+    var explicit=text(value.route || value.network || value.provider || value.carrier);
+    if(explicit && explicit!==name) return explicit;
+
+    if(/CN2 GIA/i.test(name)) return "China Telecom CN2 GIA";
+    if(/China Unicom Premium/i.test(name)) return "China Unicom Premium";
+    if(/CMIN2/i.test(name)) return "China Mobile CMIN2";
+    if(/\bCMI\b/i.test(name)) return "China Mobile CMI";
+    if(/DMIT Backbone/i.test(name)) return "DMIT Backbone";
+    if(/Arelion/i.test(name)) return "Arelion";
+    if(/Cogent/i.test(name)) return "Cogent";
+    if(/\bNTT\b/i.test(name)) return "NTT";
+    if(/Global Secure Layer/i.test(name)) return "Global Secure Layer";
+    return "";
+  }
+
+  function flattenServices(data){
+    var out=[], seen=new Set();
+
+    function walk(value,path,depth,keyHint){
+      if(depth>9 || value==null) return;
+
+      if(Array.isArray(value)){
+        value.forEach(function(v){walk(v,path,depth+1,"");});
+        return;
+      }
+      if(typeof value!=="object") return;
+
+      var name=text(value.name || value.title || value.label || value.service || value.product || keyHint || "");
+      var raw=value.status ?? value.state ?? value.indicator ?? value.health ?? null;
+      var rawStatus=text(raw);
+      var token=statusToken(raw);
+
+      if(name && raw!=null && rawStatus && token){
+        var id=text(value.id || value.slug || "");
+        var group=detectGroup(path,value,name);
+        var location=detectLocation(path,value);
+        var category=text(value.category || value.type || value.kind || "");
+        var route=detectRoute(value,name);
+        var key=(id || [location,group,name].filter(Boolean).join("/")).toLowerCase();
+
+        if(!seen.has(key)){
+          seen.add(key);
           out.push({
             id:id || key,
             name:name,
@@ -140,45 +283,58 @@
         }
       }
 
+      var nextPath=path;
+      if(name){
+        nextPath=path.concat([{name:name,type:text(value.type||value.category||"")}]);
+      }
+
       Object.keys(value).forEach(function(k){
-        if(["translations","locale","description","updates","metadata"].indexOf(k)>=0) return;
+        if(["translations","locale","description","updates","metadata"].includes(k)) return;
         var child=value[k];
-        if(child && typeof child==="object") walk(child,path.concat(name||k),depth+1);
+        if(child && typeof child==="object") walk(child,nextPath,depth+1,k);
       });
     }
 
-    walk(data,[],0);
-    return out.slice(0,120);
+    walk(data,[],0,"");
+    return out.slice(0,160);
   }
 
   function incidentList(data){
     if(Array.isArray(data)) return data;
-    return arrayFrom(data && (data.incidents || data.items || data.data || data.results));
+    if(!data || typeof data!=="object") return [];
+    return collection(data.incidents || data.items || data.data || data.results || data.history);
   }
 
   function explicitIncidentStatus(raw){
-    var s=str(raw).toLowerCase().replace(/[\s_-]+/g," ");
+    var s=normalizeToken(raw);
     if(!s) return null;
-    if(/resolved|completed|closed|fixed|restored/.test(s)) return "resolved";
-    if(/monitoring/.test(s)) return "monitoring";
-    if(/identified/.test(s)) return "identified";
-    if(/investigating|open|active|ongoing/.test(s)) return "investigating";
+    if(/\b(resolved|completed|closed|fixed|restored)\b/.test(s)) return "resolved";
+    if(/\bmonitoring\b/.test(s)) return "monitoring";
+    if(/\bidentified\b/.test(s)) return "identified";
+    if(/\b(investigating|open|active|ongoing)\b/.test(s)) return "investigating";
+    if(/\bmaintenance\b/.test(s)) return "maintenance";
     return null;
   }
 
   function mapIncident(item,source,u){
     if(!item || typeof item!=="object") return null;
-    var title=u.cleanText(str(item.title || item.name || item.summary || item.message));
+
+    var title=u.cleanText(text(item.title || item.name || item.summary || item.message || item.subject));
     if(!title || u.looksNoise(title)) return null;
 
-    var rawStatus=str(item.status || item.state || item.phase);
+    var rawStatus=text(item.status || item.state || item.phase || "");
     var status=explicitIncidentStatus(rawStatus);
+
     var start=item.started_at || item.startedAt || item.start_at || item.start ||
-      item.created_at || item.createdAt || item.date || null;
+      item.created_at || item.createdAt || item.published_at || item.publishedAt ||
+      item.date || null;
+
     var end=item.resolved_at || item.resolvedAt || item.ended_at || item.endedAt ||
       item.end_at || item.end || item.closed_at || item.closedAt || null;
-    var slug=str(item.slug || item.id || "");
-    var url=item.url || item.link || (slug ? "https://does.dmit.fail/incidents/"+encodeURIComponent(slug) : source.url);
+
+    var slug=text(item.slug || item.id || "");
+    var url=item.url || item.link ||
+      (slug ? SITE+"/incidents/"+encodeURIComponent(slug) : SITE+"/incidents");
 
     return {
       id:slug || null,
@@ -193,8 +349,13 @@
     };
   }
 
+  async function optionalJson(ctx,url){
+    if(!url) return null;
+    try{return await ctx.fetchJson(url);}catch(_){return null;}
+  }
+
   async function runApi(source,service,ctx){
-    // Current status and service inventory are both official JSON.
+    // Public API documented at /api-docs. No key is required.
     var settled=await Promise.allSettled([
       ctx.fetchJson(source.url),
       ctx.fetchJson(source.servicesUrl),
@@ -205,21 +366,24 @@
     var servicesData=settled[1].status==="fulfilled" ? settled[1].value : null;
     var incidentsData=settled[2].status==="fulfilled" ? settled[2].value : null;
 
-    if(!statusData && !servicesData && !incidentsData){
-      throw new Error("DOES DMIT FAIL? API unavailable");
+    // /status.json is the documented compact answer. Use only as a health fallback.
+    var simpleStatusData=null;
+    if(!statusData) simpleStatusData=await optionalJson(ctx,source.simpleStatusUrl);
+
+    if(!statusData && !simpleStatusData && !servicesData && !incidentsData){
+      throw new Error("DOES DMIT FAIL? public API unavailable");
     }
 
-    var health=healthFromStatus(statusData || {});
+    var health=healthFromStatus(statusData || simpleStatusData || {});
     var details=flattenServices(servicesData || statusData || {});
     var events=(incidentsData ? incidentList(incidentsData) : [])
       .map(function(x){return mapIncident(x,source,ctx.utils);})
       .filter(Boolean);
 
-    var active=[], recent=[];
+    var active=[],recent=[];
     events.forEach(function(e){
       if(e.unresolved===true) active.push(e);
-      else if(e.status==="resolved" || e.end) recent.push(e);
-      else recent.push(e); // status missing remains untagged; never infer an active incident.
+      else recent.push(e);
     });
 
     return {
@@ -230,12 +394,12 @@
       events:active.concat(recent),
       details:details,
       detailsTitle:"DMIT 服務與線路",
-      detailsSource:"DOES DMIT FAIL? API"
+      detailsSource:"API · DOES DMIT FAIL?"
     };
   }
 
-  function parseTelegram(text, service, source, u) {
-    var ls=u.lines(text), events=[], seen={};
+  function parseTelegram(textBody, service, source, u) {
+    var ls=u.lines(textBody), events=[], seen={};
     var heading=/(security maintenance notification|maintenance notification|incident notification|network incident|outage notification|emergency maintenance|scheduled maintenance|service interruption|routing issue|network issue|packet loss)/i;
     var body=/^(we apologize\b|impact\s*:|additional\b|update\s*:|details?\s*:|affected\b|customers?\b|the affected\b|please\b|thank you\b|•|\-|\*)/i;
 
@@ -252,8 +416,8 @@
     return {events:u.sortRecent(events),health:null,healthText:null};
   }
 
-  function parseServerStatus(text, service, source, u) {
-    var ls=u.lines(text), events=[], seen={};
+  function parseServerStatus(textBody, service, source, u) {
+    var ls=u.lines(textBody), events=[], seen={};
     var heading=/(maintenance notification|incident notification|network incident|outage notification|emergency maintenance|scheduled maintenance|service interruption|routing issue|network issue|packet loss)/i;
 
     for(var i=0;i<ls.length;i++){
@@ -273,9 +437,9 @@
       if(source.type==="dmit-api") return await runApi(source,service,ctx);
       return null;
     },
-    parseReader:function(text,service,source,u){
-      if(source.url.indexOf("t.me/s/DMIT_INC")!==-1) return parseTelegram(text,service,source,u);
-      return parseServerStatus(text,service,source,u);
+    parseReader:function(textBody,service,source,u){
+      if(source.url.indexOf("t.me/s/DMIT_INC")!==-1) return parseTelegram(textBody,service,source,u);
+      return parseServerStatus(textBody,service,source,u);
     }
   });
 })();

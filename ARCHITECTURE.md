@@ -292,6 +292,28 @@ Check-Host 的 `429` 是探針供應商限流，不是 Telegram outage。
 
 瀏覽器內的 DC1–DC5 WebSocket 直連與全球 Check-Host 探針是兩套獨立測量。
 
+
+
+### DMIT public API
+
+DMIT Service Plugin 使用 DOES DMIT FAIL? 公開 API，主來源 contract：
+
+```text
+/api/v1/status?locale=en
+/api/v1/services?locale=en
+/api/v1/incidents?locale=en
+/status.json
+```
+
+`/status.json` 僅作 current-health fallback，不用來製造事件。
+
+DMIT Parser 對 status / services 採結構容錯解析，但仍遵守：
+
+- Health 只接受明確狀態或布林健康欄位。
+- Event status 只接受事件本身明示 lifecycle status。
+- Service details 可從巢狀 API 結構保留 Datacenter / Product Line / Route 上下文。
+- API source link 指向 `https://does.dmit.fail/api-docs`。
+
 ## 9. 新增服務
 
 新增服務的正常流程：

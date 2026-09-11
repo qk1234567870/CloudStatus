@@ -378,3 +378,14 @@ footer{
 .card-footer>span:first-child{flex:0 1 auto;text-align:left}
 .card-footer>span:last-child{flex:0 1 auto;text-align:right}
 
+
+
+.card-footer .source-link{
+  color:inherit;
+  text-decoration:none;
+  border-bottom:1px dotted currentColor;
+}
+.card-footer .source-link:hover{
+  color:var(--text);
+  border-bottom-style:solid;
+}

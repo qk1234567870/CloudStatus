@@ -79,7 +79,7 @@ export function servicesSignature(list){
     return list.map(function(service){
       return [
         service.id,service.loading?"1":"0",service.health||"",service.healthText||"",
-        service.sourceLabel||"",service.fallback?"1":"0",service.updatedAt||"",
+        service.sourceLabel||"",service.sourceUrl||"",service.fallback?"1":"0",service.updatedAt||"",
         service.globalProbeLabel||"",
         (service.events||[]).map(function(e){
           return [e.title||"",e.status||"",e.start||"",e.end||""].join("~");

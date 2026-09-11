@@ -76,11 +76,14 @@ assets/services/*.js
 
 ## DMIT
 
-DMIT 主要使用 `DOES DMIT FAIL?` JSON API：
+DMIT 主要使用 `DOES DMIT FAIL?` 公開 JSON API（無需 API Key；官方文件標示 60 requests/min）：
 
-- `/api/v1/status`：目前狀態
-- `/api/v1/services`：機房、產品線、網路與線路
+- `/api/v1/status`：目前狀態與各服務狀態
+- `/api/v1/services`：機房、產品線與線路
 - `/api/v1/incidents`：事件
+- `/status.json`：僅在主要 status endpoint 失敗時作目前狀態備援
+
+DMIT 卡片的資料來源會顯示可點擊的 `API · DOES DMIT FAIL?`，直接連到官方 [`API Docs`](https://does.dmit.fail/api-docs)。
 
 API 失敗時再依序回退：
 

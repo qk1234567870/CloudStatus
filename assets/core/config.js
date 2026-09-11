@@ -1,10 +1,10 @@
 /* CloudStatus runtime configuration */
 export const CONFIG = Object.freeze({
-    version: "92.0.0",
+    version: "93.0.0",
     expectedServiceCount: 24,
 
     refreshInterval: 5 * 60 * 1000,
-    cacheKey: "cloudstatus-cache-v92",
+    cacheKey: "cloudstatus-cache-v93",
     cacheMaxAge: 15 * 60 * 1000,
     staleCacheMaxAge: 24 * 60 * 60 * 1000,
     foregroundRefreshThreshold: 2 * 60 * 1000,

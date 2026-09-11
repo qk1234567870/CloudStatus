@@ -1,6 +1,6 @@
 {
   "name": "CloudStatus Pure Pages",
-  "version": "92.0.0",
+  "version": "93.0.0",
   "ui_language": "zh-TW",
   "architecture": "native-es-modules-plus-service-plugin-registry",
   "build_tool_required": false,
@@ -34,7 +34,7 @@
   ],
   "frontend_refresh_minutes": 5,
   "foreground_refresh_threshold_minutes": 2,
-  "cache_key": "cloudstatus-cache-v92",
+  "cache_key": "cloudstatus-cache-v93",
   "cache_fresh_minutes": 15,
   "cache_stale_hours": 24,
   "responsive_layout": "single-column-under-760px / natural-flow-two-columns-at-760px-plus",
@@ -73,7 +73,12 @@
       "https://www.dmit.io/serverstatus.php",
       "https://t.me/s/DMIT_INC"
     ],
-    "security_response_source_enabled": false
+    "security_response_source_enabled": false,
+    "api_docs": "https://does.dmit.fail/api-docs",
+    "compact_status_fallback": "https://does.dmit.fail/status.json",
+    "source_label": "API · DOES DMIT FAIL?",
+    "public_api_key_required": false,
+    "documented_rate_limit_per_minute": 60
   },
   "github_pages": {
     "workflow": ".github/workflows/pages.yml",
@@ -89,5 +94,5 @@
     "DEPLOYMENT.md",
     "CHANGELOG.md"
   ],
-  "synchronized_asset_version": "92.0.0"
+  "synchronized_asset_version": "93.0.0"
 }

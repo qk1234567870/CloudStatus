@@ -2,6 +2,18 @@
 
 CloudStatus 版本更新記錄。
 
+## v93.0.0
+
+- 依 `https://does.dmit.fail/api-docs` 重新校正 DMIT 公開 API 整合。
+- DMIT 主來源固定為 `/api/v1/status`、`/api/v1/services`、`/api/v1/incidents`；`/status.json` 僅作 current-health 備援。
+- DMIT API source label 改為 `API · DOES DMIT FAIL?`，卡片 footer 可直接點擊官方 API Docs。
+- 核心 Service Model 新增 `sourceUrl`，只有來源明確提供文件/來源連結時才渲染可點擊資料來源，不影響既有純文字來源。
+- DMIT health parser 新增 boolean / nested status 容錯，並縮緊 Operational / Outage token 判定，避免寬鬆字串誤判。
+- DMIT services parser 重構為保留巢狀 Datacenter / Product Line / Route 上下文，改善 LAX / TYO / HKG 與 Pro / EB / T1 分組。
+- Incident lifecycle 仍只採來源明示狀態；沒有 status 不自行判定 active/resolved。
+- README / ARCHITECTURE / DEPLOYMENT 同步更新官方 API contract。
+- 版本與 cache key 更新為 `93.0.0` / `cloudstatus-cache-v93`。
+
 ## v92.0.0
 
 - 全面同步完全模組化後的 Markdown 文件，不再保留舊版單體架構說明。
