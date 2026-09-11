@@ -2,6 +2,19 @@
 
 CloudStatus 版本更新記錄。
 
+## v92.0.0
+
+- 全面同步完全模組化後的 Markdown 文件，不再保留舊版單體架構說明。
+- `README.md` 重寫為目前實際架構：原生 ES Modules、Service Plugin Registry、Core / Parsers / UI / Styles 分層。
+- 修正舊 README 仍宣稱 `assets/app.js` 承載抓取、解析、快取與 UI 的過期描述。
+- 修正舊 README 仍宣稱「沒有額外 Renderer」的過期描述；目前 Renderer 已獨立至 `assets/ui/renderer.js`。
+- 修正部署文件：Telegram 全球機器探針需要自訂 GitHub Actions；一般前端資料仍由瀏覽器直接讀取。
+- 新增 `ARCHITECTURE.md`，完整記錄模組責任、資料流、Source Priority、Service Plugin contract、Event / Health invariant、Cache 與擴充方式。
+- 新增 `DEPLOYMENT.md`，記錄 GitHub Pages Source、Actions workflow、15 分鐘 Telegram 全球探針、429 限流語意、自訂網域與故障排查。
+- 同步清理 `version.json` 中從舊版本遺留、已與實際程式不一致的 metadata。
+- 版本與 cache key 更新為 `92.0.0` / `cloudstatus-cache-v92`。
+- 功能邏輯沿用 v91；本版重點是文件、metadata 與實際完全模組化架構完全一致。
+
 ## v91.0.0
 
 - 前端核心完成全層模組化；`assets/app.js` 現在只負責啟動，不再承載抓取、解析、快取、渲染或 UI 業務邏輯。

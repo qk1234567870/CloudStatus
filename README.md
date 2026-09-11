@@ -1,94 +1,165 @@
 # CloudStatus
 
-純 GitHub Pages 前端版的全球雲端、平台、Hosting、資料中心與骨幹網服務狀態頁。
+純 GitHub Pages 的全球雲端、AI、平台、Hosting、資料中心、骨幹網與跨境線路狀態頁。
 
-## 核心顯示規則
+前端採 **原生 ES Modules + Service Plugin Registry**。不需要 npm、Vite、Webpack 或其他前端建置流程；GitHub Actions 只負責 Pages 部署與 Telegram 全球機器探針。
 
-每個服務分成兩個互相獨立的資訊層：
+## 核心原則
 
-1. **目前狀態**
-   - 只有來源本身明確提供 current health / status 時才顯示。
-   - 不會因為歷史事件名稱、正文文字或關鍵字推斷目前狀態。
-   - 因此「目前正常」可以和「今天曾發生、現已解決的事件」同時存在。
+CloudStatus 將「目前狀態」與「事件歷史」分開處理：
 
-2. **最近事件**
-   - 最多顯示最近 3 筆可靠事件。
-   - 少於 3 筆就照實顯示，不硬湊。
-   - 每一筆事件的狀態只採用來源明確提供的 status。
-   - 沒有明確 status 時不自行標記成「處理中」「已解決」等狀態。
+- 只有來源明確提供 current health / status 時，才顯示目前狀態。
+- 不從事件名稱、歷史紀錄、公告正文或 HTTP 成功自行推斷目前健康狀態。
+- Active incidents 與 Recent events 分離，Active 永遠優先顯示。
+- 事件狀態只採用來源明示的 status；來源沒有提供就不補標籤。
+- 不為了湊數而製造事件，最近事件最多顯示 3 筆。
+- 來源事件內容保留原語言；UI 使用繁體中文。
 
-## 資料來源原則
+資料來源優先級：
 
-來源按各服務實際可用性配置，優先使用可結構化、可追溯的官方資料：
+```text
+官方 API
+→ 官方 JSON
+→ 官方 RSS / Feed
+→ 官方事件歷史
+→ 官方 System Status
+→ 官方公告 / 備援
+→ 可信第三方備援
+→ 官方頁入口
+```
 
-- 官方 API / JSON
-- 官方 RSS / Atom / Feed
-- 官方事件歷史
-- 官方狀態頁
-- Reader / 專屬備援只用來補足資料，且必須通過事件過濾
+## 完全模組化架構
 
-若自動來源無法取得可靠事件，直接提供官方狀態頁入口，不把普通頁面正文、導航、說明文字偽裝成事件。
+主要目錄：
 
-## Telegram DC 連線狀態
+```text
+assets/
+├─ app.js                  # 純啟動器
+├─ style.css               # CSS manifest
+├─ core/                   # 核心資料流、網路、快取、刷新、查詢
+├─ parsers/                # 通用 Parser
+├─ ui/                     # Renderer、卡片、篩選與事件綁定
+├─ services/               # Registry + 24 個服務 Plugin
+└─ styles/                 # 分層 CSS
 
-Telegram Data Centers 卡片直接由使用者瀏覽器連線 Telegram 官方 MTProto WebSocket 端點，顯示 DC1–DC5 是否可建立 WebSocket。這是「目前網路到官方 DC 端點的可連線性」，不把單一網路路徑失敗推斷成 Telegram 全球機房故障。全球狀態使用 GitHub Actions 定時呼叫 Check-Host 的全球機器節點，直接測試 Telegram 官方 DC 端點 TCP/443；不使用使用者回報或推測。
+scripts/
+└─ telegram-global-probe.mjs
 
+data/
+└─ telegram-global.json
 
-## 更新
+.github/workflows/
+└─ pages.yml
+```
 
-- 頁面開啟後直接向來源讀取資料。
-- 前景狀態約每 5 分鐘自動更新。
-- 頁面從背景返回前景且資料已超過更新門檻時會重新讀取。
-- 不需要 GitHub Actions 定時抓取事件。
-- GitHub Pages 只負責託管靜態網站。
+`assets/app.js` 只負責啟動。抓取、Parser、來源合併、快取、刷新、搜尋、Layout、Renderer 與 UI 綁定都已拆到獨立模組。
+
+完整模組責任、資料流與擴充方式見 [`ARCHITECTURE.md`](./ARCHITECTURE.md)。
+
+## 服務 Plugin
+
+目前共有 24 個服務模組，位於：
+
+```text
+assets/services/*.js
+```
+
+`assets/services/registry.js` 負責：
+
+- Service manifest
+- 動態載入服務 Plugin
+- Service Registry
+- 專屬 Parser Plugin Registry
+- 固定服務排序
+
+新增服務原則上只需要新增自己的 Service Plugin，再加入 manifest；不應把服務專屬邏輯重新塞回核心。
+
+## DMIT
+
+DMIT 主要使用 `DOES DMIT FAIL?` JSON API：
+
+- `/api/v1/status`：目前狀態
+- `/api/v1/services`：機房、產品線、網路與線路
+- `/api/v1/incidents`：事件
+
+API 失敗時再依序回退：
+
+```text
+DMIT 官方 Server Status
+→ DMIT 官方 Telegram 公告
+```
+
+不使用已移除的 DMIT Security Response 作為狀態來源。
+
+## Telegram Data Centers
+
+Telegram 卡片有兩個互相獨立的測量層。
+
+### 目前網路
+
+瀏覽器直接測試 Telegram 官方 WebSocket 端點：
+
+- DC1 · Pluto（冥王星）· Miami
+- DC2 · Venus（金星）· Amsterdam
+- DC3 · Aurora（歐若拉）· Miami
+- DC4 · Vesta（灶神星）· Amsterdam
+- DC5 · Flora（花神星）· Singapore
+
+這表示「目前瀏覽器網路到 Telegram 官方端點的可連線性」，不是 Telegram 官方全球 outage 判定。
+
+### 全球機器探針
+
+GitHub Actions 定時執行 `scripts/telegram-global-probe.mjs`，透過 Check-Host 機器節點測試 DC1–DC5 的 TCP/443。
+
+- 亞洲、歐洲、北美、南美、大洋洲、非洲按洲自動選可用機器節點。
+- 每一洲仍測試全部 DC1–DC5。
+- 洲別旁的 DC 標示表示主 DC 實體所在地，不表示該洲使用者固定只使用該 DC。
+- Check-Host `HTTP 429` 顯示為「來源限流」，不視為 Telegram 故障。
+- 全球完整巡檢目前每 15 分鐘執行一次，錯峰於每小時 07 / 22 / 37 / 52 分。
+
+## 更新與快取
+
+前端：
+
+- 開啟頁面後立即讀取資料。
+- 有有效快取時先顯示快取，再背景更新。
+- 前景約每 5 分鐘刷新。
+- 從背景返回且超過門檻時重新讀取。
+- 手動刷新可強制重新讀取。
+- 舊快取最多保留 24 小時作為暫時備援。
+
+Telegram 全球探針由 GitHub Actions 的排程獨立執行。
 
 ## 部署
 
-將 `CloudStatus` 目錄內檔案放到 GitHub Pages 發佈來源即可。
+建議使用內附的 GitHub Pages workflow：
 
-自訂網域由 GitHub Pages Repository Settings 設定；本套件不附帶固定 `CNAME`，避免覆蓋你現有的 Pages 網域設定。
+```text
+.github/workflows/pages.yml
+```
 
-## 原則
+GitHub Repository：
 
-**不推斷、不造假、不硬湊三筆。**
+```text
+Settings
+→ Pages
+→ Build and deployment
+→ Source
+→ GitHub Actions
+```
 
-頁面只顯示來源能明確支持的目前狀態與事件資料。
+詳細部署、排程與故障排查見 [`DEPLOYMENT.md`](./DEPLOYMENT.md)。
 
+套件**不包含 `CNAME`**。自訂網域請在 GitHub Pages Repository Settings 設定，避免更新套件時覆蓋你的網域。
 
-## 更新記錄
+## 文件
 
-版本更新內容已獨立至 [`CHANGELOG.md`](./CHANGELOG.md)，README 不再混入逐版更新日誌。
+- [`ARCHITECTURE.md`](./ARCHITECTURE.md)：完整模組架構、依賴方向與擴充規則
+- [`DEPLOYMENT.md`](./DEPLOYMENT.md)：GitHub Pages / Actions 部署與 Telegram 探針
+- [`CHANGELOG.md`](./CHANGELOG.md)：版本更新記錄
 
+## 最重要的資料規則
 
-## 程式架構
+> 不推斷、不造假、不硬湊事件。
 
-- `assets/services.js`：服務註冊、manifest 與模組載入器
-- `assets/services/*.js`：各服務來源設定
-- `assets/app.js`：全域設定、抓取、解析、事件合併、快取與 UI
-- `assets/style.css`：全端響應式樣式
-
-
-## 卡片模板
-
-卡片採單一模板直接生成：
-
-- `assets/card-template.js`：完整服務卡片模板，包含事件項目
-- `assets/services/*.js`：只管理服務與來源資料
-- `assets/app.js`：抓取、標準化、快取、篩選後直接將 Service Model 套入模板
-
-沒有額外 Renderer，也不再把卡片與事件拆成多層模板。
-修改 `assets/card-template.js` 即同步套用全部 24 個服務。
-
-
-## 模組架構
-
-- `assets/app.js`：純啟動器
-- `assets/core/`：資料、網路、快取、刷新、事件與來源引擎
-- `assets/parsers/`：通用來源 Parser
-- `assets/ui/`：卡片、渲染、篩選與 UI 綁定
-- `assets/services/registry.js` + `assets/services/*.js`：服務 Plugin 系統
-- `assets/styles/`：分層 CSS
-- `scripts/`：GitHub Actions 機器探針
-- `data/`：部署時產生的探針資料
-
-前端使用瀏覽器原生 ES Modules，不需要建置步驟。
+CloudStatus 只顯示來源能明確支持的狀態與事件資料。
