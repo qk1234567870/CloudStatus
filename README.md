@@ -99,6 +99,20 @@ DMIT 現在採 **API-only**：不再使用舊 `Server Status` 頁與 Telegram �
 
 不使用已移除的 DMIT Security Response 作為狀態來源。
 
+
+
+DMIT 卡片固定顯示順序：
+
+```text
+目前狀態
+→ 目前事件
+→ 最近 3 筆事件
+→ 無事件提示（若適用）
+→ 服務
+```
+
+「最近 3 筆事件」是固定區塊名稱，右側數字顯示實際取得筆數；例如沒有歷史事件時顯示 `最近 3 筆事件  0`，而不是把標題改成「最近 0 筆事件」。
+
 ## Telegram Data Centers
 
 Telegram 卡片有兩個互相獨立的測量層。

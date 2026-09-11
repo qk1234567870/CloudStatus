@@ -1,6 +1,6 @@
 {
   "name": "CloudStatus Pure Pages",
-  "version": "98.0.0",
+  "version": "99.0.0",
   "ui_language": "zh-TW",
   "architecture": "native-es-modules-plus-service-plugin-registry",
   "build_tool_required": false,
@@ -34,7 +34,7 @@
   ],
   "frontend_refresh_minutes": 5,
   "foreground_refresh_threshold_minutes": 2,
-  "cache_key": "cloudstatus-cache-v98",
+  "cache_key": "cloudstatus-cache-v99",
   "cache_fresh_minutes": 15,
   "cache_stale_hours": 24,
   "responsive_layout": "single-column-under-760px / natural-flow-two-columns-at-760px-plus",
@@ -94,7 +94,15 @@
     ],
     "services_primary_source": "https://does.dmit.fail/services",
     "services_primary_transport": "Reader",
-    "services_api_fallback": "https://does.dmit.fail/api/v1/services?locale=en"
+    "services_api_fallback": "https://does.dmit.fail/api/v1/services?locale=en",
+    "card_order": [
+      "health",
+      "目前事件",
+      "最近 3 筆事件",
+      "no-event message",
+      "服務"
+    ],
+    "recent_history_display_limit": 3
   },
   "github_pages": {
     "workflow": ".github/workflows/pages.yml",
@@ -110,7 +118,7 @@
     "DEPLOYMENT.md",
     "CHANGELOG.md"
   ],
-  "synchronized_asset_version": "98.0.0",
+  "synchronized_asset_version": "99.0.0",
   "asset_cache_busting": {
     "html_entry_assets": true,
     "service_plugin_loader": true,

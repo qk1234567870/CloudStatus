@@ -2,6 +2,16 @@
 
 CloudStatus 版本更新記錄。
 
+## v99.0.0
+
+- 調整 DMIT 卡片資訊順序，符合官方頁用途：`目前事件` → `最近 3 筆事件` → `服務`。
+- `服務` 面板不再出現在事件區塊之前，改到事件與「近期沒有可顯示的可靠事件」提示之後。
+- DMIT 事故歷史區塊標題固定為 `最近 3 筆事件`；右側 count 顯示實際筆數，0 筆時不再顯示「最近 0 筆事件」。
+- `目前事件` 仍連至 `https://does.dmit.fail/`。
+- `最近 3 筆事件` 仍連至 `https://does.dmit.fail/incidents`。
+- `服務` 仍連至 `https://does.dmit.fail/services`，並保留完整服務面板。
+- 所有 ES Module / CSS 子模組版本同步更新為 `99.0.0`，cache key 更新為 `cloudstatus-cache-v99`。
+
 ## v98.0.0
 
 - 修正「DMIT 服務面板程式已存在但網站仍完全不顯示」的根因：**ES Module 子模組沒有版本 query，瀏覽器可能持續載入舊 `card-template.js` / `events.js` / `renderer.js`。**

@@ -408,7 +408,6 @@
 
     var body=healthBlock(service,ctx);
     body+=checksBlock(service,ctx);
-    body+=detailsBlock(service,ctx);
     body+=globalProbeBlock(service,ctx);
 
     var currentLink=service.sectionLinks && service.sectionLinks.current || null;
@@ -422,7 +421,8 @@
     }
 
     if(recentEvents.length){
-      body+=sectionHead("最近 "+recentEvents.length+" 筆事件",recentEvents.length,false,historyLink,ctx);
+      var recentTitle=service.id==="dmit" ? "最近 3 筆事件" : "最近 "+recentEvents.length+" 筆事件";
+      body+=sectionHead(recentTitle,recentEvents.length,false,historyLink,ctx);
       body+='<div class="event-list recent-events">'+recentEvents.map(function(e){
         return eventItem(e,service,ctx);
       }).join("")+'</div>';
@@ -432,10 +432,13 @@
       body+=sectionHead("目前事件",0,true,currentLink,ctx);
     }
     if(service.id==="dmit" && !recentEvents.length){
-      body+=sectionHead("最近 0 筆事件",0,false,historyLink,ctx);
+      body+=sectionHead("最近 3 筆事件",0,false,historyLink,ctx);
     }
 
     body+=emptyBlock(service,activeEvents,recentEvents,ctx);
+
+    // Structured service inventory belongs after current/history incidents.
+    body+=detailsBlock(service,ctx);
 
     var sourceLabel=service.sourceLabel || "官方頁";
     var source=service.sourceUrl

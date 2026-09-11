@@ -1,5 +1,5 @@
-import {cleanText,lines,findDate,findAnyDate,findDateRange} from "../core/utils.js?v=98.0.0";
-import {explicitStatus,looksNoise,sortRecent,activeEventCount} from "../core/events.js?v=98.0.0";
+import {cleanText,lines,findDate,findAnyDate,findDateRange} from "../core/utils.js?v=99.0.0";
+import {explicitStatus,looksNoise,sortRecent,activeEventCount} from "../core/events.js?v=99.0.0";
 
 export function gcpAdapter(data, service, source) {
     var list = Array.isArray(data) ? data : [];
