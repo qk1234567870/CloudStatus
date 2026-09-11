@@ -33,6 +33,7 @@
         url:API+"/status?locale=en",
         simpleStatusUrl:SITE+"/status.json",
         servicesUrl:API+"/services?locale=en",
+        servicesPageUrl:SITE+"/services",
         incidentsUrl:API+"/incidents?locale=en",
         docsUrl:SITE+"/api-docs",
         link:SITE+"/api-docs",
@@ -313,6 +314,106 @@
     return out.slice(0,160);
   }
 
+  function stripMarkdown(value){
+    return text(value)
+      .replace(/^#{1,6}\s*/,"")
+      .replace(/^\s*[-*+]\s+/,"")
+      .replace(/\[([^\]]+)\]\([^)]+\)/g,"$1")
+      .replace(/[`*_]+/g,"")
+      .trim();
+  }
+
+  function parseServicesPage(textBody){
+    var raw=String(textBody||"");
+    var lines=raw.split(/\r?\n/).map(function(line){return line.trim();}).filter(Boolean);
+    var details=[];
+    var location="";
+    var group="";
+    var category="";
+
+    var locationMap={
+      "Los Angeles":"Los Angeles",
+      "Tokyo":"Tokyo",
+      "Hong Kong":"Hong Kong",
+      "Applications":"Applications"
+    };
+
+    function parseStatusLine(line){
+      var cleaned=stripMarkdown(line);
+      var statusMatch=cleaned.match(/\s+(All Systems Operational|Operational|Degraded Performance|Partial Outage|Major Outage|Maintenance|Under Maintenance|Unavailable|Down)$/i);
+      if(!statusMatch) return null;
+
+      var rawStatus=statusMatch[1];
+      var state=statusToken(rawStatus);
+      var left=cleaned.slice(0,statusMatch.index).trim();
+      if(!left) return null;
+
+      var routeParts=[];
+      var routePattern=/\b(Outbound|Inbound|Interconnect|Internet|System)\b/gi;
+      var routeMatch;
+      while((routeMatch=routePattern.exec(left))){
+        routeParts.push(routeMatch[1]);
+      }
+
+      // Route/type words belong in the right-side metadata, not in the service name.
+      var name=left
+        .replace(/\s+(?:Outbound|Inbound)(?:\s*·\s*(?:Outbound|Inbound))*\s*$/i,"")
+        .replace(/\s+(?:Interconnect|Internet|System)\s*$/i,"")
+        .trim();
+
+      return {
+        id:[location,group,name].filter(Boolean).join("/").toLowerCase().replace(/\s+/g,"-"),
+        name:name,
+        status:rawStatus,
+        state:state || "unknown",
+        location:location || "其他",
+        category:category || (location==="Applications" ? "Application" : "Datacenter"),
+        kind:location==="Applications" ? "application" : "datacenter",
+        group:group || (location==="Applications" ? "Applications" : "其他"),
+        route:routeParts.filter(function(v,i,a){return a.indexOf(v)===i;}).join(" · ")
+      };
+    }
+
+    for(var i=0;i<lines.length;i++){
+      var rawLine=lines[i];
+
+      var h3=rawLine.match(/^###\s+(.+)$/);
+      if(h3){
+        var heading=stripMarkdown(h3[1]);
+        if(locationMap[heading]){
+          location=locationMap[heading];
+          group=location==="Applications" ? "Applications" : "";
+          category=location==="Applications" ? "Application" : "Datacenter";
+        }
+        continue;
+      }
+
+      var clean=stripMarkdown(rawLine);
+      if(!clean) continue;
+
+      if(/^(Datacenter|Application)$/i.test(clean)){
+        category=clean;
+        continue;
+      }
+
+      if(/^(?:LAX|TYO|HKG)\s+(?:Pro|EB|T1)$/i.test(clean)){
+        group=clean
+          .replace(/\bpro\b/i,"Pro")
+          .replace(/\beb\b/i,"EB")
+          .replace(/\bt1\b/i,"T1");
+        continue;
+      }
+
+      if(!/^\s*[-*+]\s+/.test(rawLine)) continue;
+      if(!location) continue;
+
+      var item=parseStatusLine(rawLine);
+      if(item) details.push(item);
+    }
+
+    return details;
+  }
+
   function incidentList(data){
     if(Array.isArray(data)) return data;
     if(!data || typeof data!=="object") return [];
@@ -369,27 +470,33 @@
   }
 
   async function runApi(source,service,ctx){
-    // Public API documented at /api-docs. No key is required.
+    // Structured API remains the main current-status / incident source.
+    // The official Services page is fetched through the existing Reader path
+    // because its hierarchy is exactly what the UI needs and is stable on static Pages.
     var settled=await Promise.allSettled([
       ctx.fetchJson(source.url),
       ctx.fetchJson(source.servicesUrl),
-      ctx.fetchJson(source.incidentsUrl)
+      ctx.fetchJson(source.incidentsUrl),
+      ctx.fetchReader(source.servicesPageUrl)
     ]);
 
     var statusData=settled[0].status==="fulfilled" ? settled[0].value : null;
     var servicesData=settled[1].status==="fulfilled" ? settled[1].value : null;
     var incidentsData=settled[2].status==="fulfilled" ? settled[2].value : null;
+    var servicesPageText=settled[3].status==="fulfilled" ? settled[3].value : "";
 
-    // /status.json is the documented compact answer. Use only as a health fallback.
     var simpleStatusData=null;
     if(!statusData) simpleStatusData=await optionalJson(ctx,source.simpleStatusUrl);
 
-    if(!statusData && !simpleStatusData && !servicesData && !incidentsData){
-      throw new Error("DOES DMIT FAIL? public API unavailable");
+    var pageDetails=parseServicesPage(servicesPageText);
+    var apiDetails=flattenServices(servicesData || statusData || {});
+    var details=pageDetails.length ? pageDetails : apiDetails;
+
+    if(!statusData && !simpleStatusData && !incidentsData && !details.length){
+      throw new Error("DOES DMIT FAIL? public sources unavailable");
     }
 
     var health=healthFromStatus(statusData || simpleStatusData || {});
-    var details=flattenServices(servicesData || statusData || {});
     var events=(incidentsData ? incidentList(incidentsData) : [])
       .map(function(x){return mapIncident(x,source,ctx.utils);})
       .filter(Boolean);
@@ -408,10 +515,9 @@
       events:active.concat(recent),
       details:details,
       detailsTitle:"服務",
-      detailsSource:"API · DOES DMIT FAIL?"
+      detailsSource:pageDetails.length ? "Services · DOES DMIT FAIL?" : "API · DOES DMIT FAIL?"
     };
   }
-
 
   window.CloudStatusServices.registerParser("dmit", {
     runSource:async function(source,service,ctx){

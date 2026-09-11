@@ -1,6 +1,6 @@
 {
   "name": "CloudStatus Pure Pages",
-  "version": "96.0.0",
+  "version": "97.0.0",
   "ui_language": "zh-TW",
   "architecture": "native-es-modules-plus-service-plugin-registry",
   "build_tool_required": false,
@@ -34,7 +34,7 @@
   ],
   "frontend_refresh_minutes": 5,
   "foreground_refresh_threshold_minutes": 2,
-  "cache_key": "cloudstatus-cache-v96",
+  "cache_key": "cloudstatus-cache-v97",
   "cache_fresh_minutes": 15,
   "cache_stale_hours": 24,
   "responsive_layout": "single-column-under-760px / natural-flow-two-columns-at-760px-plus",
@@ -91,7 +91,10 @@
       "東京",
       "香港",
       "應用"
-    ]
+    ],
+    "services_primary_source": "https://does.dmit.fail/services",
+    "services_primary_transport": "Reader",
+    "services_api_fallback": "https://does.dmit.fail/api/v1/services?locale=en"
   },
   "github_pages": {
     "workflow": ".github/workflows/pages.yml",
@@ -107,5 +110,5 @@
     "DEPLOYMENT.md",
     "CHANGELOG.md"
   ],
-  "synchronized_asset_version": "96.0.0"
+  "synchronized_asset_version": "97.0.0"
 }

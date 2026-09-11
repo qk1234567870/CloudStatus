@@ -2,6 +2,18 @@
 
 CloudStatus 版本更新記錄。
 
+## v97.0.0
+
+- 修正 v96 DMIT「服務」面板可能完全不出現的問題。
+- 原因：v96 只有在 `/api/v1/services` 成功解析成 `details[]` 時才渲染服務面板；API 回傳結構不符合預期或瀏覽器沒有拿到可用資料時，`details` 為空，整個服務區塊直接消失。
+- DMIT Services 改為優先讀取官方 `https://does.dmit.fail/services`，透過既有 Reader 路徑解析真正的頁面階層。
+- `/api/v1/services` 保留為結構化備援；官方 Services 頁與 API 任一成功都能生成服務面板。
+- 新增專屬 `parseServicesPage()`：識別 Los Angeles / Tokyo / Hong Kong / Applications、LAX/TYO/HKG Pro/EB/T1、Route、Operational/Degraded/Outage/Maintenance 等狀態。
+- 服務面板仍維持：地區卡片 → Product Line → Service / Route → 狀態。
+- Current status / incident API 邏輯維持不變。
+- README / ARCHITECTURE 同步更新。
+- 版本與 cache key 更新為 `97.0.0` / `cloudstatus-cache-v97`。
+
 ## v96.0.0
 
 - 重做 DMIT「服務」區塊，不再只是 `/services` 的連結或普通清單。

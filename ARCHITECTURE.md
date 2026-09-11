@@ -316,7 +316,9 @@ DMIT Parser 對 status / services 採結構容錯解析，但仍遵守：
 - DMIT 為 API-only Service Plugin；不再掛載 `Server Status` Reader 或 Telegram Reader 備援。
 - DMIT `sectionLinks` 將 Card 區塊與官方頁分離映射：current → `/`、history → `/incidents`、services → `/services`。
 - `ui/card-template.js` 的 `sectionHead()` 支援可選官方連結；其他服務沒有 `sectionLinks` 時維持原本純文字標題。
-- DMIT `details` channel 會依 `location` → `group` → `service item` 渲染成多卡片 Services 面板；這只是 UI projection，API 原始 service item 仍在 Service Model 中保持扁平結構，避免核心綁死 DMIT 階層。
+- DMIT `details` channel 會依 `location` → `group` → `service item` 渲染成多卡片 Services 面板。
+- Services details 優先由官方 `/services` 頁經 Reader 解析，因為該頁直接暴露 Datacenter / Product Line / Route 階層；`/api/v1/services` 保留為結構化備援。
+- Reader / API 都先轉成同一個扁平 `details[]` Service Model，再由 UI 投影成地區卡片，因此核心不綁死 DMIT 的頁面層級。
 
 ## 9. 新增服務
 
