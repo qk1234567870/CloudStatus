@@ -429,17 +429,17 @@
     }
 
     if(recentEvents.length){
-      var recentTitle=(service.id==="dmit" || service.id==="oracle") ? "最近 3 筆事件" : "最近 "+recentEvents.length+" 筆事件";
+      var recentTitle=(service.id==="dmit" || service.id==="oracle" || service.id==="aws") ? "最近 3 筆事件" : "最近 "+recentEvents.length+" 筆事件";
       body+=sectionHead(recentTitle,recentEvents.length,false,historyLink,ctx);
       body+='<div class="event-list recent-events">'+recentEvents.map(function(e){
         return eventItem(e,service,ctx);
       }).join("")+'</div>';
     }
 
-    if(service.id==="dmit" && !activeEvents.length){
+    if((service.id==="dmit" || service.id==="aws") && !activeEvents.length){
       body+=sectionHead("目前事件",0,true,currentLink,ctx);
     }
-    if(service.id==="dmit" && !recentEvents.length){
+    if((service.id==="dmit" || service.id==="aws") && !recentEvents.length){
       body+=sectionHead("最近 3 筆事件",0,false,historyLink,ctx);
     }
 

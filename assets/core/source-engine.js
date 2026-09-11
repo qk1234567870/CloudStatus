@@ -1,12 +1,12 @@
 /* Source priority, fetching, merge and fallback orchestration */
-import {fetchJson,fetchText,fetchReader} from "./network.js?v=102.0.0";
-import {explicitStatus,CLOSED_EVENT_STATUSES,normalizeResult,activeEventCount,mergeEvents} from "./events.js?v=102.0.0";
-import {PARSER_UTILS} from "../parsers/utils.js?v=102.0.0";
-import {statuspageAdapter} from "../parsers/statuspage.js?v=102.0.0";
-import {gcpAdapter} from "../parsers/google.js?v=102.0.0";
-import {rssAdapter} from "../parsers/rss.js?v=102.0.0";
-import {appleStructuredAdapter,fetchAppleJson,parseAppleBackup} from "../parsers/apple.js?v=102.0.0";
-import {parseReader} from "../parsers/reader.js?v=102.0.0";
+import {fetchJson,fetchText,fetchReader} from "./network.js?v=103.0.0";
+import {explicitStatus,CLOSED_EVENT_STATUSES,normalizeResult,activeEventCount,mergeEvents} from "./events.js?v=103.0.0";
+import {PARSER_UTILS} from "../parsers/utils.js?v=103.0.0";
+import {statuspageAdapter} from "../parsers/statuspage.js?v=103.0.0";
+import {gcpAdapter} from "../parsers/google.js?v=103.0.0";
+import {rssAdapter} from "../parsers/rss.js?v=103.0.0";
+import {appleStructuredAdapter,fetchAppleJson,parseAppleBackup} from "../parsers/apple.js?v=103.0.0";
+import {parseReader} from "../parsers/reader.js?v=103.0.0";
 
 export async function runSource(source,service) {
     // A source without its own URL inherits the service's official page.

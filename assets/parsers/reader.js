@@ -1,11 +1,11 @@
 /* Reader dispatcher */
-import {normalizeResult} from "../core/events.js?v=102.0.0";
-import {PARSER_UTILS} from "./utils.js?v=102.0.0";
-import {parseGooglePage} from "./google.js?v=102.0.0";
-import {parseAzure} from "./azure.js?v=102.0.0";
-import {parseApple,parseAppleBackup} from "./apple.js?v=102.0.0";
-import {parseDMIT} from "./hosting.js?v=102.0.0";
-import {parseInfrastructure,parseCloudflareRadarBGP} from "./network.js?v=102.0.0";
+import {normalizeResult} from "../core/events.js?v=103.0.0";
+import {PARSER_UTILS} from "./utils.js?v=103.0.0";
+import {parseGooglePage} from "./google.js?v=103.0.0";
+import {parseAzure} from "./azure.js?v=103.0.0";
+import {parseApple,parseAppleBackup} from "./apple.js?v=103.0.0";
+import {parseDMIT} from "./hosting.js?v=103.0.0";
+import {parseInfrastructure,parseCloudflareRadarBGP} from "./network.js?v=103.0.0";
 
 export function parseReader(text, service, source) {
     var moduleParser=(window.CloudStatusServiceParsers||{})[service.id];
@@ -25,7 +25,6 @@ export function parseReader(text, service, source) {
       case "arelion":
       case "ntt-global":
       case "cogent": return normalizeResult(parseInfrastructure(text,service,source),service,source);
-      case "aws": return normalizeResult(parseInfrastructure(text,service,source),service,source);
       case "cloudflare-radar-bgp": return normalizeResult(parseCloudflareRadarBGP(text,service,source),service,source);
       default: return normalizeResult(parseInfrastructure(text,service,source),service,source);
     }

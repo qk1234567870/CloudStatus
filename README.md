@@ -138,6 +138,29 @@ data/dmit-services.json（同源、首選）
 
 
 
+
+
+## AWS
+
+AWS 使用官方 **AWS Health Dashboard – Service health**：
+
+```text
+現況 / Open and recent issues
+https://health.aws.amazon.com/health/status?path=open-issues
+
+歷史 / Service history
+https://health.aws.amazon.com/health/status?path=service-history
+
+RSS fallback
+https://status.aws.amazon.com/rss/all.rss
+```
+
+AWS 官方文件說明 Service health 可公開查看 AWS 服務事件，不需要 AWS 帳號；Service history 顯示過去 12 個月的服務中斷。官方亦提供 RSS，但提醒 RSS 格式可能變更，因此 CloudStatus 將 Dashboard Reader 放在 RSS 前面。
+
+目前健康狀態只在來源明確寫出 `No open issues / All services are operating normally` 或明確 `Impacted / Degraded` 時設定，不以「頁面沒有抓到事件」推斷正常。
+
+AWS 專屬 Parser 位於 `assets/services/aws.js`。
+
 ## Oracle Cloud Infrastructure
 
 OCI 使用官方可程式化 Status Report + 官方 Incident RSS：

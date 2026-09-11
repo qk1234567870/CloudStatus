@@ -2,6 +2,19 @@
 
 CloudStatus 版本更新記錄。
 
+## v103.0.0
+
+- 重構 AWS 為專屬 Service Plugin Parser。
+- 現況入口改為 `https://health.aws.amazon.com/health/status?path=open-issues`。
+- 歷史入口改為 `https://health.aws.amazon.com/health/status?path=service-history`。
+- 官方 `https://status.aws.amazon.com/rss/all.rss` 保留為事件備援，不再作唯一主要來源。
+- Current health 只有在 AWS 官方來源明確寫出 `No open issues / All services are operating normally / Impacted / Degraded` 等訊號時才設定；不因抓不到事件而推斷正常。
+- Service history parser 讀取 AWS 過去服務中斷，最近區塊固定顯示「最近 3 筆事件」。
+- RSS parser 只對明示 `[RESOLVED] / [INVESTIGATING] / ...` 或 `service is operating normally` 套 lifecycle，不從普通正文推斷。
+- AWS 零事件時仍顯示 `目前事件 0` 與 `最近 3 筆事件 0` 的官方入口。
+- AWS 專屬邏輯從通用 Reader 移回 `assets/services/aws.js`。
+- 所有 ES Module / CSS 子模組同步到 `103.0.0`；cache key 更新為 `cloudstatus-cache-v103`。
+
 ## v102.0.0
 
 - 重構 Oracle Cloud Infrastructure 狀態來源。

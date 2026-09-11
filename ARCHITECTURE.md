@@ -443,3 +443,21 @@ OCI 使用兩條獨立官方 channel：
 ```
 
 Status JSON 與 Incident RSS 不互相推斷。RSS parser 只以每個 item description 最前面的明示 lifecycle status 判斷目前事件是否仍 unresolved；Start Time / End Time 只從 RSS 明示欄位解析。
+
+
+### AWS service-local parser
+
+AWS 使用三條官方 channel：
+
+```text
+AWS Health Dashboard · Open and recent issues
+→ current health / explicitly marked current events
+
+AWS Health Dashboard · Service history
+→ recentEvents
+
+status.aws.amazon.com/rss/all.rss
+→ RSS fallback
+```
+
+Dashboard history 優先於 RSS。AWS 官方明確提醒 RSS 格式可能變更，因此 RSS 不作唯一資料源。Current health 不以空事件清單推斷正常。

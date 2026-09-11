@@ -1,6 +1,6 @@
 {
   "name": "CloudStatus Pure Pages",
-  "version": "102.0.0",
+  "version": "103.0.0",
   "ui_language": "zh-TW",
   "architecture": "native-es-modules-plus-service-plugin-registry",
   "build_tool_required": false,
@@ -34,7 +34,7 @@
   ],
   "frontend_refresh_minutes": 5,
   "foreground_refresh_threshold_minutes": 2,
-  "cache_key": "cloudstatus-cache-v102",
+  "cache_key": "cloudstatus-cache-v103",
   "cache_fresh_minutes": 15,
   "cache_stale_hours": 24,
   "responsive_layout": "single-column-under-760px / natural-flow-two-columns-at-760px-plus",
@@ -126,7 +126,7 @@
     "DEPLOYMENT.md",
     "CHANGELOG.md"
   ],
-  "synchronized_asset_version": "102.0.0",
+  "synchronized_asset_version": "103.0.0",
   "asset_cache_busting": {
     "html_entry_assets": true,
     "service_plugin_loader": true,
@@ -156,6 +156,15 @@
     "incident_rss": "https://ocistatus.oraclecloud.com/api/v2/incident-summary.rss",
     "parser": "service-local",
     "recent_history_display_limit": 3,
+    "status_inference": false
+  },
+  "aws": {
+    "current_page": "https://health.aws.amazon.com/health/status?path=open-issues",
+    "history_page": "https://health.aws.amazon.com/health/status?path=service-history",
+    "rss_fallback": "https://status.aws.amazon.com/rss/all.rss",
+    "parser": "service-local",
+    "recent_history_display_limit": 3,
+    "current_health_requires_explicit_source_text": true,
     "status_inference": false
   }
 }
