@@ -1,6 +1,6 @@
 {
   "name": "CloudStatus Pure Pages",
-  "version": "95.0.0",
+  "version": "96.0.0",
   "ui_language": "zh-TW",
   "architecture": "native-es-modules-plus-service-plugin-registry",
   "build_tool_required": false,
@@ -34,7 +34,7 @@
   ],
   "frontend_refresh_minutes": 5,
   "foreground_refresh_threshold_minutes": 2,
-  "cache_key": "cloudstatus-cache-v95",
+  "cache_key": "cloudstatus-cache-v96",
   "cache_fresh_minutes": 15,
   "cache_stale_hours": 24,
   "responsive_layout": "single-column-under-760px / natural-flow-two-columns-at-760px-plus",
@@ -83,7 +83,15 @@
       "目前事件": "https://does.dmit.fail/",
       "最近事件": "https://does.dmit.fail/incidents",
       "服務": "https://does.dmit.fail/services"
-    }
+    },
+    "services_ui": "location-cards -> product-lines -> service-items",
+    "services_page": "https://does.dmit.fail/services",
+    "services_locations_ui": [
+      "洛杉磯",
+      "東京",
+      "香港",
+      "應用"
+    ]
   },
   "github_pages": {
     "workflow": ".github/workflows/pages.yml",
@@ -99,5 +107,5 @@
     "DEPLOYMENT.md",
     "CHANGELOG.md"
   ],
-  "synchronized_asset_version": "95.0.0"
+  "synchronized_asset_version": "96.0.0"
 }

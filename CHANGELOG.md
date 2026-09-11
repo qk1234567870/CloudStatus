@@ -2,6 +2,21 @@
 
 CloudStatus 版本更新記錄。
 
+## v96.0.0
+
+- 重做 DMIT「服務」區塊，不再只是 `/services` 的連結或普通清單。
+- `/api/v1/services` 直接渲染成類似官方 Services 頁的服務面板。
+- 第一層依地區分卡：洛杉磯、東京、香港、應用。
+- 第二層依 Product Line 分組：LAX/TYO/HKG Pro、EB、T1。
+- 第三層逐項顯示線路 / 互連 / Internet service 與目前運作狀態。
+- 服務狀態以小圓點 + `運作狀況 / 服務異常 / 狀態未知` 顯示。
+- 路由方向使用正確繁體 UI：`出站 / 入站 / 互連 / 網路`，不採瀏覽器機翻的錯誤詞彙。
+- DMIT Parser 加強 `location` / `product line` / `kind` 結構辨識。
+- 桌面服務面板兩欄；窄螢幕自動單欄。
+- `服務` 標題仍可直接開啟官方 `https://does.dmit.fail/services`。
+- README / ARCHITECTURE 同步更新。
+- 版本與 cache key 更新為 `96.0.0` / `cloudstatus-cache-v96`。
+
 ## v95.0.0
 
 - DMIT 卡片依官方頁面重新分配三個內容入口。

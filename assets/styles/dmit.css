@@ -12,3 +12,125 @@
 .dmit-detail-state.fail{color:var(--warn);background:rgba(245,158,11,.14)}
 .dmit-detail-state.unknown{color:var(--muted);background:rgba(148,163,184,.12)}
 @media(max-width:560px){.dmit-detail-row{align-items:flex-start}.dmit-detail-state{margin-top:1px}}
+
+
+/* v96 DMIT Services panel */
+.dmit-services-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+  margin:10px 12px 12px;
+}
+.dmit-location-card{
+  min-width:0;
+  overflow:hidden;
+  border:1px solid var(--hairline);
+  border-radius:13px;
+  background:rgba(255,255,255,.018);
+}
+.dmit-location-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  min-height:44px;
+  padding:10px 12px;
+  border-bottom:1px solid var(--hairline);
+}
+.dmit-location-title{
+  min-width:0;
+  color:var(--text);
+  font-size:14px;
+  font-weight:750;
+  line-height:1.2;
+}
+.dmit-location-type{
+  flex:0 0 auto;
+  color:var(--muted);
+  font-size:10px;
+  line-height:1.2;
+}
+.dmit-location-body{
+  min-width:0;
+}
+.dmit-product-group{
+  min-width:0;
+  padding:10px 12px;
+}
+.dmit-product-group+.dmit-product-group{
+  border-top:1px solid var(--hairline);
+}
+.dmit-product-title{
+  margin-bottom:7px;
+  color:var(--muted);
+  font-size:10px;
+  line-height:1.2;
+  letter-spacing:.02em;
+  text-transform:uppercase;
+}
+.dmit-service-row{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+  padding:4px 0;
+}
+.dmit-service-main{
+  display:flex;
+  align-items:baseline;
+  flex-wrap:wrap;
+  gap:4px 6px;
+  min-width:0;
+}
+.dmit-service-name{
+  min-width:0;
+  color:var(--text);
+  font-size:11px;
+  line-height:1.35;
+  overflow-wrap:anywhere;
+}
+.dmit-service-route{
+  color:var(--muted);
+  font-size:9.5px;
+  line-height:1.25;
+  white-space:nowrap;
+}
+.dmit-service-state{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  flex:0 0 auto;
+  color:var(--muted);
+  font-size:10px;
+  line-height:1.2;
+  white-space:nowrap;
+}
+.dmit-service-dot{
+  width:6px;
+  height:6px;
+  border-radius:50%;
+  background:currentColor;
+}
+.dmit-service-state.ok{color:var(--green)}
+.dmit-service-state.fail{color:var(--orange)}
+.dmit-service-state.unknown{color:var(--muted)}
+
+@media(max-width:880px){
+  .dmit-services-grid{
+    grid-template-columns:1fr;
+  }
+}
+@media(max-width:520px){
+  .dmit-services-grid{
+    margin-left:0;
+    margin-right:0;
+    gap:10px;
+  }
+  .dmit-service-row{
+    align-items:start;
+  }
+  .dmit-service-state{
+    margin-top:1px;
+  }
+}

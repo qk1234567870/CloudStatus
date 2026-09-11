@@ -91,6 +91,8 @@ DMIT 卡片的三個內容區塊另外直接對應官方頁面：
 - `最近 N 筆事件` → [`Incident history · DOES DMIT FAIL?`](https://does.dmit.fail/incidents)
 - `服務` → [`Services · DOES DMIT FAIL?`](https://does.dmit.fail/services)
 
+`服務` 不只是入口：CloudStatus 會把 `/api/v1/services` 的資料直接渲染成服務面板，依 **洛杉磯 / 東京 / 香港 / 應用** 分卡，再依 **LAX/TYO/HKG Pro、EB、T1** 分組，逐項顯示線路與目前運作狀態。這個階層對應官方 Services 頁的 Datacenter → Product Line → Route 結構。
+
 即使目前沒有事件，DMIT 卡片仍會保留 `目前事件 0` / `最近 0 筆事件` 的官方入口。
 
 DMIT 現在採 **API-only**：不再使用舊 `Server Status` 頁與 Telegram 公告作為備援，避免重複、延遲或難以結構化的資料污染卡片。

@@ -195,34 +195,47 @@
     return entry && entry.name ? entry.name : "";
   }
 
-  function detectLocation(path,value){
+  function detectLocation(path,value,name){
     var explicit=text(value.location || value.region || value.city || value.datacenter || value.datacentre);
-    if(explicit) return explicit;
+    var joined=[explicit,name].concat(path.map(pathName)).join(" ");
 
-    var joined=path.map(pathName).join(" ");
     if(/\bLAX\b|Los Angeles/i.test(joined)) return "Los Angeles";
     if(/\bTYO\b|Tokyo/i.test(joined)) return "Tokyo";
     if(/\bHKG\b|Hong Kong/i.test(joined)) return "Hong Kong";
     if(/Applications?/i.test(joined)) return "Applications";
-    return "";
+
+    return explicit || "";
   }
 
   function detectGroup(path,value,name){
     var explicit=text(value.group || value.product_line || value.productLine || value.product || value.service_group);
-    if(explicit && explicit!==name) return explicit;
+    var candidates=[explicit,name].concat(path.map(pathName));
 
-    for(var i=path.length-1;i>=0;i--){
-      var n=path[i] && path[i].name || "";
-      if(!n || n===name) continue;
-      if(/\b(?:LAX|TYO|HKG)\s+(?:Pro|EB|T1)\b/i.test(n)) return n;
-      if(/^Applications?$/i.test(n)) return n;
+    for(var i=0;i<candidates.length;i++){
+      var n=text(candidates[i]);
+      var m=n.match(/\b((?:LAX|TYO|HKG)\s+(?:Pro|EB|T1))\b/i);
+      if(m) return m[1].replace(/\s+/g," ").replace(/\bpro\b/i,"Pro").replace(/\beb\b/i,"EB").replace(/\bt1\b/i,"T1");
     }
+
+    if(candidates.some(function(n){return /^Applications?$/i.test(text(n));})) return "Applications";
+
+    if(explicit && explicit!==name) return explicit;
 
     for(var j=path.length-1;j>=0;j--){
       var fallback=path[j] && path[j].name || "";
       if(fallback && fallback!==name && !/^(Services?|Routes?|Datacenter|Application)$/i.test(fallback)) return fallback;
     }
     return "";
+  }
+
+  function detectKind(path,value,location){
+    var explicit=text(value.kind || value.type || value.category || "");
+    if(/application/i.test(explicit) || location==="Applications") return "application";
+    if(/datacenter|datacentre/i.test(explicit)) return "datacenter";
+
+    var joined=path.map(pathName).join(" ");
+    if(/Application/i.test(joined)) return "application";
+    return "datacenter";
   }
 
   function detectRoute(value,name){
@@ -261,9 +274,11 @@
       if(name && raw!=null && rawStatus && token){
         var id=text(value.id || value.slug || "");
         var group=detectGroup(path,value,name);
-        var location=detectLocation(path,value);
+        var location=detectLocation(path,value,name);
         var category=text(value.category || value.type || value.kind || "");
+        var kind=detectKind(path,value,location);
         var route=detectRoute(value,name);
+        if(location==="Applications" && !group) group="Applications";
         var key=(id || [location,group,name].filter(Boolean).join("/")).toLowerCase();
 
         if(!seen.has(key)){
@@ -275,6 +290,7 @@
             state:token,
             location:location,
             category:category,
+            kind:kind,
             group:group,
             route:route
           });

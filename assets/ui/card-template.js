@@ -112,6 +112,117 @@
     var items=service.loading ? [] : (service.details || []);
     if(!items.length) return "";
 
+    var detailsLink=service.sectionLinks && service.sectionLinks.services || null;
+
+    // DMIT: reproduce the Services page information hierarchy inside the status card.
+    if(service.id==="dmit"){
+      var stateLabels={ok:"運作狀況",fail:"服務異常",unknown:"狀態未知"};
+      var locationOrder=["Los Angeles","Tokyo","Hong Kong","Applications"];
+      var locationLabels={
+        "Los Angeles":"洛杉磯",
+        "Tokyo":"東京",
+        "Hong Kong":"香港",
+        "Applications":"應用"
+      };
+      var locationMeta={
+        "Los Angeles":"資料中心",
+        "Tokyo":"資料中心",
+        "Hong Kong":"資料中心",
+        "Applications":"應用"
+      };
+      var groupOrder={
+        "Los Angeles":["LAX Pro","LAX EB","LAX T1"],
+        "Tokyo":["TYO Pro","TYO EB","TYO T1"],
+        "Hong Kong":["HKG Pro","HKG EB","HKG T1"],
+        "Applications":["Applications"]
+      };
+
+      function serviceNameZh(name){
+        return String(name||"")
+          .replace(/China Telecom/gi,"中國電信")
+          .replace(/China Unicom Premium/gi,"中國聯通 Premium")
+          .replace(/China Mobile/gi,"中國移動")
+          .replace(/DMIT Backbone/gi,"DMIT Backbone");
+      }
+
+      function routeMetaZh(item){
+        var name=String(item.name||"");
+        var raw=[item.route,item.category].filter(Boolean).join(" ");
+        var bits=[];
+
+        if(/Outbound/i.test(name+" "+raw)) bits.push("出站");
+        if(/Inbound/i.test(name+" "+raw)) bits.push("入站");
+        if(/Interconnect/i.test(name+" "+raw)) bits.push("互連");
+        if(/Internet/i.test(name+" "+raw)) bits.push("網路");
+
+        return bits.filter(function(v,i,a){return a.indexOf(v)===i;}).join(" · ");
+      }
+
+      var byLocation={};
+      items.forEach(function(item){
+        var loc=item.location || "其他";
+        if(!byLocation[loc]) byLocation[loc]=[];
+        byLocation[loc].push(item);
+      });
+
+      var dynamicLocations=Object.keys(byLocation).filter(function(loc){
+        return locationOrder.indexOf(loc)===-1;
+      }).sort();
+
+      var orderedLocations=locationOrder.filter(function(loc){
+        return byLocation[loc] && byLocation[loc].length;
+      }).concat(dynamicLocations);
+
+      var cards=orderedLocations.map(function(location){
+        var locItems=byLocation[location] || [];
+        var groups={};
+
+        locItems.forEach(function(item){
+          var group=item.group || (location==="Applications" ? "Applications" : "其他");
+          if(!groups[group]) groups[group]=[];
+          groups[group].push(item);
+        });
+
+        var preferred=groupOrder[location] || [];
+        var groupNames=preferred.filter(function(g){return groups[g] && groups[g].length;})
+          .concat(Object.keys(groups).filter(function(g){return preferred.indexOf(g)===-1;}).sort());
+
+        var body=groupNames.map(function(group){
+          var rows=groups[group].map(function(item){
+            var state=item.state || "unknown";
+            var meta=routeMetaZh(item);
+            return '<div class="dmit-service-row">'+
+              '<span class="dmit-service-main">'+
+                '<span class="dmit-service-name">'+esc(serviceNameZh(item.name || item.id || "Service"))+'</span>'+
+                (meta?'<span class="dmit-service-route">'+esc(meta)+'</span>':'')+
+              '</span>'+
+              '<span class="dmit-service-state '+esc(state)+'">'+
+                '<span class="dmit-service-dot" aria-hidden="true"></span>'+
+                esc(stateLabels[state] || "狀態未知")+
+              '</span>'+
+            '</div>';
+          }).join("");
+
+          return '<section class="dmit-product-group">'+
+            '<div class="dmit-product-title">'+esc(group)+'</div>'+
+            rows+
+          '</section>';
+        }).join("");
+
+        return '<article class="dmit-location-card">'+
+          '<header class="dmit-location-head">'+
+            '<span class="dmit-location-title">'+esc(locationLabels[location] || location)+'</span>'+
+            '<span class="dmit-location-type">'+esc(locationMeta[location] || "服務")+'</span>'+
+          '</header>'+
+          '<div class="dmit-location-body">'+body+'</div>'+
+        '</article>';
+      }).join("");
+
+      return sectionHead("服務",items.length,false,detailsLink,ctx)+
+        '<div class="dmit-services-grid">'+cards+'</div>';
+    }
+
+    // Generic details channel for future services.
     var labels={ok:"正常",fail:"異常",unknown:"未知"};
     var groups={}, order=[];
 
@@ -138,7 +249,6 @@
       '</div>';
     }).join("");
 
-    var detailsLink=service.sectionLinks && service.sectionLinks.services || null;
     return sectionHead(service.detailsTitle || "服務狀態",items.length,false,detailsLink,ctx)+
       '<div class="dmit-detail-list">'+html+'</div>';
   }

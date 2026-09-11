@@ -96,7 +96,7 @@ export function servicesSignature(list){
         (service.checks||[]).map(function(c){
           return [c.id||"",c.name||"",c.host||"",c.location||"",c.continent||"",c.state||"",c.endpoint||""].join("~");
         }).join("¦"),        (service.details||[]).map(function(d){
-          return [d.id||"",d.name||"",d.status||"",d.state||"",d.location||"",d.group||"",d.route||""].join("~");
+          return [d.id||"",d.name||"",d.status||"",d.state||"",d.location||"",d.kind||"",d.group||"",d.route||""].join("~");
         }).join("¦"),
         service.globalProbe ? [
           service.globalProbe.runStatus||"",

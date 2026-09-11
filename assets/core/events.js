@@ -182,6 +182,7 @@ export function normalizeResult(result, service, source) {
         state:["ok","fail","unknown"].indexOf(item.state)>=0 ? item.state : "unknown",
         location:cleanText(item.location || ""),
         category:cleanText(item.category || ""),
+        kind:cleanText(item.kind || ""),
         group:cleanText(item.group || ""),
         route:cleanText(item.route || "")
       };
