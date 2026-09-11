@@ -3,11 +3,11 @@
 
   function startApp() {
   var CONFIG = Object.freeze({
-    version: "89.0.0",
+    version: "90.0.0",
     expectedServiceCount: 24,
 
     refreshInterval: 5 * 60 * 1000,
-    cacheKey: "cloudstatus-cache-v89",
+    cacheKey: "cloudstatus-cache-v90",
     cacheMaxAge: 15 * 60 * 1000,
     staleCacheMaxAge: 24 * 60 * 60 * 1000,
     foregroundRefreshThreshold: 2 * 60 * 1000,
@@ -27,7 +27,7 @@
   var state = { services: [], filter: "all", search: "", activeOnly: false };
 
   var REFRESH_INTERVAL = CONFIG.refreshInterval || 5 * 60 * 1000;
-  var CACHE_KEY = CONFIG.cacheKey || "cloudstatus-cache-v89";
+  var CACHE_KEY = CONFIG.cacheKey || "cloudstatus-cache-v90";
   var CACHE_MAX_AGE = CONFIG.cacheMaxAge || 15 * 60 * 1000;
   var STALE_CACHE_MAX_AGE = CONFIG.staleCacheMaxAge || 24 * 60 * 60 * 1000;
   var FETCH_TIMEOUT = CONFIG.fetchTimeout || 6500;
@@ -268,6 +268,22 @@
       };
     }
 
+    var details=Array.isArray(result.details) ? result.details.map(function(item){
+      if(!item) return null;
+      return {
+        id:cleanText(item.id || ""),
+        name:cleanText(item.name || ""),
+        status:cleanText(item.status || ""),
+        state:["ok","fail","unknown"].indexOf(item.state)>=0 ? item.state : "unknown",
+        location:cleanText(item.location || ""),
+        category:cleanText(item.category || ""),
+        group:cleanText(item.group || ""),
+        route:cleanText(item.route || "")
+      };
+    }).filter(Boolean) : null;
+    var detailsTitle=cleanText(result.detailsTitle || "");
+    var detailsSource=cleanText(result.detailsSource || "");
+
     var health=result.health || null;
     var healthText=result.healthText || null;
     var activeCount=explicitActive ? explicitActive.length : activeEventCount(events);
@@ -278,6 +294,9 @@
       recentEvents:explicitRecent,
       checks:checks,
       globalProbe:globalProbe,
+      details:details,
+      detailsTitle:detailsTitle,
+      detailsSource:detailsSource,
       health:health,
       healthText:healthText
     };
@@ -1068,7 +1087,7 @@
     if(!source){
       return {
         id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,globalProbeLabel:service.globalProbeLabel||null,
-        events:[],activeEvents:null,recentEvents:null,checks:null,globalProbe:null,health:null,healthText:null,sourceLabel:"官方頁",fallback:true,failures:["No source"],
+        events:[],activeEvents:null,recentEvents:null,checks:null,globalProbe:null,details:null,detailsTitle:null,detailsSource:null,health:null,healthText:null,sourceLabel:"官方頁",fallback:true,failures:["No source"],
         _remainingSources:[]
       };
     }
@@ -1080,21 +1099,24 @@
       var recentEvents=Array.isArray(result.recentEvents) ? result.recentEvents.slice(0,20) : null;
       var checks=Array.isArray(result.checks) ? result.checks.slice() : null;
       var globalProbe=result.globalProbe && typeof result.globalProbe==="object" ? result.globalProbe : null;
+      var details=Array.isArray(result.details) ? result.details.slice() : null;
+      var detailsTitle=result.detailsTitle||null;
+      var detailsSource=result.detailsSource||null;
       var health=result.health||null;
       var healthText=result.healthText||null;
 
       return {
         id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,globalProbeLabel:service.globalProbeLabel||null,
-        events:events,activeEvents:activeEvents,recentEvents:recentEvents,checks:checks,globalProbe:globalProbe,health:health,healthText:healthText,
-        sourceLabel:(events.length||checks||globalProbe||health)?source.label:"官方頁",
-        fallback:!events.length&&!health,
+        events:events,activeEvents:activeEvents,recentEvents:recentEvents,checks:checks,globalProbe:globalProbe,details:details,detailsTitle:detailsTitle,detailsSource:detailsSource,health:health,healthText:healthText,
+        sourceLabel:(events.length||checks||globalProbe||(details&&details.length)||health)?source.label:"官方頁",
+        fallback:!events.length&&!(details&&details.length)&&!health,
         failures:[],
         _remainingSources:sources.slice(1)
       };
     }catch(e){
       return {
         id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,globalProbeLabel:service.globalProbeLabel||null,
-        events:[],activeEvents:null,recentEvents:null,checks:null,globalProbe:null,health:null,healthText:null,sourceLabel:"官方頁",fallback:true,
+        events:[],activeEvents:null,recentEvents:null,checks:null,globalProbe:null,details:null,detailsTitle:null,detailsSource:null,health:null,healthText:null,sourceLabel:"官方頁",fallback:true,
         failures:[source.label+": "+String(e)],
         _remainingSources:sources.slice(1)
       };
@@ -1107,6 +1129,9 @@
     var recentEvents=Array.isArray(partial.recentEvents) ? partial.recentEvents.slice() : null;
     var checks=Array.isArray(partial.checks) ? partial.checks.slice() : null;
     var globalProbe=partial.globalProbe && typeof partial.globalProbe==="object" ? partial.globalProbe : null;
+    var details=Array.isArray(partial.details) ? partial.details.slice() : null;
+    var detailsTitle=partial.detailsTitle||null;
+    var detailsSource=partial.detailsSource||null;
     var health=partial.health||null, healthText=partial.healthText||null;
     var labels=[]; if(partial.sourceLabel && partial.sourceLabel!=="官方頁") labels.push(partial.sourceLabel);
     var failures=(partial.failures||[]).slice();
@@ -1121,6 +1146,7 @@
         if(result.events && result.events.length){ events=mergeEvents(events,result.events); if(labels.indexOf(source.label)<0) labels.push(source.label); }
         if(!checks && Array.isArray(result.checks)){ checks=result.checks.slice(); if(labels.indexOf(source.label)<0) labels.push(source.label); }
         if(!globalProbe && result.globalProbe && typeof result.globalProbe==="object"){ globalProbe=result.globalProbe; if(labels.indexOf(source.label)<0) labels.push(source.label); }
+        if(!details && Array.isArray(result.details)){ details=result.details.slice(); detailsTitle=result.detailsTitle||null; detailsSource=result.detailsSource||null; if(labels.indexOf(source.label)<0) labels.push(source.label); }
         if(!hasStructuredChannels && Array.isArray(result.activeEvents) && Array.isArray(result.recentEvents)){
           activeEvents=result.activeEvents.slice(); recentEvents=result.recentEvents.slice(); hasStructuredChannels=true;
         }
@@ -1131,9 +1157,9 @@
     }
     return {
       id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,globalProbeLabel:service.globalProbeLabel||null,
-      events:events.slice(0,20),activeEvents:activeEvents,recentEvents:recentEvents,checks:checks,globalProbe:globalProbe,health:health,healthText:healthText,
+      events:events.slice(0,20),activeEvents:activeEvents,recentEvents:recentEvents,checks:checks,globalProbe:globalProbe,details:details,detailsTitle:detailsTitle,detailsSource:detailsSource,health:health,healthText:healthText,
       sourceLabel:labels.length===1?labels[0]:(labels.length>1?"多來源":"官方頁"),
-      fallback:!events.length&&!checks&&!globalProbe&&!health,failures:failures
+      fallback:!events.length&&!checks&&!globalProbe&&!(details&&details.length)&&!health,failures:failures
     };
   }
 
@@ -1206,7 +1232,7 @@
       if (n) {
         var h=[s.name,s.nameZh,s.desc,s.carrierLabel,s.routeClassLabel,s.globalProbeLabel]
           .concat((s.events||[]).map(function(e){return e.title;}))
-          .concat((s.checks||[]).map(function(c){return [c.name,c.host,c.location,c.continent].join(" ");}))
+          .concat((s.checks||[]).map(function(c){return [c.name,c.host,c.location,c.continent].join(" ");})).concat((s.details||[]).map(function(d){return [d.name,d.status,d.location,d.category,d.group,d.route].join(" ");}))
           .concat((s.globalProbe && s.globalProbe.regions || []).map(function(r){
             return [r.label,r.dcGroup,r.node&&r.node.country,r.node&&r.node.city,r.node&&r.node.asn].join(" ");
           }))
@@ -1350,6 +1376,8 @@
         }).join("¦"),
         (service.checks||[]).map(function(c){
           return [c.id||"",c.name||"",c.host||"",c.location||"",c.continent||"",c.state||"",c.endpoint||""].join("~");
+        }).join("¦"),        (service.details||[]).map(function(d){
+          return [d.id||"",d.name||"",d.status||"",d.state||"",d.location||"",d.group||"",d.route||""].join("~");
         }).join("¦"),
         service.globalProbe ? [
           service.globalProbe.runStatus||"",
@@ -1417,7 +1445,7 @@
         state.services=SERVICES.map(function(service){
           return {
             id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,globalProbeLabel:service.globalProbeLabel||null,
-            events:[],activeEvents:null,recentEvents:null,checks:null,globalProbe:null,health:null,healthText:null,sourceLabel:"載入中",fallback:false,failures:[],loading:true
+            events:[],activeEvents:null,recentEvents:null,checks:null,globalProbe:null,details:null,detailsTitle:null,detailsSource:null,health:null,healthText:null,sourceLabel:"載入中",fallback:false,failures:[],loading:true
           };
         });
         render();

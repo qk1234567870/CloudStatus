@@ -100,6 +100,41 @@
       }).join("")+'</div>';
   }
 
+  function detailsBlock(service,ctx){
+    var esc=ctx.escapeHtml;
+    var items=service.loading ? [] : (service.details || []);
+    if(!items.length) return "";
+
+    var labels={ok:"正常",fail:"異常",unknown:"未知"};
+    var groups={}, order=[];
+
+    items.forEach(function(item){
+      var group=item.group || item.location || item.category || "其他";
+      if(!groups[group]){groups[group]=[]; order.push(group);}
+      groups[group].push(item);
+    });
+
+    var html=order.map(function(group){
+      return '<div class="dmit-detail-group">'+
+        '<div class="dmit-detail-group-title">'+esc(group)+'</div>'+
+        groups[group].map(function(item){
+          var state=item.state || "unknown";
+          var meta=[item.location,item.route,item.category].filter(Boolean).filter(function(v,i,a){return a.indexOf(v)===i;}).join(" · ");
+          return '<div class="dmit-detail-row">'+
+            '<span class="dmit-detail-main">'+
+              '<span class="dmit-detail-name">'+esc(item.name || item.id || "Service")+'</span>'+
+              (meta?'<span class="dmit-detail-meta">'+esc(meta)+'</span>':'')+
+            '</span>'+
+            '<span class="dmit-detail-state '+esc(state)+'">'+esc(labels[state] || item.status || "未知")+'</span>'+
+          '</div>';
+        }).join("")+
+      '</div>';
+    }).join("");
+
+    return sectionHead(service.detailsTitle || "服務狀態",items.length,false)+
+      '<div class="dmit-detail-list">'+html+'</div>';
+  }
+
   function globalProbeBlock(service,ctx){
     if(service.id!=="telegram-dc") return "";
 
@@ -255,6 +290,7 @@
 
     var body=healthBlock(service,ctx);
     body+=checksBlock(service,ctx);
+    body+=detailsBlock(service,ctx);
     body+=globalProbeBlock(service,ctx);
 
     if(activeEvents.length){
