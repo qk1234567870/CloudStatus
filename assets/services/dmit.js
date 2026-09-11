@@ -13,6 +13,20 @@
     category:"hosting",
     page:SITE+"/",
     parser:"dmit",
+    sectionLinks:{
+      current:{
+        label:"DOES DMIT FAIL?",
+        url:SITE+"/"
+      },
+      history:{
+        label:"Incident history · DOES DMIT FAIL?",
+        url:SITE+"/incidents"
+      },
+      services:{
+        label:"Services · DOES DMIT FAIL?",
+        url:SITE+"/services"
+      }
+    },
     sources:[
       {
         type:"dmit-api",
@@ -26,22 +40,6 @@
         tier:10,
         kind:"official-api",
         priority:10
-      },
-      {
-        type:"reader",
-        url:"https://www.dmit.io/serverstatus.php",
-        label:"官方 Server Status",
-        tier:50,
-        kind:"official-status",
-        priority:50
-      },
-      {
-        type:"reader",
-        url:"https://t.me/s/DMIT_INC",
-        label:"官方 Telegram 公告",
-        tier:60,
-        kind:"official-announcement",
-        priority:60
       }
     ]
   };
@@ -393,53 +391,16 @@
       recentEvents:recent,
       events:active.concat(recent),
       details:details,
-      detailsTitle:"DMIT 服務與線路",
+      detailsTitle:"服務",
       detailsSource:"API · DOES DMIT FAIL?"
     };
   }
 
-  function parseTelegram(textBody, service, source, u) {
-    var ls=u.lines(textBody), events=[], seen={};
-    var heading=/(security maintenance notification|maintenance notification|incident notification|network incident|outage notification|emergency maintenance|scheduled maintenance|service interruption|routing issue|network issue|packet loss)/i;
-    var body=/^(we apologize\b|impact\s*:|additional\b|update\s*:|details?\s*:|affected\b|customers?\b|the affected\b|please\b|thank you\b|•|\-|\*)/i;
-
-    for(var i=0;i<ls.length;i++){
-      var title=u.cleanText(ls[i]);
-      if(!title || body.test(title) || u.looksNoise(title) || !heading.test(title)) continue;
-      var block=ls.slice(Math.max(0,i-4),Math.min(ls.length,i+10)).join(" ");
-      var date=u.findAnyDate(block);
-      var key=title.toLowerCase();
-      if(seen[key]) continue;
-      seen[key]=true;
-      events.push({title:title,status:null,statusRaw:null,start:date||null,end:null,url:source.url,sourceLabel:source.label});
-    }
-    return {events:u.sortRecent(events),health:null,healthText:null};
-  }
-
-  function parseServerStatus(textBody, service, source, u) {
-    var ls=u.lines(textBody), events=[], seen={};
-    var heading=/(maintenance notification|incident notification|network incident|outage notification|emergency maintenance|scheduled maintenance|service interruption|routing issue|network issue|packet loss)/i;
-
-    for(var i=0;i<ls.length;i++){
-      var title=u.cleanText(ls[i]);
-      if(!title || u.looksNoise(title) || !heading.test(title)) continue;
-      var key=title.toLowerCase();
-      if(seen[key]) continue;
-      seen[key]=true;
-      var block=ls.slice(Math.max(0,i-3),Math.min(ls.length,i+8)).join(" ");
-      events.push({title:title,status:null,statusRaw:null,start:u.findAnyDate(block)||null,end:null,url:source.url,sourceLabel:source.label});
-    }
-    return {events:u.sortRecent(events),health:null,healthText:null};
-  }
 
   window.CloudStatusServices.registerParser("dmit", {
     runSource:async function(source,service,ctx){
       if(source.type==="dmit-api") return await runApi(source,service,ctx);
       return null;
-    },
-    parseReader:function(textBody,service,source,u){
-      if(source.url.indexOf("t.me/s/DMIT_INC")!==-1) return parseTelegram(textBody,service,source,u);
-      return parseServerStatus(textBody,service,source,u);
     }
   });
 })();

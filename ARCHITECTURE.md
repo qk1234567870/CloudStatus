@@ -313,6 +313,9 @@ DMIT Parser 對 status / services 採結構容錯解析，但仍遵守：
 - Event status 只接受事件本身明示 lifecycle status。
 - Service details 可從巢狀 API 結構保留 Datacenter / Product Line / Route 上下文。
 - API source link 指向 `https://does.dmit.fail/api-docs`。
+- DMIT 為 API-only Service Plugin；不再掛載 `Server Status` Reader 或 Telegram Reader 備援。
+- DMIT `sectionLinks` 將 Card 區塊與官方頁分離映射：current → `/`、history → `/incidents`、services → `/services`。
+- `ui/card-template.js` 的 `sectionHead()` 支援可選官方連結；其他服務沒有 `sectionLinks` 時維持原本純文字標題。
 
 ## 9. 新增服務
 

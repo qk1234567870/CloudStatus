@@ -1,8 +1,17 @@
 /* CloudStatus card renderer */
 
-  function sectionHead(title, count, active) {
+  function sectionHead(title, count, active, link, ctx) {
+    var label=title;
+    if(link && link.url && ctx){
+      var esc=ctx.escapeHtml;
+      label='<a class="section-label section-source-link" href="'+esc(link.url)+'" target="_blank" rel="noopener"'+
+        (link.label?' title="'+esc(link.label)+'"':'')+'>'+title+'</a>';
+    }else{
+      label='<span class="section-label">'+title+'</span>';
+    }
+
     return '<div class="section-head'+(active?' active':'')+'">'+
-      '<span class="section-label">'+title+'</span>'+
+      label+
       '<span class="section-count">'+count+'</span>'+
     '</div>';
   }
@@ -129,7 +138,8 @@
       '</div>';
     }).join("");
 
-    return sectionHead(service.detailsTitle || "服務狀態",items.length,false)+
+    var detailsLink=service.sectionLinks && service.sectionLinks.services || null;
+    return sectionHead(service.detailsTitle || "服務狀態",items.length,false,detailsLink,ctx)+
       '<div class="dmit-detail-list">'+html+'</div>';
   }
 
@@ -291,18 +301,28 @@
     body+=detailsBlock(service,ctx);
     body+=globalProbeBlock(service,ctx);
 
+    var currentLink=service.sectionLinks && service.sectionLinks.current || null;
+    var historyLink=service.sectionLinks && service.sectionLinks.history || null;
+
     if(activeEvents.length){
-      body+=sectionHead("目前事件",activeEvents.length,true);
+      body+=sectionHead("目前事件",activeEvents.length,true,currentLink,ctx);
       body+='<div class="event-list active-events">'+activeEvents.map(function(e){
         return eventItem(e,service,ctx);
       }).join("")+'</div>';
     }
 
     if(recentEvents.length){
-      body+=sectionHead("最近 "+recentEvents.length+" 筆事件",recentEvents.length,false);
+      body+=sectionHead("最近 "+recentEvents.length+" 筆事件",recentEvents.length,false,historyLink,ctx);
       body+='<div class="event-list recent-events">'+recentEvents.map(function(e){
         return eventItem(e,service,ctx);
       }).join("")+'</div>';
+    }
+
+    if(service.id==="dmit" && !activeEvents.length){
+      body+=sectionHead("目前事件",0,true,currentLink,ctx);
+    }
+    if(service.id==="dmit" && !recentEvents.length){
+      body+=sectionHead("最近 0 筆事件",0,false,historyLink,ctx);
     }
 
     body+=emptyBlock(service,activeEvents,recentEvents,ctx);

@@ -225,4 +225,4 @@ https://does.dmit.fail/api-docs
 
 API 不需要 Key；官方文件目前標示 60 requests/min。CloudStatus 的正常 5 分鐘刷新遠低於此限制。
 
-若 DMIT API 無法由瀏覽器取得，Service Plugin 會回退至 DMIT 官方 Server Status，再回退官方 Telegram 公告。
+若 DMIT API 無法由瀏覽器取得，DMIT 卡片保持未知／無可靠資料，不再回退到舊 Server Status 或 Telegram 公告。

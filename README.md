@@ -85,12 +85,15 @@ DMIT 主要使用 `DOES DMIT FAIL?` 公開 JSON API（無需 API Key；官方文
 
 DMIT 卡片的資料來源會顯示可點擊的 `API · DOES DMIT FAIL?`，直接連到官方 [`API Docs`](https://does.dmit.fail/api-docs)。
 
-API 失敗時再依序回退：
+DMIT 卡片的三個內容區塊另外直接對應官方頁面：
 
-```text
-DMIT 官方 Server Status
-→ DMIT 官方 Telegram 公告
-```
+- `目前事件` → [`DOES DMIT FAIL?`](https://does.dmit.fail/)
+- `最近 N 筆事件` → [`Incident history · DOES DMIT FAIL?`](https://does.dmit.fail/incidents)
+- `服務` → [`Services · DOES DMIT FAIL?`](https://does.dmit.fail/services)
+
+即使目前沒有事件，DMIT 卡片仍會保留 `目前事件 0` / `最近 0 筆事件` 的官方入口。
+
+DMIT 現在採 **API-only**：不再使用舊 `Server Status` 頁與 Telegram 公告作為備援，避免重複、延遲或難以結構化的資料污染卡片。
 
 不使用已移除的 DMIT Security Response 作為狀態來源。
 

@@ -2,6 +2,30 @@
 
 CloudStatus 版本更新記錄。
 
+## v95.0.0
+
+- DMIT 卡片依官方頁面重新分配三個內容入口。
+- `目前事件` 連到 `https://does.dmit.fail/`（DOES DMIT FAIL? 現況）。
+- `最近 N 筆事件` 連到 `https://does.dmit.fail/incidents`（Incident history）。
+- `服務` 連到 `https://does.dmit.fail/services`（Services）。
+- DMIT details 標題由「DMIT 服務與線路」簡化為「服務」。
+- 即使 DMIT 目前沒有 active / recent incident，仍保留 `目前事件 0` 與 `最近 0 筆事件` 的官方頁入口。
+- Service Plugin 新增可選 `sectionLinks` metadata；核心只傳遞，不硬寫 DMIT URL。
+- `sectionHead()` 支援可選官方來源連結，維持完全模組化架構。
+- README / ARCHITECTURE 同步更新。
+- 版本與 cache key 更新為 `95.0.0` / `cloudstatus-cache-v95`。
+
+## v94.0.0
+
+- DMIT 改為純 `DOES DMIT FAIL?` API-only。
+- 移除 `https://www.dmit.io/serverstatus.php` Reader 備援。
+- 移除 `https://t.me/s/DMIT_INC` Telegram Reader 備援。
+- 同時刪除 DMIT 模組內已無用途的 `parseServerStatus` / `parseTelegram` 程式碼。
+- DMIT 目前唯一資料鏈：`/api/v1/status` + `/api/v1/services` + `/api/v1/incidents`，`/status.json` 僅作 current-health 備援。
+- API 無法取得時保持未知，不再以低結構化來源補值。
+- README / ARCHITECTURE / DEPLOYMENT 同步為 API-only。
+- 版本與 cache key 更新為 `94.0.0` / `cloudstatus-cache-v94`。
+
 ## v93.0.0
 
 - 依 `https://does.dmit.fail/api-docs` 重新校正 DMIT 公開 API 整合。

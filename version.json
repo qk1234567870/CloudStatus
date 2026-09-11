@@ -1,6 +1,6 @@
 {
   "name": "CloudStatus Pure Pages",
-  "version": "93.0.0",
+  "version": "95.0.0",
   "ui_language": "zh-TW",
   "architecture": "native-es-modules-plus-service-plugin-registry",
   "build_tool_required": false,
@@ -34,7 +34,7 @@
   ],
   "frontend_refresh_minutes": 5,
   "foreground_refresh_threshold_minutes": 2,
-  "cache_key": "cloudstatus-cache-v93",
+  "cache_key": "cloudstatus-cache-v95",
   "cache_fresh_minutes": 15,
   "cache_stale_hours": 24,
   "responsive_layout": "single-column-under-760px / natural-flow-two-columns-at-760px-plus",
@@ -69,16 +69,21 @@
     "primary_status_source": "https://does.dmit.fail/api/v1/status",
     "services_source": "https://does.dmit.fail/api/v1/services",
     "incidents_source": "https://does.dmit.fail/api/v1/incidents",
-    "fallbacks": [
-      "https://www.dmit.io/serverstatus.php",
-      "https://t.me/s/DMIT_INC"
-    ],
+    "fallbacks": [],
     "security_response_source_enabled": false,
     "api_docs": "https://does.dmit.fail/api-docs",
     "compact_status_fallback": "https://does.dmit.fail/status.json",
     "source_label": "API · DOES DMIT FAIL?",
     "public_api_key_required": false,
-    "documented_rate_limit_per_minute": 60
+    "documented_rate_limit_per_minute": 60,
+    "mode": "api-only",
+    "server_status_reader_enabled": false,
+    "telegram_reader_enabled": false,
+    "section_links": {
+      "目前事件": "https://does.dmit.fail/",
+      "最近事件": "https://does.dmit.fail/incidents",
+      "服務": "https://does.dmit.fail/services"
+    }
   },
   "github_pages": {
     "workflow": ".github/workflows/pages.yml",
@@ -94,5 +99,5 @@
     "DEPLOYMENT.md",
     "CHANGELOG.md"
   ],
-  "synchronized_asset_version": "93.0.0"
+  "synchronized_asset_version": "95.0.0"
 }

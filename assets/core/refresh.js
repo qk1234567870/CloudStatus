@@ -25,7 +25,7 @@ export async function refresh(options) {
       if(!state.services.length){
         state.services=catalog.services.map(function(service){
           return {
-            id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,globalProbeLabel:service.globalProbeLabel||null,
+            id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,globalProbeLabel:service.globalProbeLabel||null,sectionLinks:service.sectionLinks||null,
             events:[],activeEvents:null,recentEvents:null,checks:null,globalProbe:null,details:null,detailsTitle:null,detailsSource:null,health:null,healthText:null,sourceLabel:"載入中",sourceUrl:null,fallback:false,failures:[],loading:true
           };
         });

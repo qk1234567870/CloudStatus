@@ -91,7 +91,7 @@ export async function loadPrimarySource(service) {
 
     if(!source){
       return {
-        id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,globalProbeLabel:service.globalProbeLabel||null,
+        id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,globalProbeLabel:service.globalProbeLabel||null,sectionLinks:service.sectionLinks||null,
         events:[],activeEvents:null,recentEvents:null,checks:null,globalProbe:null,details:null,detailsTitle:null,detailsSource:null,health:null,healthText:null,sourceLabel:"官方頁",sourceUrl:null,fallback:true,failures:["No source"],
         _remainingSources:[]
       };
@@ -111,7 +111,7 @@ export async function loadPrimarySource(service) {
       var healthText=result.healthText||null;
 
       return {
-        id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,globalProbeLabel:service.globalProbeLabel||null,
+        id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,globalProbeLabel:service.globalProbeLabel||null,sectionLinks:service.sectionLinks||null,
         events:events,activeEvents:activeEvents,recentEvents:recentEvents,checks:checks,globalProbe:globalProbe,details:details,detailsTitle:detailsTitle,detailsSource:detailsSource,health:health,healthText:healthText,
         sourceLabel:(events.length||checks||globalProbe||(details&&details.length)||health)?source.label:"官方頁",
         sourceUrl:(events.length||checks||globalProbe||(details&&details.length)||health)?(source.link||source.docsUrl||null):null,
@@ -121,7 +121,7 @@ export async function loadPrimarySource(service) {
       };
     }catch(e){
       return {
-        id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,globalProbeLabel:service.globalProbeLabel||null,
+        id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,globalProbeLabel:service.globalProbeLabel||null,sectionLinks:service.sectionLinks||null,
         events:[],activeEvents:null,recentEvents:null,checks:null,globalProbe:null,details:null,detailsTitle:null,detailsSource:null,health:null,healthText:null,sourceLabel:"官方頁",sourceUrl:null,fallback:true,
         failures:[source.label+": "+String(e)],
         _remainingSources:sources.slice(1)
@@ -164,7 +164,7 @@ export async function completeService(service, partial) {
       }catch(e){ failures.push(source.label+": "+String(e)); }
     }
     return {
-      id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,globalProbeLabel:service.globalProbeLabel||null,
+      id:service.id,name:service.name,nameZh:service.nameZh||"",desc:service.desc,category:service.category,page:service.page,carrier:service.carrier||null,carrierLabel:service.carrierLabel||null,routeClass:service.routeClass||null,routeClassLabel:service.routeClassLabel||null,globalProbeLabel:service.globalProbeLabel||null,sectionLinks:service.sectionLinks||null,
       events:events.slice(0,20),activeEvents:activeEvents,recentEvents:recentEvents,checks:checks,globalProbe:globalProbe,details:details,detailsTitle:detailsTitle,detailsSource:detailsSource,health:health,healthText:healthText,
       sourceLabel:labels.length===1?labels[0]:(labels.length>1?"多來源":"官方頁"),
       sourceUrl:labels.length===1?(sourceLinks[labels[0]]||null):null,
