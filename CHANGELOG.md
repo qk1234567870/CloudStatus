@@ -2,6 +2,18 @@
 
 CloudStatus 版本更新記錄。
 
+## v90.0.0
+
+- DMIT 主資料源升級為 DOES DMIT FAIL? 官方 JSON API。
+- 即時健康狀態優先使用 `/api/v1/status`。
+- 機房、產品線與線路細項使用 `/api/v1/services`。
+- 事件資料使用 `/api/v1/incidents`，只採用來源明示的事件狀態；沒有狀態不自行推斷。
+- DMIT 卡片新增「DMIT 服務與線路」區塊，可顯示 LAX / TYO / HKG、CN2 GIA、China Unicom Premium、CMIN2/CMI、DMIT Backbone、Arelion、Cogent、NTT、Global Secure Layer 與 Applications 等 API 回傳項目。
+- DOES DMIT FAIL? API 失敗時依序回退至 DMIT 官方 Server Status 與官方 Telegram 公告。
+- 不重新加入 DMIT Security Response。
+- 保留 v89 Telegram 限流韌性處理。
+- 快取更新為 `cloudstatus-cache-v90`。
+
 ## v89.0.0
 
 - Telegram 全球完整巡檢由每 5 分鐘降為每 15 分鐘，錯峰於每小時 07/22/37/52 分。
